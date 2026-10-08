@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Subjects | StudyRoom AI</title>
+
+    <link rel="stylesheet" href="css/subjects.css">
+</head>
+
+<body>
+
+<header class="navbar">
+
+    <a href="dashboard.html" class="logo">
+        <span>AI</span>
+        StudyRoom
+    </a>
+
+    <a href="dashboard.html" class="back-btn">
+        ← Dashboard
+    </a>
+
+</header>
+
+
+<main class="container">
+
+    <!-- Heading -->
+
+    <section class="page-header">
+
+        <div>
+            <span class="label">SUBJECT MANAGEMENT</span>
+
+            <h1>Manage Your Subjects</h1>
+
+            <p>
+                Add subjects, organize topics and track
+                your learning progress.
+            </p>
+        </div>
+
+        <button id="addSubjectBtn">
+            + Add Subject
+        </button>
+
+    </section>
+
+
+    <!-- Stats -->
+
+    <section class="stats-grid">
+
+        <div class="stat-card">
+            <p>Total Subjects</p>
+            <h2 id="totalSubjects">0</h2>
+        </div>
+
+        <div class="stat-card">
+            <p>Total Topics</p>
+            <h2 id="totalTopics">0</h2>
+        </div>
+
+        <div class="stat-card">
+            <p>Completed Topics</p>
+            <h2 id="completedTopics">0</h2>
+        </div>
+
+        <div class="stat-card">
+            <p>Overall Progress</p>
+            <h2 id="overallProgress">0%</h2>
+        </div>
+
+    </section>
+
+
+    <!-- Search -->
+
+    <section class="search-section">
+
+        <input
+            type="text"
+            id="searchSubject"
+            placeholder="Search subject..."
+        >
+
+    </section>
+
+
+    <!-- Subjects -->
+
+    <section id="subjectContainer"
+             class="subjects-grid">
+    </section>
+
+</main>
+
+
+<!-- Subject Modal -->
+
+<div class="modal" id="subjectModal">
+
+    <div class="modal-box">
+
+        <div class="modal-header">
+
+            <div>
+                <h2 id="subjectModalTitle">
+                    Add Subject
+                </h2>
+
+                <p>
+                    Enter your subject information.
+                </p>
+            </div>
+
+            <button id="closeSubjectModal">
+                ×
+            </button>
+
+        </div>
+
+
+        <form id="subjectForm">
+
+            <input
+                type="hidden"
+                id="editingSubjectId"
+            >
+
+
+            <div class="input-group">
+
+                <label>
+                    Subject Name
+                </label>
+
+                <input
+                    type="text"
+                    id="subjectName"
+                    placeholder="Example: Java Programming"
+                    maxlength="60"
+                    required
+                >
+
+            </div>
+
+
+            <div class="input-group">
+
+                <label>
+                    Subject Code
+                </label>
+
+                <input
+                    type="text"
+                    id="subjectCode"
+                    placeholder="Example: BCA-301"
+                    maxlength="30"
+                >
+
+            </div>
+
+
+            <div class="input-group">
+
+                <label>
+                    Target Study Hours
+                </label>
+
+                <input
+                    type="number"
+                    id="targetHours"
+                    min="1"
+                    max="500"
+                    value="20"
+                    required
+                >
+
+            </div>
+
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    class="cancel-btn"
+                    id="cancelSubjectBtn"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="save-btn"
+                >
+                    Save Subject
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- Topic Modal -->
+
+<div class="modal" id="topicModal">
+
+    <div class="modal-box">
+
+        <div class="modal-header">
+
+            <div>
+                <h2 id="topicModalTitle">
+                    Add Topic
+                </h2>
+
+                <p id="topicSubjectName">
+                    Add a topic to this subject.
+                </p>
+            </div>
+
+            <button id="closeTopicModal">
+                ×
+            </button>
+
+        </div>
+
+
+        <form id="topicForm">
+
+            <input
+                type="hidden"
+                id="topicSubjectId"
+            >
+
+            <input
+                type="hidden"
+                id="editingTopicId"
+            >
+
+
+            <div class="input-group">
+
+                <label>
+                    Topic Name
+                </label>
+
+                <input
+                    type="text"
+                    id="topicName"
+                    placeholder="Example: Inheritance"
+                    maxlength="100"
+                    required
+                >
+
+            </div>
+
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    class="cancel-btn"
+                    id="cancelTopicBtn"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="save-btn"
+                >
+                    Save Topic
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<script src="js/subjects.js"></script>
+
+</body>
+</html>

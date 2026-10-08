@@ -1,0 +1,391 @@
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary: #625bf6;
+    --dark: #172033;
+    --muted: #858c9c;
+    --border: #e8ebf3;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f5f7fc;
+    color: var(--dark);
+    min-height: 100vh;
+}
+
+button, input {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.navbar {
+    height: 75px;
+    padding: 0 7%;
+    background: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--dark);
+    font-size: 21px;
+    font-weight: 800;
+}
+
+.logo span {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    background: var(--primary);
+    color: white;
+    border-radius: 11px;
+    font-size: 12px;
+}
+
+.back-btn {
+    text-decoration: none;
+    color: var(--primary);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.container {
+    max-width: 1150px;
+    margin: 0 auto;
+    padding: 55px 25px;
+}
+
+.page-heading {
+    text-align: center;
+    margin-bottom: 38px;
+}
+
+.tag {
+    display: inline-block;
+    color: var(--primary);
+    background: #eae9ff;
+    padding: 9px 16px;
+    border-radius: 30px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+.page-heading h1 {
+    font-size: clamp(28px, 4vw, 40px);
+    margin-bottom: 12px;
+}
+
+.page-heading p {
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.7;
+}
+
+.main-grid {
+    display: grid;
+    grid-template-columns: 1.8fr 1fr;
+    gap: 25px;
+}
+
+.timer-card,
+.info-card,
+.history-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    box-shadow: 0 12px 35px rgba(30, 42, 80, 0.04);
+}
+
+.timer-card {
+    padding: 35px;
+    text-align: center;
+}
+
+.mode-buttons {
+    display: inline-flex;
+    gap: 8px;
+    background: #f1f2f8;
+    border-radius: 12px;
+    padding: 6px;
+}
+
+.mode-btn {
+    border: none;
+    background: transparent;
+    color: #7b8291;
+    padding: 12px 20px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.mode-btn.active {
+    background: var(--primary);
+    color: white;
+}
+
+.timer-ring {
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    padding: 12px;
+    margin: 35px auto;
+    background: conic-gradient(
+        var(--primary) var(--progress, 0%),
+        #edecff var(--progress, 0%)
+    );
+    display: grid;
+    place-items: center;
+    transition: background 0.3s;
+}
+
+.timer-circle {
+    background: white;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+#timerLabel {
+    color: var(--primary);
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 2px;
+}
+
+#timerDisplay {
+    font-size: 64px;
+    letter-spacing: -3px;
+    margin: 13px 0;
+    font-variant-numeric: tabular-nums;
+}
+
+#timerDescription {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.subject-field {
+    max-width: 360px;
+    margin: auto;
+    text-align: left;
+}
+
+.subject-field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.subject-field input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid #dfe3ec;
+    outline: none;
+    border-radius: 10px;
+}
+
+.subject-field input:focus {
+    border-color: var(--primary);
+}
+
+.timer-controls {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 27px;
+}
+
+.timer-controls button {
+    padding: 13px 22px;
+    border-radius: 10px;
+    font-weight: 700;
+    border: none;
+}
+
+.start-btn {
+    background: var(--primary);
+    color: white;
+}
+
+.control-btn {
+    background: #f0f1f7;
+    color: #42495a;
+}
+
+.timer-status {
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 24px;
+    line-height: 1.6;
+}
+
+.right-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.info-card {
+    padding: 25px;
+}
+
+.card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: #efefff;
+    display: grid;
+    place-items: center;
+    font-size: 23px;
+    margin-bottom: 16px;
+}
+
+.info-card h3 {
+    font-size: 15px;
+}
+
+.info-card h2 {
+    color: var(--primary);
+    font-size: 32px;
+    margin: 14px 0 8px;
+}
+
+.info-card p,
+.tip-card p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+}
+
+.tip-card {
+    border-radius: 18px;
+    padding: 25px;
+    background: #eae9ff;
+}
+
+.tip-card h3 {
+    margin-bottom: 12px;
+}
+
+.history-card {
+    margin-top: 25px;
+    padding: 28px;
+}
+
+.history-header h2 {
+    font-size: 20px;
+    margin-bottom: 8px;
+}
+
+.history-header p {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+#historyList {
+    margin-top: 20px;
+}
+
+.history-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 17px 0;
+    border-top: 1px solid var(--border);
+}
+
+.history-item strong {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.history-item p {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.history-item span {
+    color: var(--primary);
+    font-weight: 700;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.empty-history {
+    padding: 20px 0;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+@media (max-width: 800px) {
+    .main-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .right-column {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .tip-card {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 500px) {
+    .navbar {
+        padding: 0 5%;
+    }
+
+    .container {
+        padding: 35px 15px;
+    }
+
+    .timer-card {
+        padding: 25px 15px;
+    }
+
+    .timer-ring {
+        width: 240px;
+        height: 240px;
+    }
+
+    #timerDisplay {
+        font-size: 52px;
+    }
+
+    .right-column {
+        grid-template-columns: 1fr;
+    }
+}

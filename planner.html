@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Planner | StudyRoom AI</title>
+
+    <link rel="stylesheet" href="../css/planner.css">
+</head>
+
+<body>
+
+<header class="navbar">
+    <a href="dashboard.html" class="logo">
+        <span>AI</span>
+        StudyRoom
+    </a>
+
+    <a href="dashboard.html" class="back-btn">
+        ← Dashboard
+    </a>
+</header>
+
+
+<main class="container">
+
+    <section class="page-header">
+        <div>
+            <span>STUDY PLANNER</span>
+            <h1>Plan Your Study Day</h1>
+
+            <p>
+                Create your study tasks, organize subjects
+                and complete your daily goals.
+            </p>
+        </div>
+
+        <button id="openTaskModal">
+            + Add Study Task
+        </button>
+    </section>
+
+
+    <!-- Stats -->
+
+    <section class="stats-grid">
+
+        <div class="stat-card">
+            <p>Total Tasks</p>
+            <h2 id="totalTasks">0</h2>
+        </div>
+
+        <div class="stat-card">
+            <p>Completed</p>
+            <h2 id="completedTasks">0</h2>
+        </div>
+
+        <div class="stat-card">
+            <p>Pending</p>
+            <h2 id="pendingTasks">0</h2>
+        </div>
+
+        <div class="stat-card">
+            <p>Total Study Time</p>
+            <h2 id="totalTime">0m</h2>
+        </div>
+
+    </section>
+
+
+    <!-- Filters -->
+
+    <section class="filter-bar">
+
+        <input
+            type="text"
+            id="searchInput"
+            placeholder="Search subject or topic..."
+        >
+
+        <select id="filterStatus">
+
+            <option value="all">
+                All Tasks
+            </option>
+
+            <option value="pending">
+                Pending
+            </option>
+
+            <option value="completed">
+                Completed
+            </option>
+
+        </select>
+
+    </section>
+
+
+    <!-- Tasks -->
+
+    <section class="planner-card">
+
+        <div class="planner-heading">
+            <div>
+                <h2>Study Tasks</h2>
+                <p>Your planned learning activities</p>
+            </div>
+        </div>
+
+        <div id="taskList"></div>
+
+    </section>
+
+</main>
+
+
+<!-- Add / Edit Modal -->
+
+<div class="modal" id="taskModal">
+
+    <div class="modal-box">
+
+        <div class="modal-header">
+
+            <div>
+                <h2 id="modalTitle">
+                    Add Study Task
+                </h2>
+
+                <p>
+                    Enter your study task details.
+                </p>
+            </div>
+
+            <button id="closeModal">
+                ×
+            </button>
+
+        </div>
+
+
+        <form id="taskForm">
+
+            <input type="hidden" id="editingTaskId">
+
+
+            <div class="input-group">
+
+                <label>Subject</label>
+
+                <input
+                    type="text"
+                    id="subject"
+                    placeholder="Example: Java Programming"
+                    maxlength="60"
+                    required
+                >
+
+            </div>
+
+
+            <div class="input-group">
+
+                <label>Topic</label>
+
+                <input
+                    type="text"
+                    id="topic"
+                    placeholder="Example: Inheritance"
+                    maxlength="100"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-row">
+
+                <div class="input-group">
+
+                    <label>Study Duration</label>
+
+                    <input
+                        type="number"
+                        id="duration"
+                        placeholder="Minutes"
+                        min="1"
+                        max="300"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="input-group">
+
+                    <label>Study Date</label>
+
+                    <input
+                        type="date"
+                        id="studyDate"
+                        required
+                    >
+
+                </div>
+
+            </div>
+
+
+            <div class="input-group">
+
+                <label>Priority</label>
+
+                <select id="priority">
+
+                    <option value="low">
+                        Low
+                    </option>
+
+                    <option value="medium" selected>
+                        Medium
+                    </option>
+
+                    <option value="high">
+                        High
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    class="cancel-btn"
+                    id="cancelBtn"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="save-btn"
+                >
+                    Save Task
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<script src="../js/planner.js"></script>
+
+</body>
+</html>

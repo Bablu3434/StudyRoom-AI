@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | StudyRoom AI</title>
+
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+
+<body>
+
+<div class="dashboard-layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+
+        <div class="logo">
+            <span>AI</span>
+            StudyRoom
+        </div>
+
+        <nav class="sidebar-menu">
+            <a href="dashboard.html" class="active">🏠 Dashboard</a>
+            <a href="subjects.html">📚 Subjects</a>
+            <a href="planner.html">📅 Study Planner</a>
+            <a href="timer.html">⏱ Focus Timer</a>
+            <a href="notes.html">📝 Notes</a>
+            <a href="quiz.html">🧠 Quiz</a>
+            <a href="progress.html">📊 Progress</a>
+            <a href="weak-topics.html">🎯 Weak Topics</a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <a href="#">⚙ Settings</a>
+
+            <button id="logoutBtn">
+                🚪 Logout
+            </button>
+        </div>
+
+    </aside>
+
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <!-- Top Header -->
+        <header class="top-header">
+
+            <div>
+                <p class="small-text">Welcome back</p>
+                <h1 id="welcomeName">Student 👋</h1>
+            </div>
+
+            <div class="header-right">
+
+                <div class="notification">
+                    🔔
+                </div>
+
+                <div class="profile">
+                    <div class="profile-avatar" id="profileAvatar">
+                        S
+                    </div>
+
+                    <div>
+                        <strong id="profileName">
+                            Student
+                        </strong>
+
+                        <p>
+                            Learner
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- Hero -->
+        <section class="dashboard-hero">
+
+            <div class="hero-text">
+
+                <p>Today's Focus</p>
+
+                <h2>
+                    Keep learning. You're doing great!
+                </h2>
+
+                <span>
+                    Complete today's study plan to maintain your streak.
+                </span>
+
+            </div>
+
+            <button id="startFocusBtn">
+                Start Focus Session
+            </button>
+
+        </section>
+
+
+        <!-- Stats -->
+        <section class="stats-grid">
+
+            <div class="stat-card">
+
+                <div class="stat-icon">⏱</div>
+
+                <div>
+                    <p>Study Time Today</p>
+                    <h3>2h 35m</h3>
+                    <span>+20 min from yesterday</span>
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon">🔥</div>
+
+                <div>
+                    <p>Study Streak</p>
+                    <h3>7 Days</h3>
+                    <span>Best: 12 days</span>
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon">✅</div>
+
+                <div>
+                    <p>Tasks Completed</p>
+                    <h3>6 / 8</h3>
+                    <span>75% completed</span>
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon">🎯</div>
+
+                <div>
+                    <p>Daily Goal</p>
+                    <h3>70%</h3>
+                    <span>Almost there</span>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- Main Grid -->
+        <section class="content-grid">
+
+            <!-- Study Plan -->
+            <div class="card study-plan-card">
+
+                <div class="card-header">
+                    <div>
+                        <h3>Today's Study Plan</h3>
+                        <p>Wednesday, October 7</p>
+                    </div>
+
+                    <button class="small-btn">
+                        + Add Task
+                    </button>
+                </div>
+
+
+                <div class="study-task">
+
+                    <div class="subject-icon purple">
+                        J
+                    </div>
+
+                    <div class="task-info">
+                        <h4>Java Programming</h4>
+                        <p>Inheritance & Polymorphism</p>
+                    </div>
+
+                    <span class="duration">
+                        40 min
+                    </span>
+
+                    <button class="task-btn">
+                        Start
+                    </button>
+
+                </div>
+
+
+                <div class="study-task">
+
+                    <div class="subject-icon blue">
+                        M
+                    </div>
+
+                    <div class="task-info">
+                        <h4>Mathematics</h4>
+                        <p>Integration Practice</p>
+                    </div>
+
+                    <span class="duration">
+                        45 min
+                    </span>
+
+                    <button class="task-btn">
+                        Start
+                    </button>
+
+                </div>
+
+
+                <div class="study-task">
+
+                    <div class="subject-icon orange">
+                        D
+                    </div>
+
+                    <div class="task-info">
+                        <h4>DBMS</h4>
+                        <p>Normalization</p>
+                    </div>
+
+                    <span class="duration">
+                        30 min
+                    </span>
+
+                    <button class="task-btn">
+                        Start
+                    </button>
+
+                </div>
+
+
+                <div class="study-task completed">
+
+                    <div class="subject-icon green">
+                        E
+                    </div>
+
+                    <div class="task-info">
+                        <h4>English</h4>
+                        <p>Grammar Revision</p>
+                    </div>
+
+                    <span class="duration">
+                        25 min
+                    </span>
+
+                    <span class="completed-badge">
+                        ✓ Done
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- Right Side -->
+            <div class="right-column">
+
+                <!-- Goal -->
+                <div class="card goal-card">
+
+                    <div class="card-header">
+                        <h3>Daily Goal</h3>
+                        <strong>70%</strong>
+                    </div>
+
+                    <div class="progress-bar">
+                        <div class="progress"></div>
+                    </div>
+
+                    <p>
+                        2h 35m completed of 3h 30m
+                    </p>
+
+                </div>
+
+
+                <!-- AI Suggestion -->
+                <div class="ai-suggestion">
+
+                    <div class="ai-title">
+
+                        <span class="ai-icon">
+                            AI
+                        </span>
+
+                        <h3>AI Suggestion</h3>
+
+                    </div>
+
+                    <p>
+                        Your Java Inheritance performance is lower
+                        than other topics. Spend 30 minutes revising
+                        it today.
+                    </p>
+
+                    <button>
+                        Start Revision
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- Bottom -->
+        <section class="bottom-grid">
+
+            <!-- Weak Topics -->
+            <div class="card">
+
+                <div class="card-header">
+
+                    <div>
+                        <h3>Weak Topics</h3>
+                        <p>Topics that need attention</p>
+                    </div>
+
+                    <a href="#">
+                        View All
+                    </a>
+
+                </div>
+
+
+                <div class="weak-topic">
+
+                    <div>
+                        <strong>Java Inheritance</strong>
+                        <p>Java Programming</p>
+                    </div>
+
+                    <span class="danger">
+                        45%
+                    </span>
+
+                </div>
+
+
+                <div class="weak-topic">
+
+                    <div>
+                        <strong>Normalization</strong>
+                        <p>DBMS</p>
+                    </div>
+
+                    <span class="warning">
+                        58%
+                    </span>
+
+                </div>
+
+
+                <div class="weak-topic">
+
+                    <div>
+                        <strong>Integration</strong>
+                        <p>Mathematics</p>
+                    </div>
+
+                    <span class="medium">
+                        65%
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- Upcoming -->
+            <div class="card">
+
+                <div class="card-header">
+
+                    <div>
+                        <h3>Upcoming Exams</h3>
+                        <p>Stay prepared</p>
+                    </div>
+
+                </div>
+
+
+                <div class="exam-item">
+
+                    <div class="exam-date">
+                        <strong>12</strong>
+                        <span>OCT</span>
+                    </div>
+
+                    <div>
+                        <strong>Java Practical</strong>
+                        <p>5 days remaining</p>
+                    </div>
+
+                </div>
+
+
+                <div class="exam-item">
+
+                    <div class="exam-date">
+                        <strong>15</strong>
+                        <span>OCT</span>
+                    </div>
+
+                    <div>
+                        <strong>DBMS Test</strong>
+                        <p>8 days remaining</p>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<script src="js/dashboard.js"></script>
+
+</body>
+</html>

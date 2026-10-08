@@ -1,0 +1,171 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Focus Timer | StudyRoom AI</title>
+
+    <link rel="stylesheet" href="css/timer.css">
+    <script src="js/timer.js" defer></script>
+</head>
+<body>
+
+    <header class="navbar">
+        <a href="dashboard.html" class="logo">
+            <span>AI</span> StudyRoom
+        </a>
+
+        <a href="dashboard.html" class="back-btn">
+            ← Dashboard
+        </a>
+    </header>
+
+    <main class="container">
+
+        <div class="page-heading">
+            <div class="tag">FOCUS MODE</div>
+
+            <h1>Stay Focused. Keep Learning.</h1>
+
+            <p>
+                Choose a subject, start your timer
+                and enjoy distraction-free learning.
+            </p>
+        </div>
+
+        <div class="main-grid">
+
+            <!-- Focus Timer -->
+            <section class="timer-card">
+
+                <div class="mode-buttons">
+                    <button id="focusMode"
+                            class="mode-btn active">
+                        Focus
+                    </button>
+
+                    <button id="breakMode"
+                            class="mode-btn">
+                        Short Break
+                    </button>
+                </div>
+
+                <div class="timer-ring" id="timerRing">
+                    <div class="timer-circle">
+                        <span id="timerLabel">
+                            FOCUS SESSION
+                        </span>
+
+                        <h2 id="timerDisplay"
+                            role="timer">
+                            25:00
+                        </h2>
+
+                        <p id="timerDescription">
+                            Time to concentrate
+                        </p>
+                    </div>
+                </div>
+
+                <div class="subject-field">
+                    <label for="subjectInput">
+                        What are you studying?
+                    </label>
+
+                    <input
+                        id="subjectInput"
+                        type="text"
+                        maxlength="70"
+                        placeholder="e.g. Java Programming"
+                        value="General Study"
+                    >
+                </div>
+
+                <div class="timer-controls">
+                    <button id="startBtn" class="start-btn">
+                        ▶ Start
+                    </button>
+
+                    <button id="pauseBtn"
+                            class="control-btn" disabled>
+                        ⏸ Pause
+                    </button>
+
+                    <button id="resetBtn"
+                            class="control-btn">
+                        ↻ Reset
+                    </button>
+                </div>
+
+                <p class="timer-status"
+                   id="timerStatus"
+                   aria-live="polite">
+                    Ready to begin your session.
+                </p>
+
+            </section>
+
+            <!-- Stats -->
+            <aside class="right-column">
+
+                <div class="info-card">
+                    <div class="card-icon">⏱️</div>
+                    <h3>Today's Focus Time</h3>
+
+                    <h2 id="todayStudyTime">0 min</h2>
+
+                    <p>
+                        Time from completed focus sessions
+                    </p>
+                </div>
+
+                <div class="info-card">
+                    <div class="card-icon">🎯</div>
+                    <h3>Sessions Completed</h3>
+
+                    <h2 id="todaySessions">0</h2>
+
+                    <p>
+                        Your completed sessions today
+                    </p>
+                </div>
+
+                <div class="tip-card">
+                    <h3>💡 Study Tip</h3>
+
+                    <p>
+                        Choose one clear goal for each
+                        focus session. Take a short break
+                        when the session ends.
+                    </p>
+                </div>
+
+            </aside>
+
+        </div>
+
+        <!-- Session History -->
+        <section class="history-card">
+            <div class="history-header">
+                <div>
+                    <h2>Recent Sessions</h2>
+                    <p>
+                        Your latest completed study sessions
+                    </p>
+                </div>
+            </div>
+
+            <div id="historyList">
+                <p class="empty-history">
+                    No completed sessions yet.
+                </p>
+            </div>
+        </section>
+
+    </main>
+
+</body>
+</html>

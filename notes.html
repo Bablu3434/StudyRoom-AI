@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Smart Notes | StudyRoom AI</title>
+
+    <link rel="stylesheet" href="css/notes.css">
+</head>
+
+<body>
+
+<header class="navbar">
+
+    <a href="dashboard.html" class="logo">
+        <span>AI</span>
+        StudyRoom
+    </a>
+
+    <a href="dashboard.html" class="back-btn">
+        ← Dashboard
+    </a>
+
+</header>
+
+
+<main class="container">
+
+    <!-- Header -->
+
+    <section class="page-header">
+
+        <div>
+
+            <span class="label">
+                SMART NOTES
+            </span>
+
+            <h1>
+                Your Study Notes
+            </h1>
+
+            <p>
+                Create, organize and manage your
+                study notes in one place.
+            </p>
+
+        </div>
+
+        <button id="addNoteBtn">
+            + Add Note
+        </button>
+
+    </section>
+
+
+    <!-- Stats -->
+
+    <section class="stats-grid">
+
+        <div class="stat-card">
+
+            <p>Total Notes</p>
+
+            <h2 id="totalNotes">
+                0
+            </h2>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <p>Pinned Notes</p>
+
+            <h2 id="pinnedNotes">
+                0
+            </h2>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <p>Subjects</p>
+
+            <h2 id="subjectCount">
+                0
+            </h2>
+
+        </div>
+
+    </section>
+
+
+    <!-- Search -->
+
+    <section class="filter-section">
+
+        <input
+            type="text"
+            id="searchNotes"
+            placeholder="Search notes..."
+        >
+
+        <select id="subjectFilter">
+
+            <option value="all">
+                All Subjects
+            </option>
+
+        </select>
+
+    </section>
+
+
+    <!-- Notes -->
+
+    <section
+        class="notes-grid"
+        id="notesContainer"
+    >
+    </section>
+
+</main>
+
+
+<!-- Add / Edit Note Modal -->
+
+<div
+    class="modal"
+    id="noteModal"
+>
+
+    <div class="modal-box">
+
+        <div class="modal-header">
+
+            <div>
+
+                <h2 id="noteModalTitle">
+                    Add Note
+                </h2>
+
+                <p>
+                    Save your important study notes.
+                </p>
+
+            </div>
+
+            <button id="closeNoteModal">
+                ×
+            </button>
+
+        </div>
+
+
+        <form id="noteForm">
+
+            <input
+                type="hidden"
+                id="editingNoteId"
+            >
+
+
+            <div class="input-group">
+
+                <label>
+                    Note Title
+                </label>
+
+                <input
+                    type="text"
+                    id="noteTitle"
+                    placeholder="Example: Java Inheritance"
+                    maxlength="100"
+                    required
+                >
+
+            </div>
+
+
+            <div class="input-group">
+
+                <label>
+                    Subject
+                </label>
+
+                <input
+                    type="text"
+                    id="noteSubject"
+                    placeholder="Example: Java Programming"
+                    maxlength="60"
+                    required
+                >
+
+            </div>
+
+
+            <div class="input-group">
+
+                <label>
+                    Note Content
+                </label>
+
+                <textarea
+                    id="noteContent"
+                    placeholder="Write your notes here..."
+                    rows="8"
+                    required
+                ></textarea>
+
+            </div>
+
+
+            <label class="pin-option">
+
+                <input
+                    type="checkbox"
+                    id="pinNote"
+                >
+
+                Pin this note
+
+            </label>
+
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    id="cancelNoteBtn"
+                    class="cancel-btn"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="save-btn"
+                >
+                    Save Note
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<script src="js/notes.js"></script>
+
+</body>
+</html>
