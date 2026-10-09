@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Quiz | StudyRoom AI</title>
+
+    <link
+        rel="stylesheet"
+        href="css/quiz.css"
+    >
+</head>
+
+<body>
+
+<header class="navbar">
+
+    <a
+        href="dashboard.html"
+        class="logo"
+    >
+        <span>AI</span>
+        StudyRoom
+    </a>
+
+    <a
+        href="dashboard.html"
+        class="back-btn"
+    >
+        ← Dashboard
+    </a>
+
+</header>
+
+
+<main class="container">
+
+    <!-- Header -->
+
+    <section class="page-header">
+
+        <div>
+
+            <span class="label">
+                SMART QUIZ
+            </span>
+
+            <h1>
+                Test Your Knowledge
+            </h1>
+
+            <p>
+                Practice MCQs, check your score
+                and identify weak topics.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- Stats -->
+
+    <section class="stats-grid">
+
+        <div class="stat-card">
+
+            <p>
+                Quizzes Completed
+            </p>
+
+            <h2 id="totalQuizzes">
+                0
+            </h2>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <p>
+                Average Score
+            </p>
+
+            <h2 id="averageScore">
+                0%
+            </h2>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <p>
+                Best Score
+            </p>
+
+            <h2 id="bestScore">
+                0%
+            </h2>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <p>
+                Weak Topics
+            </p>
+
+            <h2 id="weakTopicCount">
+                0
+            </h2>
+
+        </div>
+
+    </section>
+
+
+    <!-- Quiz Setup -->
+
+    <section
+        class="setup-card"
+        id="quizSetup"
+    >
+
+        <div class="card-heading">
+
+            <h2>
+                Start New Quiz
+            </h2>
+
+            <p>
+                Choose a subject and topic.
+            </p>
+
+        </div>
+
+
+        <div class="setup-grid">
+
+            <div class="input-group">
+
+                <label>
+                    Subject
+                </label>
+
+                <select id="subjectSelect">
+
+                    <option value="">
+                        Select Subject
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="input-group">
+
+                <label>
+                    Topic
+                </label>
+
+                <select
+                    id="topicSelect"
+                    disabled
+                >
+
+                    <option value="">
+                        Select Topic
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="input-group">
+
+                <label>
+                    Number of Questions
+                </label>
+
+                <select id="questionCount">
+
+                    <option value="3">
+                        3 Questions
+                    </option>
+
+                    <option
+                        value="5"
+                        selected
+                    >
+                        5 Questions
+                    </option>
+
+                    <option value="10">
+                        10 Questions
+                    </option>
+
+                </select>
+
+            </div>
+
+        </div>
+
+
+        <button
+            id="startQuizBtn"
+            class="primary-btn"
+        >
+            Start Quiz
+        </button>
+
+    </section>
+
+
+    <!-- Quiz Area -->
+
+    <section
+        class="quiz-card hidden"
+        id="quizArea"
+    >
+
+        <div class="quiz-top">
+
+            <div>
+
+                <span id="quizSubject">
+                    Java Programming
+                </span>
+
+                <h2 id="questionCounter">
+                    Question 1 of 5
+                </h2>
+
+            </div>
+
+
+            <div class="score-live">
+
+                Score
+
+                <strong id="liveScore">
+                    0
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <div class="progress-bar">
+
+            <div
+                class="progress"
+                id="quizProgress"
+            ></div>
+
+        </div>
+
+
+        <div class="question-box">
+
+            <p
+                class="topic-name"
+                id="currentTopic"
+            >
+                Topic
+            </p>
+
+            <h2 id="questionText">
+                Question
+            </h2>
+
+        </div>
+
+
+        <div
+            class="options"
+            id="optionsContainer"
+        >
+        </div>
+
+
+        <div
+            id="answerMessage"
+            class="answer-message"
+        >
+        </div>
+
+
+        <div class="quiz-actions">
+
+            <button
+                id="quitQuizBtn"
+                class="secondary-btn"
+            >
+                Quit Quiz
+            </button>
+
+            <button
+                id="nextQuestionBtn"
+                class="primary-btn"
+                disabled
+            >
+                Next Question
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- Result -->
+
+    <section
+        class="result-card hidden"
+        id="resultArea"
+    >
+
+        <div class="result-icon">
+            🎯
+        </div>
+
+        <p>
+            QUIZ COMPLETED
+        </p>
+
+        <h2>
+            Your Score
+        </h2>
+
+        <div
+            class="score-circle"
+            id="resultScore"
+        >
+            0%
+        </div>
+
+
+        <h3 id="resultMessage">
+            Good Work!
+        </h3>
+
+
+        <div class="result-stats">
+
+            <div>
+
+                <strong id="correctAnswers">
+                    0
+                </strong>
+
+                <span>
+                    Correct
+                </span>
+
+            </div>
+
+
+            <div>
+
+                <strong id="wrongAnswers">
+                    0
+                </strong>
+
+                <span>
+                    Incorrect
+                </span>
+
+            </div>
+
+
+            <div>
+
+                <strong id="totalAnswers">
+                    0
+                </strong>
+
+                <span>
+                    Questions
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <button
+            id="newQuizBtn"
+            class="primary-btn"
+        >
+            Take Another Quiz
+        </button>
+
+    </section>
+
+
+    <!-- Weak Topics -->
+
+    <section class="weak-card">
+
+        <div class="card-heading">
+
+            <h2>
+                Weak Topics
+            </h2>
+
+            <p>
+                Based on your quiz performance.
+            </p>
+
+        </div>
+
+        <div id="weakTopicsList">
+
+            <p class="empty-message">
+                Complete quizzes to identify
+                your weak topics.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- Quiz History -->
+
+    <section class="history-card">
+
+        <div class="card-heading">
+
+            <h2>
+                Quiz History
+            </h2>
+
+            <p>
+                Your recent quiz results.
+            </p>
+
+        </div>
+
+        <div id="historyList">
+
+            <p class="empty-message">
+                No quizzes completed yet.
+            </p>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<script src="js/quiz.js"></script>
+
+</body>
+</html>

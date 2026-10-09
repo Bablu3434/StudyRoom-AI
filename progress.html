@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Progress Analytics | StudyRoom AI</title>
+
+    <link
+        rel="stylesheet"
+        href="css/progress.css"
+    >
+</head>
+
+<body>
+
+<header class="navbar">
+
+    <a
+        href="dashboard.html"
+        class="logo"
+    >
+        <span>AI</span>
+        StudyRoom
+    </a>
+
+    <a
+        href="dashboard.html"
+        class="back-btn"
+    >
+        ← Dashboard
+    </a>
+
+</header>
+
+
+<main class="container">
+
+    <!-- Header -->
+
+    <section class="page-header">
+
+        <div>
+
+            <span class="label">
+                PERFORMANCE ANALYTICS
+            </span>
+
+            <h1>
+                Your Learning Progress
+            </h1>
+
+            <p>
+                Track your focus time, quizzes,
+                study tasks and subject progress.
+            </p>
+
+        </div>
+
+        <a
+            href="timer.html"
+            class="focus-btn"
+        >
+            Start Focus Session
+        </a>
+
+    </section>
+
+
+    <!-- Main Stats -->
+
+    <section class="stats-grid">
+
+        <div class="stat-card">
+
+            <div class="stat-icon">
+                ⏱
+            </div>
+
+            <div>
+                <p>Total Focus Time</p>
+
+                <h2 id="totalFocusTime">
+                    0m
+                </h2>
+
+                <span id="todayFocusText">
+                    0m today
+                </span>
+            </div>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <div class="stat-icon">
+                🔥
+            </div>
+
+            <div>
+                <p>Study Streak</p>
+
+                <h2 id="studyStreak">
+                    0 Days
+                </h2>
+
+                <span>
+                    Consecutive active days
+                </span>
+            </div>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <div class="stat-icon">
+                ✅
+            </div>
+
+            <div>
+                <p>Task Completion</p>
+
+                <h2 id="taskCompletion">
+                    0%
+                </h2>
+
+                <span id="taskCompletionText">
+                    0 of 0 tasks
+                </span>
+            </div>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <div class="stat-icon">
+                🧠
+            </div>
+
+            <div>
+                <p>Average Quiz Score</p>
+
+                <h2 id="averageQuizScore">
+                    0%
+                </h2>
+
+                <span id="quizCountText">
+                    0 quizzes completed
+                </span>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- Smart Summary -->
+
+    <section class="summary-card">
+
+        <div class="summary-icon">
+            AI
+        </div>
+
+        <div>
+
+            <h3>
+                Smart Weekly Summary
+            </h3>
+
+            <p id="weeklySummary">
+                Start studying and completing quizzes
+                to generate your performance summary.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- Charts -->
+
+    <section class="analytics-grid">
+
+        <!-- Study Time Chart -->
+
+        <div class="analytics-card">
+
+            <div class="card-heading">
+
+                <div>
+                    <h2>
+                        Weekly Study Time
+                    </h2>
+
+                    <p>
+                        Focus sessions from the last 7 days
+                    </p>
+                </div>
+
+                <strong id="weeklyFocusTotal">
+                    0m
+                </strong>
+
+            </div>
+
+
+            <div
+                class="study-chart"
+                id="studyChart"
+            >
+            </div>
+
+        </div>
+
+
+        <!-- Quiz Chart -->
+
+        <div class="analytics-card">
+
+            <div class="card-heading">
+
+                <div>
+                    <h2>
+                        Quiz Performance
+                    </h2>
+
+                    <p>
+                        Your recent quiz scores
+                    </p>
+                </div>
+
+                <strong id="bestQuizScore">
+                    Best 0%
+                </strong>
+
+            </div>
+
+
+            <div
+                class="quiz-chart"
+                id="quizChart"
+            >
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- Performance Highlights -->
+
+    <section class="highlight-grid">
+
+        <div class="highlight-card good">
+
+            <span>
+                🏆 Strongest Subject
+            </span>
+
+            <h2 id="strongestSubject">
+                —
+            </h2>
+
+            <p id="strongestSubjectScore">
+                Complete quizzes to calculate
+            </p>
+
+        </div>
+
+
+        <div class="highlight-card attention">
+
+            <span>
+                🎯 Needs Attention
+            </span>
+
+            <h2 id="weakestTopic">
+                —
+            </h2>
+
+            <p id="weakestTopicScore">
+                No weak topic data yet
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- Subject Progress -->
+
+    <section class="section-card">
+
+        <div class="card-heading">
+
+            <div>
+                <h2>
+                    Subject Progress
+                </h2>
+
+                <p>
+                    Progress based on completed topics
+                </p>
+            </div>
+
+            <a href="subjects.html">
+                Manage Subjects
+            </a>
+
+        </div>
+
+
+        <div
+            class="subject-progress-list"
+            id="subjectProgressList"
+        >
+        </div>
+
+    </section>
+
+
+    <!-- Planner Progress -->
+
+    <section class="analytics-grid bottom-space">
+
+        <div class="section-card">
+
+            <div class="card-heading">
+
+                <div>
+                    <h2>
+                        Study Planner
+                    </h2>
+
+                    <p>
+                        Current task completion
+                    </p>
+                </div>
+
+                <a href="planner.html">
+                    Open Planner
+                </a>
+
+            </div>
+
+
+            <div class="big-progress">
+
+                <div class="big-progress-top">
+
+                    <span>
+                        Completed Tasks
+                    </span>
+
+                    <strong id="plannerProgressPercentage">
+                        0%
+                    </strong>
+
+                </div>
+
+
+                <div class="progress-track">
+
+                    <div
+                        id="plannerProgressBar"
+                        class="progress-fill"
+                    ></div>
+
+                </div>
+
+
+                <p id="plannerDetails">
+                    No study tasks added yet.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="section-card">
+
+            <div class="card-heading">
+
+                <div>
+                    <h2>
+                        Topic Progress
+                    </h2>
+
+                    <p>
+                        Overall learning completion
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="topic-overview">
+
+                <div
+                    class="circle-progress"
+                    id="topicCircle"
+                >
+
+                    <div>
+
+                        <strong id="topicProgressPercentage">
+                            0%
+                        </strong>
+
+                        <span>
+                            Complete
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="topic-numbers">
+
+                    <div>
+                        <strong id="totalTopicCount">
+                            0
+                        </strong>
+
+                        <span>
+                            Total Topics
+                        </span>
+                    </div>
+
+
+                    <div>
+                        <strong id="completedTopicCount">
+                            0
+                        </strong>
+
+                        <span>
+                            Completed
+                        </span>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<script src="js/progress.js"></script>
+
+</body>
+</html>

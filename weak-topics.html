@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Weak Topics | StudyRoom AI</title>
+
+    <link
+        rel="stylesheet"
+        href="css/weak-topics.css"
+    >
+</head>
+
+<body>
+
+<header class="navbar">
+
+    <a
+        href="dashboard.html"
+        class="logo"
+    >
+        <span>AI</span>
+        StudyRoom
+    </a>
+
+    <a
+        href="dashboard.html"
+        class="back-btn"
+    >
+        ← Dashboard
+    </a>
+
+</header>
+
+
+<main class="container">
+
+    <!-- Header -->
+
+    <section class="page-header">
+
+        <div>
+
+            <span class="label">
+                PERFORMANCE ANALYSIS
+            </span>
+
+            <h1>
+                Weak Topic Detector
+            </h1>
+
+            <p>
+                StudyRoom AI analyzes your quiz performance
+                and shows the topics that need more attention.
+            </p>
+
+        </div>
+
+        <a
+            href="quiz.html"
+            class="practice-main-btn"
+        >
+            Take New Quiz
+        </a>
+
+    </section>
+
+
+    <!-- Statistics -->
+
+    <section class="stats-grid">
+
+        <div class="stat-card">
+
+            <div class="stat-icon">
+                🎯
+            </div>
+
+            <div>
+                <p>
+                    Weak Topics
+                </p>
+
+                <h2 id="weakTopicCount">
+                    0
+                </h2>
+            </div>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <div class="stat-icon">
+                🚨
+            </div>
+
+            <div>
+                <p>
+                    High Priority
+                </p>
+
+                <h2 id="highPriorityCount">
+                    0
+                </h2>
+            </div>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <div class="stat-icon">
+                📊
+            </div>
+
+            <div>
+                <p>
+                    Average Accuracy
+                </p>
+
+                <h2 id="averageAccuracy">
+                    0%
+                </h2>
+            </div>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <div class="stat-icon">
+                🧠
+            </div>
+
+            <div>
+                <p>
+                    Total Attempts
+                </p>
+
+                <h2 id="totalAttempts">
+                    0
+                </h2>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- AI Recommendation -->
+
+    <section
+        class="ai-overview"
+        id="aiOverview"
+    >
+
+        <div class="ai-icon">
+            AI
+        </div>
+
+        <div>
+
+            <h3>
+                Smart Recommendation
+            </h3>
+
+            <p id="aiOverviewText">
+                Complete some quizzes and StudyRoom AI
+                will identify which topics need revision.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- Filters -->
+
+    <section class="filter-bar">
+
+        <input
+            type="text"
+            id="searchInput"
+            placeholder="Search weak topic..."
+        >
+
+
+        <select id="subjectFilter">
+
+            <option value="all">
+                All Subjects
+            </option>
+
+        </select>
+
+
+        <select id="priorityFilter">
+
+            <option value="all">
+                All Priorities
+            </option>
+
+            <option value="high">
+                High Priority
+            </option>
+
+            <option value="medium">
+                Medium Priority
+            </option>
+
+            <option value="low">
+                Low Priority
+            </option>
+
+        </select>
+
+    </section>
+
+
+    <!-- Weak Topic Container -->
+
+    <section
+        class="topics-grid"
+        id="topicsContainer"
+    >
+    </section>
+
+</main>
+
+
+<script src="js/weak-topics.js"></script>
+
+</body>
+</html>
