@@ -7,6 +7,135 @@
 // Login Protection
 // -------------------------------------
 
+const QUIZ_API =
+    "http://localhost:5000/api/quiz";
+
+const quizToken =
+    localStorage.getItem(
+        "studyRoomToken"
+    );
+
+
+if (!quizToken) {
+
+    window.location.href =
+        "login.html";
+
+}
+
+
+async function quizApiFetch(
+    url,
+    options = {}
+) {
+
+    const response =
+        await fetch(
+            url,
+            {
+                ...options,
+
+                headers: {
+
+                    "Content-Type":
+                        "application/json",
+
+                    Authorization:
+                        `Bearer ${quizToken}`,
+
+                    ...options.headers
+                }
+            }
+        );
+
+
+    if (
+        response.status === 401
+    ) {
+
+        localStorage.removeItem(
+            "studyRoomToken"
+        );
+
+        localStorage.removeItem(
+            "studyRoomUser"
+        );
+
+
+        window.location.href =
+            "login.html";
+
+        return;
+    }
+
+
+    const data =
+        await response.json();
+
+
+    if (!response.ok) {
+
+        throw new Error(
+            data.message ||
+            "Quiz request failed"
+        );
+
+    }
+
+
+    return data;
+} //add new code 
+
+async function saveQuizResultToDatabase(
+    subject,
+    topic,
+    score,
+    totalQuestions
+) {
+
+    try {
+
+        const data =
+            await quizApiFetch(
+                `${QUIZ_API}/attempts`,
+                {
+                    method:
+                        "POST",
+
+                    body:
+                        JSON.stringify({
+                            subject,
+                            topic,
+                            score,
+                            totalQuestions
+                        })
+                }
+            );
+
+
+        console.log(
+            "Quiz saved:",
+            data.attempt
+        );
+
+
+        return data.attempt;
+
+    } catch (error) {
+
+        console.error(
+            "Quiz save error:",
+            error
+        );
+
+
+        alert(
+            "Quiz completed, but result could not be saved."
+        );
+
+    }
+
+} //add new funcation 
 const loggedIn =
     localStorage.getItem(
         "studyRoomLoggedIn"

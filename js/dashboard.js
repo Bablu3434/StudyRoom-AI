@@ -1,7 +1,17 @@
 // Check login
 
-const isLoggedIn =
-    localStorage.getItem("studyRoomLoggedIn");
+const token =
+    localStorage.getItem(
+        "studyRoomToken"
+    );
+
+
+if (!token) {
+
+    window.location.href =
+        "login.html";
+
+}
 
 if (isLoggedIn !== "true") {
 
@@ -48,7 +58,11 @@ logoutBtn.addEventListener(
     function () {
 
         localStorage.removeItem(
-            "studyRoomLoggedIn"
+            "studyRoomToken"
+        );
+
+        localStorage.removeItem(
+            "studyRoomUser"
         );
 
         window.location.href =

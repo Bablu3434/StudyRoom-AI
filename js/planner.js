@@ -1,116 +1,193 @@
-// Login protection
+const API_URL =
+    "http://localhost:5000/api/tasks";
 
-const loggedIn =
-    localStorage.getItem("studyRoomLoggedIn") === "true";
 
-const user =
-    JSON.parse(
-        localStorage.getItem("studyRoomUser") || "null"
+const token =
+    localStorage.getItem(
+        "studyRoomToken"
     );
 
-if (!loggedIn || !user) {
-    window.location.replace("login.html");
+
+if (!token) {
+    window.location.href =
+        "login.html";
 }
-
-
-// Separate tasks for each user
-
-const taskStorageKey =
-    "studyPlannerTasks_" +
-    user.email.toLowerCase();
 
 
 // Elements
 
 const taskModal =
-    document.getElementById("taskModal");
+    document.getElementById(
+        "taskModal"
+    );
 
 const openTaskModal =
-    document.getElementById("openTaskModal");
+    document.getElementById(
+        "openTaskModal"
+    );
 
 const closeModal =
-    document.getElementById("closeModal");
+    document.getElementById(
+        "closeModal"
+    );
 
 const cancelBtn =
-    document.getElementById("cancelBtn");
+    document.getElementById(
+        "cancelBtn"
+    );
 
 const taskForm =
-    document.getElementById("taskForm");
+    document.getElementById(
+        "taskForm"
+    );
 
 const taskList =
-    document.getElementById("taskList");
+    document.getElementById(
+        "taskList"
+    );
 
 const searchInput =
-    document.getElementById("searchInput");
+    document.getElementById(
+        "searchInput"
+    );
 
 const filterStatus =
-    document.getElementById("filterStatus");
+    document.getElementById(
+        "filterStatus"
+    );
 
-
-// Fields
 
 const editingTaskId =
-    document.getElementById("editingTaskId");
+    document.getElementById(
+        "editingTaskId"
+    );
 
 const subjectInput =
-    document.getElementById("subject");
+    document.getElementById(
+        "subject"
+    );
 
 const topicInput =
-    document.getElementById("topic");
+    document.getElementById(
+        "topic"
+    );
 
 const durationInput =
-    document.getElementById("duration");
+    document.getElementById(
+        "duration"
+    );
 
 const studyDateInput =
-    document.getElementById("studyDate");
+    document.getElementById(
+        "studyDate"
+    );
 
 const priorityInput =
-    document.getElementById("priority");
+    document.getElementById(
+        "priority"
+    );
 
 
-// Set default date
-
-studyDateInput.value =
-    new Date().toISOString().split("T")[0];
+let tasks = [];
 
 
-// Get Tasks
+// ====================================
+// API Helper
+// ====================================
 
-function getTasks() {
+async function apiFetch(
+    url,
+    options = {}
+) {
+
+    const response =
+        await fetch(
+            url,
+            {
+                ...options,
+
+                headers: {
+                    "Content-Type":
+                        "application/json",
+
+                    Authorization:
+                        `Bearer ${token}`,
+
+                    ...options.headers
+                }
+            }
+        );
+
+
+    if (response.status === 401) {
+
+        localStorage.removeItem(
+            "studyRoomToken"
+        );
+
+        localStorage.removeItem(
+            "studyRoomUser"
+        );
+
+        window.location.href =
+            "login.html";
+
+        return;
+    }
+
+
+    const data =
+        await response.json();
+
+
+    if (!response.ok) {
+
+        throw new Error(
+            data.message ||
+            "Request failed"
+        );
+
+    }
+
+
+    return data;
+}
+
+
+// ====================================
+// Load Tasks
+// ====================================
+
+async function loadTasks() {
 
     try {
 
         const data =
-            JSON.parse(
-                localStorage.getItem(taskStorageKey) || "[]"
+            await apiFetch(
+                API_URL
             );
 
-        return Array.isArray(data)
-            ? data
-            : [];
 
-    } catch {
+        tasks =
+            data.tasks;
 
-        return [];
+
+        renderTasks();
+
+    } catch (error) {
+
+        alert(
+            error.message
+        );
 
     }
 
 }
 
 
-// Save Tasks
-
-function saveTasks(tasks) {
-
-    localStorage.setItem(
-        taskStorageKey,
-        JSON.stringify(tasks)
-    );
-
-}
-
-
-// Open Modal
+// ====================================
+// Modal
+// ====================================
 
 openTaskModal.addEventListener(
     "click",
@@ -118,24 +195,28 @@ openTaskModal.addEventListener(
 
         resetForm();
 
-        taskModal.classList.add("show");
+        taskModal.classList.add(
+            "show"
+        );
 
     }
 );
 
 
-// Close
-
 function hideModal() {
 
-    taskModal.classList.remove("show");
+    taskModal.classList.remove(
+        "show"
+    );
 
 }
+
 
 closeModal.addEventListener(
     "click",
     hideModal
 );
+
 
 cancelBtn.addEventListener(
     "click",
@@ -143,13 +224,14 @@ cancelBtn.addEventListener(
 );
 
 
-// Click outside modal
-
 taskModal.addEventListener(
     "click",
     function (event) {
 
-        if (event.target === taskModal) {
+        if (
+            event.target ===
+            taskModal
+        ) {
 
             hideModal();
 
@@ -159,20 +241,27 @@ taskModal.addEventListener(
 );
 
 
+// ====================================
 // Reset Form
+// ====================================
 
 function resetForm() {
 
     taskForm.reset();
 
-    editingTaskId.value = "";
+    editingTaskId.value =
+        "";
+
 
     studyDateInput.value =
-        new Date().toISOString()
+        new Date()
+            .toISOString()
             .split("T")[0];
+
 
     priorityInput.value =
         "medium";
+
 
     document.getElementById(
         "modalTitle"
@@ -182,155 +271,134 @@ function resetForm() {
 }
 
 
-// Submit
+// ====================================
+// Add / Update Task
+// ====================================
 
 taskForm.addEventListener(
     "submit",
-    function (event) {
+    async function (event) {
 
         event.preventDefault();
 
 
-        const subject =
-            subjectInput.value.trim();
+        const body = {
 
-        const topic =
-            topicInput.value.trim();
+            subject:
+                subjectInput
+                    .value
+                    .trim(),
 
-        const duration =
-            Number(durationInput.value);
+            topic:
+                topicInput
+                    .value
+                    .trim(),
 
-        const studyDate =
-            studyDateInput.value;
+            duration:
+                Number(
+                    durationInput.value
+                ),
 
-        const priority =
-            priorityInput.value;
+            studyDate:
+                studyDateInput.value,
 
+            priority:
+                priorityInput.value
 
-        if (
-            !subject ||
-            !topic ||
-            !studyDate ||
-            duration < 1
-        ) {
-
-            alert(
-                "Please enter valid task details."
-            );
-
-            return;
-
-        }
+        };
 
 
-        const tasks =
-            getTasks();
+        try {
+
+            const id =
+                editingTaskId.value;
 
 
-        const editId =
-            editingTaskId.value;
+            if (id) {
 
+                await apiFetch(
+                    `${API_URL}/${id}`,
+                    {
+                        method: "PUT",
 
-        if (editId) {
-
-            const index =
-                tasks.findIndex(
-                    task =>
-                        String(task.id) === editId
+                        body:
+                            JSON.stringify(
+                                body
+                            )
+                    }
                 );
 
+            } else {
 
-            if (index !== -1) {
+                await apiFetch(
+                    API_URL,
+                    {
+                        method: "POST",
 
-                tasks[index] = {
-                    ...tasks[index],
-
-                    subject,
-                    topic,
-                    duration,
-                    studyDate,
-                    priority
-                };
+                        body:
+                            JSON.stringify(
+                                body
+                            )
+                    }
+                );
 
             }
 
-        } else {
 
-            const newTask = {
+            hideModal();
 
-                id:
-                    Date.now(),
+            resetForm();
 
-                subject,
+            await loadTasks();
 
-                topic,
+        } catch (error) {
 
-                duration,
-
-                studyDate,
-
-                priority,
-
-                completed:
-                    false,
-
-                createdAt:
-                    new Date()
-                        .toISOString()
-
-            };
-
-
-            tasks.unshift(
-                newTask
+            alert(
+                error.message
             );
 
         }
-
-
-        saveTasks(tasks);
-
-        hideModal();
-
-        resetForm();
-
-        renderTasks();
 
     }
 );
 
 
+// ====================================
 // Edit Task
+// ====================================
 
 function editTask(id) {
-
-    const tasks =
-        getTasks();
 
     const task =
         tasks.find(
             item =>
-                item.id === id
+                item._id === id
         );
 
 
-    if (!task) return;
+    if (!task)
+        return;
 
 
     editingTaskId.value =
-        task.id;
+        task._id;
+
 
     subjectInput.value =
         task.subject;
 
+
     topicInput.value =
         task.topic;
+
 
     durationInput.value =
         task.duration;
 
+
     studyDateInput.value =
         task.studyDate;
+
 
     priorityInput.value =
         task.priority;
@@ -349,9 +417,40 @@ function editTask(id) {
 }
 
 
-// Delete Task
+// ====================================
+// Toggle Task
+// ====================================
 
-function deleteTask(id) {
+async function toggleComplete(id) {
+
+    try {
+
+        await apiFetch(
+            `${API_URL}/${id}/toggle`,
+            {
+                method: "PATCH"
+            }
+        );
+
+
+        await loadTasks();
+
+    } catch (error) {
+
+        alert(
+            error.message
+        );
+
+    }
+
+}
+
+
+// ====================================
+// Delete Task
+// ====================================
+
+async function deleteTask(id) {
 
     const confirmDelete =
         confirm(
@@ -363,75 +462,61 @@ function deleteTask(id) {
         return;
 
 
-    const tasks =
-        getTasks()
-            .filter(
-                task =>
-                    task.id !== id
-            );
+    try {
 
-
-    saveTasks(tasks);
-
-    renderTasks();
-
-}
-
-
-// Complete Task
-
-function toggleComplete(id) {
-
-    const tasks =
-        getTasks();
-
-
-    const task =
-        tasks.find(
-            item =>
-                item.id === id
+        await apiFetch(
+            `${API_URL}/${id}`,
+            {
+                method:
+                    "DELETE"
+            }
         );
 
 
-    if (!task) return;
+        await loadTasks();
 
+    } catch (error) {
 
-    task.completed =
-        !task.completed;
+        alert(
+            error.message
+        );
 
-
-    saveTasks(tasks);
-
-    renderTasks();
+    }
 
 }
 
 
-// Format Date
+// ====================================
+// Date
+// ====================================
 
 function formatDate(date) {
 
     return new Date(
         date + "T00:00:00"
-    ).toLocaleDateString(
+    )
+    .toLocaleDateString(
         "en-IN",
         {
-            day: "numeric",
-            month: "short",
-            year: "numeric"
+            day:
+                "numeric",
+
+            month:
+                "short",
+
+            year:
+                "numeric"
         }
     );
 
 }
 
 
-// Render Tasks
+// ====================================
+// Render
+// ====================================
 
 function renderTasks() {
-
-    const tasks =
-        getTasks();
-
 
     const query =
         searchInput.value
@@ -443,74 +528,74 @@ function renderTasks() {
         filterStatus.value;
 
 
-    const filteredTasks =
-        tasks.filter(task => {
+    const filtered =
+        tasks.filter(
+            task => {
+
+                const searchMatch =
+
+                    task.subject
+                        .toLowerCase()
+                        .includes(query)
+
+                    ||
+
+                    task.topic
+                        .toLowerCase()
+                        .includes(query);
 
 
-            const matchesSearch =
+                const statusMatch =
 
-                task.subject
-                    .toLowerCase()
-                    .includes(query)
+                    status === "all"
 
-                ||
+                    ||
 
-                task.topic
-                    .toLowerCase()
-                    .includes(query);
+                    (
+                        status ===
+                        "completed"
+                        &&
+                        task.completed
+                    )
+
+                    ||
+
+                    (
+                        status ===
+                        "pending"
+                        &&
+                        !task.completed
+                    );
 
 
-            const matchesStatus =
-
-                status === "all"
-
-                ||
-
-                (
-                    status === "completed"
-                    &&
-                    task.completed
-                )
-
-                ||
-
-                (
-                    status === "pending"
-                    &&
-                    !task.completed
+                return (
+                    searchMatch &&
+                    statusMatch
                 );
 
-
-            return (
-                matchesSearch &&
-                matchesStatus
-            );
-
-        });
+            }
+        );
 
 
     taskList.innerHTML =
         "";
 
 
-    if (
-        filteredTasks.length === 0
-    ) {
+    if (filtered.length === 0) {
 
         taskList.innerHTML = `
+
             <div class="empty">
                 No study tasks found.
-                Click "Add Study Task"
-                to create one.
             </div>
+
         `;
 
     }
 
 
-    filteredTasks.forEach(
+    filtered.forEach(
         task => {
-
 
             const item =
                 document.createElement(
@@ -527,25 +612,45 @@ function renderTasks() {
                 );
 
 
+            const timerLink =
+                "timer.html?subject=" +
+
+                encodeURIComponent(
+                    task.subject
+                )
+
+                +
+
+                "&minutes=" +
+
+                task.duration;
+
+
             item.innerHTML = `
 
                 <input
                     type="checkbox"
                     class="task-check"
-                    ${task.completed
-                        ? "checked"
-                        : ""}
+                    ${
+                        task.completed
+                            ? "checked"
+                            : ""
+                    }
                 >
 
 
                 <div class="task-content">
 
                     <h3>
-                        ${escapeHTML(task.subject)}
+                        ${escapeHTML(
+                            task.subject
+                        )}
                     </h3>
 
                     <p>
-                        ${escapeHTML(task.topic)}
+                        ${escapeHTML(
+                            task.topic
+                        )}
                     </p>
 
                 </div>
@@ -554,11 +659,14 @@ function renderTasks() {
                 <div class="task-meta">
 
                     <strong>
-                        ${task.duration} min
+                        ${task.duration}
+                        min
                     </strong>
 
                     <span>
-                        ${formatDate(task.studyDate)}
+                        ${formatDate(
+                            task.studyDate
+                        )}
                     </span>
 
                 </div>
@@ -576,12 +684,7 @@ function renderTasks() {
 
                 <a
                     class="start-btn"
-                    href="
-                        timer.html?subject=
-                        ${encodeURIComponent(task.subject)}
-                        &minutes=
-                        ${task.duration}
-                    "
+                    href="${timerLink}"
                 >
                     Start
                 </a>
@@ -612,13 +715,10 @@ function renderTasks() {
                 )
                 .addEventListener(
                     "change",
-                    function () {
-
+                    () =>
                         toggleComplete(
-                            task.id
-                        );
-
-                    }
+                            task._id
+                        )
                 );
 
 
@@ -628,13 +728,10 @@ function renderTasks() {
                 )
                 .addEventListener(
                     "click",
-                    function () {
-
+                    () =>
                         editTask(
-                            task.id
-                        );
-
-                    }
+                            task._id
+                        )
                 );
 
 
@@ -644,13 +741,10 @@ function renderTasks() {
                 )
                 .addEventListener(
                     "click",
-                    function () {
-
+                    () =>
                         deleteTask(
-                            task.id
-                        );
-
-                    }
+                            task._id
+                        )
                 );
 
 
@@ -667,50 +761,32 @@ function renderTasks() {
 }
 
 
-// Escape HTML
-
-function escapeHTML(text) {
-
-    const div =
-        document.createElement(
-            "div"
-        );
-
-    div.textContent =
-        text;
-
-    return div.innerHTML;
-
-}
-
-
-// Stats
+// ====================================
+// Statistics
+// ====================================
 
 function updateStats() {
-
-    const tasks =
-        getTasks();
-
 
     const completed =
         tasks.filter(
             task =>
                 task.completed
-        );
+        ).length;
 
 
     const pending =
-        tasks.filter(
-            task =>
-                !task.completed
-        );
+        tasks.length -
+        completed;
 
 
     const totalMinutes =
         tasks.reduce(
             (sum, task) =>
                 sum +
-                Number(task.duration),
+                Number(
+                    task.duration
+                ),
+
             0
         );
 
@@ -724,39 +800,55 @@ function updateStats() {
     document.getElementById(
         "completedTasks"
     ).textContent =
-        completed.length;
+        completed;
 
 
     document.getElementById(
         "pendingTasks"
     ).textContent =
-        pending.length;
+        pending;
 
 
-    if (totalMinutes >= 60) {
-
-        const hours =
-            Math.floor(
-                totalMinutes / 60
-            );
-
-        const minutes =
-            totalMinutes % 60;
+    const hours =
+        Math.floor(
+            totalMinutes / 60
+        );
 
 
-        document.getElementById(
-            "totalTime"
-        ).textContent =
-            `${hours}h ${minutes}m`;
+    const minutes =
+        totalMinutes % 60;
 
-    } else {
 
-        document.getElementById(
-            "totalTime"
-        ).textContent =
-            `${totalMinutes}m`;
+    document.getElementById(
+        "totalTime"
+    ).textContent =
 
-    }
+        hours > 0
+
+            ? `${hours}h ${minutes}m`
+
+            : `${minutes}m`;
+
+}
+
+
+// ====================================
+// Security
+// ====================================
+
+function escapeHTML(text) {
+
+    const div =
+        document.createElement(
+            "div"
+        );
+
+
+    div.textContent =
+        String(text);
+
+
+    return div.innerHTML;
 
 }
 
@@ -775,6 +867,11 @@ filterStatus.addEventListener(
 );
 
 
-// Initial Load
+// Initial date
 
-renderTasks();
+resetForm();
+
+
+// Start
+
+loadTasks();

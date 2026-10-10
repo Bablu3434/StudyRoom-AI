@@ -1,13 +1,26 @@
 require("dotenv").config();
 
+const quizRoutes = require("./routes/quizRoutes");
+const focusRoutes = require("./routes/focusRoutes");
+const noteRoutes = require("./routes/noteRoutes");
+const taskRoutes = require("./routes/taskRoutes");
+const subjectRoutes = require("./routes/subjectRoutes");
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");
+const authRoutes = require("./routes/authRoutes");
+
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use("/api/auth", authRoutes);
+app.use("/api/subjects", subjectRoutes);
+app.use("/api/tasks" , taskRoutes);
+app.use("/api/notes", noteRoutes);
+app.use("/api/focus", focusRoutes);
+app.use("/api/quiz", quizRoutes);
 
 app.get("/", (req, res) => {
     res.json({

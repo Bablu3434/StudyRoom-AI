@@ -1,310 +1,331 @@
-// =======================================
-// StudyRoom AI - Subject Management
-// =======================================
+const API_URL =
+    "http://localhost:5000/api/subjects";
 
 
-// Login Check
-
-const loggedIn =
-    localStorage.getItem("studyRoomLoggedIn") === "true";
-
-const user =
-    JSON.parse(
-        localStorage.getItem("studyRoomUser") || "null"
+const token =
+    localStorage.getItem(
+        "studyRoomToken"
     );
 
 
-if (!loggedIn || !user) {
+if (!token) {
 
-    window.location.replace("login.html");
+    window.location.href =
+        "login.html";
 
 }
-
-
-// User based storage
-
-const storageKey =
-    "studySubjects_" +
-    user.email.toLowerCase();
 
 
 // Elements
 
 const subjectContainer =
-    document.getElementById("subjectContainer");
+    document.getElementById(
+        "subjectContainer"
+    );
 
 const searchSubject =
-    document.getElementById("searchSubject");
-
+    document.getElementById(
+        "searchSubject"
+    );
 
 const subjectModal =
-    document.getElementById("subjectModal");
+    document.getElementById(
+        "subjectModal"
+    );
 
 const topicModal =
-    document.getElementById("topicModal");
-
+    document.getElementById(
+        "topicModal"
+    );
 
 const addSubjectBtn =
-    document.getElementById("addSubjectBtn");
+    document.getElementById(
+        "addSubjectBtn"
+    );
 
 const closeSubjectModal =
-    document.getElementById("closeSubjectModal");
+    document.getElementById(
+        "closeSubjectModal"
+    );
 
 const cancelSubjectBtn =
-    document.getElementById("cancelSubjectBtn");
-
+    document.getElementById(
+        "cancelSubjectBtn"
+    );
 
 const closeTopicModal =
-    document.getElementById("closeTopicModal");
+    document.getElementById(
+        "closeTopicModal"
+    );
 
 const cancelTopicBtn =
-    document.getElementById("cancelTopicBtn");
+    document.getElementById(
+        "cancelTopicBtn"
+    );
 
-
-// Subject Form
 
 const subjectForm =
-    document.getElementById("subjectForm");
+    document.getElementById(
+        "subjectForm"
+    );
 
 const editingSubjectId =
-    document.getElementById("editingSubjectId");
+    document.getElementById(
+        "editingSubjectId"
+    );
 
 const subjectName =
-    document.getElementById("subjectName");
+    document.getElementById(
+        "subjectName"
+    );
 
 const subjectCode =
-    document.getElementById("subjectCode");
+    document.getElementById(
+        "subjectCode"
+    );
 
 const targetHours =
-    document.getElementById("targetHours");
+    document.getElementById(
+        "targetHours"
+    );
 
-
-// Topic Form
 
 const topicForm =
-    document.getElementById("topicForm");
+    document.getElementById(
+        "topicForm"
+    );
 
 const topicSubjectId =
-    document.getElementById("topicSubjectId");
+    document.getElementById(
+        "topicSubjectId"
+    );
 
 const editingTopicId =
-    document.getElementById("editingTopicId");
+    document.getElementById(
+        "editingTopicId"
+    );
 
 const topicName =
-    document.getElementById("topicName");
+    document.getElementById(
+        "topicName"
+    );
 
 
-// ---------------------------------------
-// Storage
-// ---------------------------------------
+let subjects = [];
 
-function getSubjects() {
+
+// API Helper
+
+async function apiFetch(
+    url,
+    options = {}
+) {
+
+    const response =
+        await fetch(
+            url,
+            {
+                ...options,
+
+                headers: {
+                    "Content-Type":
+                        "application/json",
+
+                    Authorization:
+                        `Bearer ${token}`,
+
+                    ...options.headers
+                }
+            }
+        );
+
+
+    if (
+        response.status === 401
+    ) {
+
+        localStorage.removeItem(
+            "studyRoomToken"
+        );
+
+        localStorage.removeItem(
+            "studyRoomUser"
+        );
+
+        window.location.href =
+            "login.html";
+
+        return;
+    }
+
+
+    const data =
+        await response.json();
+
+
+    if (!response.ok) {
+
+        throw new Error(
+            data.message ||
+            "Request failed"
+        );
+
+    }
+
+
+    return data;
+
+}
+
+
+// Load Subjects
+
+async function loadSubjects() {
 
     try {
 
         const data =
-            JSON.parse(
-                localStorage.getItem(storageKey)
-                || "[]"
+            await apiFetch(
+                API_URL
             );
 
-        return Array.isArray(data)
-            ? data
-            : [];
 
-    } catch {
+        subjects =
+            data.subjects;
 
-        return [];
+
+        renderSubjects();
+
+    } catch (error) {
+
+        alert(
+            error.message
+        );
 
     }
 
 }
 
 
-function saveSubjects(subjects) {
-
-    localStorage.setItem(
-        storageKey,
-        JSON.stringify(subjects)
-    );
-
-}
-
-
-// ---------------------------------------
-// Open Subject Modal
-// ---------------------------------------
+// Add Subject
 
 addSubjectBtn.addEventListener(
     "click",
-    () => {
+    function () {
 
-        resetSubjectForm();
+        subjectForm.reset();
 
-        subjectModal.classList.add("show");
+        editingSubjectId.value =
+            "";
+
+        targetHours.value =
+            20;
+
+        document.getElementById(
+            "subjectModalTitle"
+        ).textContent =
+            "Add Subject";
+
+
+        subjectModal.classList.add(
+            "show"
+        );
 
     }
 );
 
 
-// Close
-
-function closeSubjectBox() {
-
-    subjectModal.classList.remove("show");
-
-}
-
-
-closeSubjectModal.addEventListener(
-    "click",
-    closeSubjectBox
-);
-
-cancelSubjectBtn.addEventListener(
-    "click",
-    closeSubjectBox
-);
-
-
-// ---------------------------------------
-// Subject Form
-// ---------------------------------------
+// Save / Update Subject
 
 subjectForm.addEventListener(
     "submit",
-    function(event) {
+    async function (event) {
 
         event.preventDefault();
 
 
-        const name =
-            subjectName.value.trim();
+        const body = {
 
-        const code =
-            subjectCode.value.trim();
+            name:
+                subjectName.value.trim(),
 
-        const hours =
-            Number(targetHours.value);
+            code:
+                subjectCode.value.trim(),
 
+            targetHours:
+                Number(
+                    targetHours.value
+                )
 
-        if (!name || hours < 1) {
-
-            alert(
-                "Please enter valid subject details."
-            );
-
-            return;
-
-        }
+        };
 
 
-        const subjects =
-            getSubjects();
+        try {
+
+            const id =
+                editingSubjectId.value;
 
 
-        const editId =
-            editingSubjectId.value;
+            if (id) {
 
+                await apiFetch(
+                    `${API_URL}/${id}`,
+                    {
+                        method:
+                            "PUT",
 
-        if (editId) {
-
-            const index =
-                subjects.findIndex(
-                    subject =>
-                        String(subject.id)
-                        === editId
+                        body:
+                            JSON.stringify(
+                                body
+                            )
+                    }
                 );
 
+            } else {
 
-            if (index !== -1) {
+                await apiFetch(
+                    API_URL,
+                    {
+                        method:
+                            "POST",
 
-                subjects[index] = {
-
-                    ...subjects[index],
-
-                    name,
-
-                    code,
-
-                    targetHours: hours
-
-                };
+                        body:
+                            JSON.stringify(
+                                body
+                            )
+                    }
+                );
 
             }
 
-        } else {
 
-            const newSubject = {
-
-                id:
-                    Date.now(),
-
-                name,
-
-                code,
-
-                targetHours:
-                    hours,
-
-                topics: [],
-
-                createdAt:
-                    new Date()
-                        .toISOString()
-
-            };
+            subjectModal.classList.remove(
+                "show"
+            );
 
 
-            subjects.unshift(
-                newSubject
+            await loadSubjects();
+
+        } catch (error) {
+
+            alert(
+                error.message
             );
 
         }
 
-
-        saveSubjects(subjects);
-
-        closeSubjectBox();
-
-        resetSubjectForm();
-
-        renderSubjects();
-
     }
 );
-
-
-// Reset
-
-function resetSubjectForm() {
-
-    subjectForm.reset();
-
-    editingSubjectId.value = "";
-
-    targetHours.value = 20;
-
-    document.getElementById(
-        "subjectModalTitle"
-    ).textContent =
-        "Add Subject";
-
-}
 
 
 // Edit Subject
 
 function editSubject(id) {
 
-    const subjects =
-        getSubjects();
-
-
     const subject =
         subjects.find(
             item =>
-                item.id === id
+                item._id === id
         );
 
 
@@ -313,7 +334,7 @@ function editSubject(id) {
 
 
     editingSubjectId.value =
-        subject.id;
+        subject._id;
 
     subjectName.value =
         subject.name;
@@ -322,7 +343,7 @@ function editSubject(id) {
         subject.code || "";
 
     targetHours.value =
-        subject.targetHours || 20;
+        subject.targetHours;
 
 
     document.getElementById(
@@ -340,47 +361,51 @@ function editSubject(id) {
 
 // Delete Subject
 
-function deleteSubject(id) {
+async function deleteSubject(id) {
 
-    const confirmation =
-        confirm(
-            "Delete this subject and all its topics?"
+    if (
+        !confirm(
+            "Delete this subject and all topics?"
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    try {
+
+        await apiFetch(
+            `${API_URL}/${id}`,
+            {
+                method:
+                    "DELETE"
+            }
         );
 
 
-    if (!confirmation)
-        return;
+        await loadSubjects();
 
+    } catch (error) {
 
-    const subjects =
-        getSubjects()
-            .filter(
-                subject =>
-                    subject.id !== id
-            );
+        alert(
+            error.message
+        );
 
-
-    saveSubjects(subjects);
-
-    renderSubjects();
+    }
 
 }
 
 
-// ---------------------------------------
-// Topic Modal
-// ---------------------------------------
+// Open Topic
 
-function openTopicModal(subjectId) {
-
-    const subjects =
-        getSubjects();
-
+function openTopicModal(id) {
 
     const subject =
         subjects.find(
             item =>
-                item.id === subjectId
+                item._id === id
         );
 
 
@@ -391,7 +416,7 @@ function openTopicModal(subjectId) {
     topicForm.reset();
 
     topicSubjectId.value =
-        subjectId;
+        id;
 
     editingTopicId.value =
         "";
@@ -416,108 +441,80 @@ function openTopicModal(subjectId) {
 }
 
 
-function closeTopicBox() {
-
-    topicModal.classList.remove(
-        "show"
-    );
-
-}
-
-
-closeTopicModal.addEventListener(
-    "click",
-    closeTopicBox
-);
-
-
-cancelTopicBtn.addEventListener(
-    "click",
-    closeTopicBox
-);
-
-
-// Topic Submit
+// Save Topic
 
 topicForm.addEventListener(
     "submit",
-    function(event) {
+    async function (event) {
 
         event.preventDefault();
 
 
         const subjectId =
-            Number(
-                topicSubjectId.value
-            );
+            topicSubjectId.value;
 
 
-        const name =
-            topicName.value.trim();
-
-
-        if (!name)
-            return;
-
-
-        const subjects =
-            getSubjects();
-
-
-        const subject =
-            subjects.find(
-                item =>
-                    item.id === subjectId
-            );
-
-
-        if (!subject)
-            return;
-
-
-        const editTopicId =
+        const topicId =
             editingTopicId.value;
 
 
-        if (editTopicId) {
+        try {
 
-            const topic =
-                subject.topics.find(
-                    item =>
-                        String(item.id)
-                        === editTopicId
+            if (topicId) {
+
+                await apiFetch(
+
+                    `${API_URL}/${subjectId}/topics/${topicId}`,
+
+                    {
+                        method:
+                            "PUT",
+
+                        body:
+                            JSON.stringify({
+                                name:
+                                    topicName.value.trim()
+                            })
+                    }
+
                 );
 
+            } else {
 
-            if (topic) {
+                await apiFetch(
 
-                topic.name =
-                    name;
+                    `${API_URL}/${subjectId}/topics`,
+
+                    {
+                        method:
+                            "POST",
+
+                        body:
+                            JSON.stringify({
+                                name:
+                                    topicName.value.trim()
+                            })
+                    }
+
+                );
 
             }
 
-        } else {
 
-            subject.topics.push({
+            topicModal.classList.remove(
+                "show"
+            );
 
-                id:
-                    Date.now(),
 
-                name,
+            await loadSubjects();
 
-                completed:
-                    false
+        } catch (error) {
 
-            });
+            alert(
+                error.message
+            );
 
         }
-
-
-        saveSubjects(subjects);
-
-        closeTopicBox();
-
-        renderSubjects();
 
     }
 );
@@ -530,25 +527,19 @@ function editTopic(
     topicId
 ) {
 
-    const subjects =
-        getSubjects();
-
-
     const subject =
         subjects.find(
             item =>
-                item.id === subjectId
+                item._id ===
+                subjectId
         );
 
 
-    if (!subject)
-        return;
-
-
     const topic =
-        subject.topics.find(
+        subject?.topics.find(
             item =>
-                item.id === topicId
+                item._id ===
+                topicId
         );
 
 
@@ -572,12 +563,6 @@ function editTopic(
         "Edit Topic";
 
 
-    document.getElementById(
-        "topicSubjectName"
-    ).textContent =
-        subject.name;
-
-
     topicModal.classList.add(
         "show"
     );
@@ -585,91 +570,88 @@ function editTopic(
 }
 
 
+// Toggle Topic
+
+async function toggleTopic(
+    subjectId,
+    topicId
+) {
+
+    try {
+
+        await apiFetch(
+
+            `${API_URL}/${subjectId}/topics/${topicId}/toggle`,
+
+            {
+                method:
+                    "PATCH"
+            }
+
+        );
+
+
+        await loadSubjects();
+
+    } catch (error) {
+
+        alert(
+            error.message
+        );
+
+    }
+
+}
+
+
 // Delete Topic
 
-function deleteTopic(
+async function deleteTopic(
     subjectId,
     topicId
 ) {
 
-    const subjects =
-        getSubjects();
+    if (
+        !confirm(
+            "Delete this topic?"
+        )
+    ) {
 
-
-    const subject =
-        subjects.find(
-            item =>
-                item.id === subjectId
-        );
-
-
-    if (!subject)
         return;
 
+    }
 
-    subject.topics =
-        subject.topics.filter(
-            topic =>
-                topic.id !== topicId
+
+    try {
+
+        await apiFetch(
+
+            `${API_URL}/${subjectId}/topics/${topicId}`,
+
+            {
+                method:
+                    "DELETE"
+            }
+
         );
 
 
-    saveSubjects(subjects);
+        await loadSubjects();
 
-    renderSubjects();
+    } catch (error) {
+
+        alert(
+            error.message
+        );
+
+    }
 
 }
 
 
-// Complete Topic
-
-function toggleTopic(
-    subjectId,
-    topicId
-) {
-
-    const subjects =
-        getSubjects();
-
-
-    const subject =
-        subjects.find(
-            item =>
-                item.id === subjectId
-        );
-
-
-    if (!subject)
-        return;
-
-
-    const topic =
-        subject.topics.find(
-            item =>
-                item.id === topicId
-        );
-
-
-    if (!topic)
-        return;
-
-
-    topic.completed =
-        !topic.completed;
-
-
-    saveSubjects(subjects);
-
-    renderSubjects();
-
-}
-
-
-// ---------------------------------------
 // Progress
-// ---------------------------------------
 
-function getSubjectProgress(
+function getProgress(
     subject
 ) {
 
@@ -682,43 +664,45 @@ function getSubjectProgress(
 
 
     const completed =
-        subject.topics
-            .filter(
-                topic =>
-                    topic.completed
-            )
-            .length;
+        subject.topics.filter(
+            topic =>
+                topic.completed
+        ).length;
 
 
     return Math.round(
-        completed / total * 100
+        completed /
+        total *
+        100
     );
 
 }
 
 
-// ---------------------------------------
-// Render Subjects
-// ---------------------------------------
+// Render
 
 function renderSubjects() {
 
-    const subjects =
-        getSubjects();
-
-
     const search =
         searchSubject.value
-            .trim()
-            .toLowerCase();
+            .toLowerCase()
+            .trim();
 
 
     const filtered =
         subjects.filter(
             subject =>
+
                 subject.name
                     .toLowerCase()
                     .includes(search)
+
+                ||
+
+                subject.code
+                    ?.toLowerCase()
+                    .includes(search)
+
         );
 
 
@@ -739,8 +723,7 @@ function renderSubjects() {
                 </h3>
 
                 <p>
-                    Add your first subject
-                    to start tracking progress.
+                    Add your first subject.
                 </p>
 
             </div>
@@ -753,8 +736,7 @@ function renderSubjects() {
     filtered.forEach(
         subject => {
 
-
-            const completedTopics =
+            const completed =
                 subject.topics.filter(
                     topic =>
                         topic.completed
@@ -762,7 +744,7 @@ function renderSubjects() {
 
 
             const progress =
-                getSubjectProgress(
+                getProgress(
                     subject
                 );
 
@@ -777,12 +759,6 @@ function renderSubjects() {
                 "subject-card";
 
 
-            const firstLetter =
-                subject.name
-                    .charAt(0)
-                    .toUpperCase();
-
-
             card.innerHTML = `
 
                 <div class="subject-top">
@@ -790,22 +766,29 @@ function renderSubjects() {
                     <div class="subject-info">
 
                         <div class="subject-icon">
-                            ${escapeHTML(firstLetter)}
+
+                            ${escapeHTML(
+                                subject.name
+                                    .charAt(0)
+                                    .toUpperCase()
+                            )}
+
                         </div>
+
 
                         <div>
 
                             <h2>
-                                ${escapeHTML(subject.name)}
+                                ${escapeHTML(
+                                    subject.name
+                                )}
                             </h2>
 
                             <p>
-                                ${
-                                    escapeHTML(
-                                        subject.code
-                                        || "No subject code"
-                                    )
-                                }
+                                ${escapeHTML(
+                                    subject.code ||
+                                    "No subject code"
+                                )}
                             </p>
 
                         </div>
@@ -846,6 +829,7 @@ function renderSubjects() {
 
                     </div>
 
+
                     <div class="progress-bar">
 
                         <div
@@ -854,8 +838,7 @@ function renderSubjects() {
                                 width:
                                 ${progress}%
                             "
-                        >
-                        </div>
+                        ></div>
 
                     </div>
 
@@ -880,7 +863,7 @@ function renderSubjects() {
                     <div class="mini-stat">
 
                         <strong>
-                            ${completedTopics}
+                            ${completed}
                         </strong>
 
                         <span>
@@ -920,35 +903,43 @@ function renderSubjects() {
                 </div>
 
 
-                <div class="topic-list">
-                </div>
+                <div
+                    class="topic-list"
+                ></div>
 
 
                 <div class="subject-bottom">
 
                     <a
                         class="focus-link"
+
                         href="
-                            timer.html?subject=
-                            ${encodeURIComponent(subject.name)}
+                        timer.html?subject=${
+                            encodeURIComponent(
+                                subject.name
+                            )
+                        }
                         "
                     >
+
                         Start Focus
+
                     </a>
+
 
                     <a
                         class="planner-link"
                         href="planner.html"
                     >
+
                         Study Planner
+
                     </a>
 
                 </div>
 
             `;
 
-
-            // Topic List
 
             const topicList =
                 card.querySelector(
@@ -963,9 +954,7 @@ function renderSubjects() {
                 topicList.innerHTML = `
 
                     <div class="empty-topics">
-
                         No topics added yet.
-
                     </div>
 
                 `;
@@ -976,14 +965,13 @@ function renderSubjects() {
             subject.topics.forEach(
                 topic => {
 
-
-                    const topicItem =
+                    const row =
                         document.createElement(
                             "div"
                         );
 
 
-                    topicItem.className =
+                    row.className =
                         "topic-item" +
                         (
                             topic.completed
@@ -992,31 +980,35 @@ function renderSubjects() {
                         );
 
 
-                    topicItem.innerHTML = `
+                    row.innerHTML = `
 
                         <input
                             type="checkbox"
-                            ${topic.completed
-                                ? "checked"
-                                : ""}
+
+                            ${
+                                topic.completed
+                                    ? "checked"
+                                    : ""
+                            }
                         >
 
+
                         <span class="topic-name">
-                            ${escapeHTML(topic.name)}
+
+                            ${escapeHTML(
+                                topic.name
+                            )}
+
                         </span>
 
 
                         <div class="topic-buttons">
 
-                            <button
-                                class="topic-edit"
-                            >
+                            <button class="topic-edit">
                                 Edit
                             </button>
 
-                            <button
-                                class="topic-delete"
-                            >
+                            <button class="topic-delete">
                                 Delete
                             </button>
 
@@ -1025,113 +1017,87 @@ function renderSubjects() {
                     `;
 
 
-                    topicItem
-                        .querySelector(
-                            "input"
-                        )
-                        .addEventListener(
-                            "change",
-                            () => {
-
-                                toggleTopic(
-                                    subject.id,
-                                    topic.id
-                                );
-
-                            }
-                        );
+                    row.querySelector(
+                        "input"
+                    )
+                    .addEventListener(
+                        "change",
+                        () =>
+                            toggleTopic(
+                                subject._id,
+                                topic._id
+                            )
+                    );
 
 
-                    topicItem
-                        .querySelector(
-                            ".topic-edit"
-                        )
-                        .addEventListener(
-                            "click",
-                            () => {
-
-                                editTopic(
-                                    subject.id,
-                                    topic.id
-                                );
-
-                            }
-                        );
+                    row.querySelector(
+                        ".topic-edit"
+                    )
+                    .addEventListener(
+                        "click",
+                        () =>
+                            editTopic(
+                                subject._id,
+                                topic._id
+                            )
+                    );
 
 
-                    topicItem
-                        .querySelector(
-                            ".topic-delete"
-                        )
-                        .addEventListener(
-                            "click",
-                            () => {
-
-                                deleteTopic(
-                                    subject.id,
-                                    topic.id
-                                );
-
-                            }
-                        );
+                    row.querySelector(
+                        ".topic-delete"
+                    )
+                    .addEventListener(
+                        "click",
+                        () =>
+                            deleteTopic(
+                                subject._id,
+                                topic._id
+                            )
+                    );
 
 
                     topicList.appendChild(
-                        topicItem
+                        row
                     );
 
                 }
             );
 
 
-            // Subject Actions
-
-            card
-                .querySelector(
-                    ".edit-subject"
-                )
-                .addEventListener(
-                    "click",
-                    () => {
-
-                        editSubject(
-                            subject.id
-                        );
-
-                    }
-                );
+            card.querySelector(
+                ".edit-subject"
+            )
+            .addEventListener(
+                "click",
+                () =>
+                    editSubject(
+                        subject._id
+                    )
+            );
 
 
-            card
-                .querySelector(
-                    ".delete-subject"
-                )
-                .addEventListener(
-                    "click",
-                    () => {
-
-                        deleteSubject(
-                            subject.id
-                        );
-
-                    }
-                );
+            card.querySelector(
+                ".delete-subject"
+            )
+            .addEventListener(
+                "click",
+                () =>
+                    deleteSubject(
+                        subject._id
+                    )
+            );
 
 
-            card
-                .querySelector(
-                    ".add-topic-btn"
-                )
-                .addEventListener(
-                    "click",
-                    () => {
-
-                        openTopicModal(
-                            subject.id
-                        );
-
-                    }
-                );
+            card.querySelector(
+                ".add-topic-btn"
+            )
+            .addEventListener(
+                "click",
+                () =>
+                    openTopicModal(
+                        subject._id
+                    )
+            );
 
 
             subjectContainer.appendChild(
@@ -1147,15 +1113,9 @@ function renderSubjects() {
 }
 
 
-// ---------------------------------------
-// Statistics
-// ---------------------------------------
+// Stats
 
 function updateStats() {
-
-    const subjects =
-        getSubjects();
-
 
     let totalTopics = 0;
 
@@ -1179,9 +1139,11 @@ function updateStats() {
     );
 
 
-    const overallProgress =
+    const percentage =
         totalTopics === 0
+
             ? 0
+
             : Math.round(
                 completedTopics /
                 totalTopics *
@@ -1210,14 +1172,12 @@ function updateStats() {
     document.getElementById(
         "overallProgress"
     ).textContent =
-        overallProgress + "%";
+        percentage + "%";
 
 }
 
 
-// ---------------------------------------
-// Escape HTML
-// ---------------------------------------
+// Escape
 
 function escapeHTML(text) {
 
@@ -1234,9 +1194,23 @@ function escapeHTML(text) {
 }
 
 
-// ---------------------------------------
-// Search
-// ---------------------------------------
+// Close Modals
+
+closeSubjectModal.onclick =
+cancelSubjectBtn.onclick =
+    () =>
+        subjectModal.classList.remove(
+            "show"
+        );
+
+
+closeTopicModal.onclick =
+cancelTopicBtn.onclick =
+    () =>
+        topicModal.classList.remove(
+            "show"
+        );
+
 
 searchSubject.addEventListener(
     "input",
@@ -1244,42 +1218,6 @@ searchSubject.addEventListener(
 );
 
 
-// Click outside modal
+// Start
 
-subjectModal.addEventListener(
-    "click",
-    event => {
-
-        if (
-            event.target ===
-            subjectModal
-        ) {
-
-            closeSubjectBox();
-
-        }
-
-    }
-);
-
-
-topicModal.addEventListener(
-    "click",
-    event => {
-
-        if (
-            event.target ===
-            topicModal
-        ) {
-
-            closeTopicBox();
-
-        }
-
-    }
-);
-
-
-// Initial Load
-
-renderSubjects();
+loadSubjects();

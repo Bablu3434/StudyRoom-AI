@@ -1,129 +1,206 @@
-// =======================================
-// StudyRoom AI - Smart Notes
-// =======================================
+const API_URL =
+    "http://localhost:5000/api/notes";
 
 
-// Login Check
-
-const loggedIn =
-    localStorage.getItem("studyRoomLoggedIn") === "true";
-
-const user =
-    JSON.parse(
-        localStorage.getItem("studyRoomUser") || "null"
+const token =
+    localStorage.getItem(
+        "studyRoomToken"
     );
 
 
-if (!loggedIn || !user) {
+if (!token) {
 
-    window.location.replace("login.html");
+    window.location.href =
+        "login.html";
 
 }
-
-
-// User Based Storage
-
-const notesStorageKey =
-    "studyNotes_" +
-    user.email.toLowerCase();
 
 
 // Elements
 
 const noteModal =
-    document.getElementById("noteModal");
+    document.getElementById(
+        "noteModal"
+    );
 
 const addNoteBtn =
-    document.getElementById("addNoteBtn");
+    document.getElementById(
+        "addNoteBtn"
+    );
 
 const closeNoteModal =
-    document.getElementById("closeNoteModal");
+    document.getElementById(
+        "closeNoteModal"
+    );
 
 const cancelNoteBtn =
-    document.getElementById("cancelNoteBtn");
+    document.getElementById(
+        "cancelNoteBtn"
+    );
 
 const noteForm =
-    document.getElementById("noteForm");
+    document.getElementById(
+        "noteForm"
+    );
 
 const notesContainer =
-    document.getElementById("notesContainer");
+    document.getElementById(
+        "notesContainer"
+    );
 
 const searchNotes =
-    document.getElementById("searchNotes");
+    document.getElementById(
+        "searchNotes"
+    );
 
 const subjectFilter =
-    document.getElementById("subjectFilter");
+    document.getElementById(
+        "subjectFilter"
+    );
 
-
-// Fields
 
 const editingNoteId =
-    document.getElementById("editingNoteId");
+    document.getElementById(
+        "editingNoteId"
+    );
 
 const noteTitle =
-    document.getElementById("noteTitle");
+    document.getElementById(
+        "noteTitle"
+    );
 
 const noteSubject =
-    document.getElementById("noteSubject");
+    document.getElementById(
+        "noteSubject"
+    );
 
 const noteContent =
-    document.getElementById("noteContent");
+    document.getElementById(
+        "noteContent"
+    );
 
 const pinNote =
-    document.getElementById("pinNote");
+    document.getElementById(
+        "pinNote"
+    );
 
 
-// ---------------------------------------
-// Storage
-// ---------------------------------------
+let notes = [];
 
-function getNotes() {
+
+// ===================================
+// API Helper
+// ===================================
+
+async function apiFetch(
+    url,
+    options = {}
+) {
+
+    const response =
+        await fetch(
+            url,
+            {
+                ...options,
+
+                headers: {
+                    "Content-Type":
+                        "application/json",
+
+                    Authorization:
+                        `Bearer ${token}`,
+
+                    ...options.headers
+                }
+            }
+        );
+
+
+    if (response.status === 401) {
+
+        localStorage.removeItem(
+            "studyRoomToken"
+        );
+
+        localStorage.removeItem(
+            "studyRoomUser"
+        );
+
+        window.location.href =
+            "login.html";
+
+        return;
+    }
+
+
+    const data =
+        await response.json();
+
+
+    if (!response.ok) {
+
+        throw new Error(
+            data.message ||
+            "Request failed"
+        );
+
+    }
+
+
+    return data;
+}
+
+
+// ===================================
+// Load Notes
+// ===================================
+
+async function loadNotes() {
 
     try {
 
         const data =
-            JSON.parse(
-                localStorage.getItem(notesStorageKey)
-                || "[]"
+            await apiFetch(
+                API_URL
             );
 
-        return Array.isArray(data)
-            ? data
-            : [];
 
-    } catch {
+        notes =
+            data.notes;
 
-        return [];
+
+        updateSubjectFilter();
+
+        renderNotes();
+
+    } catch (error) {
+
+        alert(
+            error.message
+        );
 
     }
 
 }
 
 
-function saveNotes(notes) {
-
-    localStorage.setItem(
-        notesStorageKey,
-        JSON.stringify(notes)
-    );
-
-}
-
-
-// ---------------------------------------
+// ===================================
 // Modal
-// ---------------------------------------
+// ===================================
 
 function openNoteModal() {
 
     noteForm.reset();
 
-    editingNoteId.value = "";
+    editingNoteId.value =
+        "";
+
 
     document.getElementById(
         "noteModalTitle"
     ).textContent =
         "Add Note";
+
 
     noteModal.classList.add(
         "show"
@@ -161,7 +238,7 @@ cancelNoteBtn.addEventListener(
 
 noteModal.addEventListener(
     "click",
-    function(event) {
+    function (event) {
 
         if (
             event.target === noteModal
@@ -175,141 +252,105 @@ noteModal.addEventListener(
 );
 
 
-// ---------------------------------------
-// Add / Edit Note
-// ---------------------------------------
+// ===================================
+// Add / Update Note
+// ===================================
 
 noteForm.addEventListener(
     "submit",
-    function(event) {
+    async function (event) {
 
         event.preventDefault();
 
 
-        const title =
-            noteTitle.value.trim();
+        const body = {
 
-        const subject =
-            noteSubject.value.trim();
+            title:
+                noteTitle
+                    .value
+                    .trim(),
 
-        const content =
-            noteContent.value.trim();
+            subject:
+                noteSubject
+                    .value
+                    .trim(),
 
-        const pinned =
-            pinNote.checked;
+            content:
+                noteContent
+                    .value
+                    .trim(),
 
+            pinned:
+                pinNote.checked
 
-        if (
-            !title ||
-            !subject ||
-            !content
-        ) {
-
-            alert(
-                "Please complete all note fields."
-            );
-
-            return;
-
-        }
+        };
 
 
-        const notes =
-            getNotes();
+        try {
+
+            const id =
+                editingNoteId.value;
 
 
-        const editId =
-            editingNoteId.value;
+            if (id) {
 
+                await apiFetch(
+                    `${API_URL}/${id}`,
+                    {
+                        method:
+                            "PUT",
 
-        if (editId) {
-
-            const index =
-                notes.findIndex(
-                    note =>
-                        String(note.id)
-                        === editId
+                        body:
+                            JSON.stringify(
+                                body
+                            )
+                    }
                 );
 
+            } else {
 
-            if (index !== -1) {
+                await apiFetch(
+                    API_URL,
+                    {
+                        method:
+                            "POST",
 
-                notes[index] = {
-
-                    ...notes[index],
-
-                    title,
-
-                    subject,
-
-                    content,
-
-                    pinned,
-
-                    updatedAt:
-                        new Date()
-                            .toISOString()
-
-                };
+                        body:
+                            JSON.stringify(
+                                body
+                            )
+                    }
+                );
 
             }
 
-        } else {
 
-            const newNote = {
+            closeNoteBox();
 
-                id:
-                    Date.now(),
+            await loadNotes();
 
-                title,
+        } catch (error) {
 
-                subject,
-
-                content,
-
-                pinned,
-
-                createdAt:
-                    new Date()
-                        .toISOString(),
-
-                updatedAt:
-                    null
-
-            };
-
-
-            notes.unshift(
-                newNote
+            alert(
+                error.message
             );
 
         }
-
-
-        saveNotes(notes);
-
-        closeNoteBox();
-
-        renderNotes();
 
     }
 );
 
 
-// ---------------------------------------
+// ===================================
 // Edit
-// ---------------------------------------
+// ===================================
 
 function editNote(id) {
-
-    const notes =
-        getNotes();
-
 
     const note =
         notes.find(
             item =>
-                item.id === id
+                item._id === id
         );
 
 
@@ -318,16 +359,20 @@ function editNote(id) {
 
 
     editingNoteId.value =
-        note.id;
+        note._id;
+
 
     noteTitle.value =
         note.title;
 
+
     noteSubject.value =
         note.subject;
 
+
     noteContent.value =
         note.content;
+
 
     pinNote.checked =
         note.pinned;
@@ -346,78 +391,82 @@ function editNote(id) {
 }
 
 
-// ---------------------------------------
+// ===================================
 // Delete
-// ---------------------------------------
+// ===================================
 
-function deleteNote(id) {
+async function deleteNote(id) {
 
-    const confirmDelete =
-        confirm(
+    if (
+        !confirm(
             "Delete this note?"
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    try {
+
+        await apiFetch(
+            `${API_URL}/${id}`,
+            {
+                method:
+                    "DELETE"
+            }
         );
 
 
-    if (!confirmDelete)
-        return;
+        await loadNotes();
 
+    } catch (error) {
 
-    const notes =
-        getNotes()
-            .filter(
-                note =>
-                    note.id !== id
-            );
+        alert(
+            error.message
+        );
 
-
-    saveNotes(notes);
-
-    renderNotes();
+    }
 
 }
 
 
-// ---------------------------------------
-// Pin
-// ---------------------------------------
+// ===================================
+// Pin / Unpin
+// ===================================
 
-function togglePin(id) {
+async function togglePin(id) {
 
-    const notes =
-        getNotes();
+    try {
 
-
-    const note =
-        notes.find(
-            item =>
-                item.id === id
+        await apiFetch(
+            `${API_URL}/${id}/pin`,
+            {
+                method:
+                    "PATCH"
+            }
         );
 
 
-    if (!note)
-        return;
+        await loadNotes();
 
+    } catch (error) {
 
-    note.pinned =
-        !note.pinned;
+        alert(
+            error.message
+        );
 
-
-    saveNotes(notes);
-
-    renderNotes();
+    }
 
 }
 
 
-// ---------------------------------------
+// ===================================
 // Subject Filter
-// ---------------------------------------
+// ===================================
 
 function updateSubjectFilter() {
-
-    const notes =
-        getNotes();
-
 
     const current =
         subjectFilter.value;
@@ -432,7 +481,7 @@ function updateSubjectFilter() {
             )
         )
 
-    ];
+    ].sort();
 
 
     subjectFilter.innerHTML = `
@@ -444,32 +493,35 @@ function updateSubjectFilter() {
     `;
 
 
-    subjects
-        .sort()
-        .forEach(
-            subject => {
+    subjects.forEach(
+        subject => {
 
-                const option =
-                    document.createElement(
-                        "option"
-                    );
-
-                option.value =
-                    subject;
-
-                option.textContent =
-                    subject;
-
-                subjectFilter.appendChild(
-                    option
+            const option =
+                document.createElement(
+                    "option"
                 );
 
-            }
-        );
+
+            option.value =
+                subject;
+
+
+            option.textContent =
+                subject;
+
+
+            subjectFilter.appendChild(
+                option
+            );
+
+        }
+    );
 
 
     if (
-        subjects.includes(current)
+        subjects.includes(
+            current
+        )
     ) {
 
         subjectFilter.value =
@@ -480,15 +532,11 @@ function updateSubjectFilter() {
 }
 
 
-// ---------------------------------------
-// Render
-// ---------------------------------------
+// ===================================
+// Render Notes
+// ===================================
 
 function renderNotes() {
-
-    const notes =
-        getNotes();
-
 
     const query =
         searchNotes.value
@@ -501,74 +549,46 @@ function renderNotes() {
 
 
     const filtered =
-        notes
-            .filter(
-                note => {
+        notes.filter(
+            note => {
 
-                    const searchMatch =
+                const searchMatch =
 
-                        note.title
-                            .toLowerCase()
-                            .includes(query)
+                    note.title
+                        .toLowerCase()
+                        .includes(query)
 
-                        ||
+                    ||
 
-                        note.subject
-                            .toLowerCase()
-                            .includes(query)
+                    note.subject
+                        .toLowerCase()
+                        .includes(query)
 
-                        ||
+                    ||
 
-                        note.content
-                            .toLowerCase()
-                            .includes(query);
-
-
-                    const subjectMatch =
-
-                        selectedSubject === "all"
-
-                        ||
-
-                        note.subject ===
-                            selectedSubject;
+                    note.content
+                        .toLowerCase()
+                        .includes(query);
 
 
-                    return (
-                        searchMatch &&
-                        subjectMatch
-                    );
+                const subjectMatch =
 
-                }
-            )
-            .sort(
-                (a, b) => {
+                    selectedSubject ===
+                    "all"
 
-                    if (
-                        a.pinned !== b.pinned
-                    ) {
+                    ||
 
-                        return a.pinned
-                            ? -1
-                            : 1;
-
-                    }
+                    note.subject ===
+                    selectedSubject;
 
 
-                    return (
-                        new Date(
-                            b.updatedAt ||
-                            b.createdAt
-                        )
-                        -
-                        new Date(
-                            a.updatedAt ||
-                            a.createdAt
-                        )
-                    );
+                return (
+                    searchMatch &&
+                    subjectMatch
+                );
 
-                }
-            );
+            }
+        );
 
 
     notesContainer.innerHTML =
@@ -601,7 +621,6 @@ function renderNotes() {
     filtered.forEach(
         note => {
 
-
             const card =
                 document.createElement(
                     "article"
@@ -622,13 +641,13 @@ function renderNotes() {
                 ${
                     note.pinned
 
-                    ? `
-                        <span class="pin-badge">
-                            📌 Pinned
-                        </span>
-                    `
+                        ? `
+                            <span class="pin-badge">
+                                📌 Pinned
+                            </span>
+                        `
 
-                    : ""
+                        : ""
                 }
 
 
@@ -712,7 +731,7 @@ function renderNotes() {
                     "click",
                     () =>
                         togglePin(
-                            note.id
+                            note._id
                         )
                 );
 
@@ -725,7 +744,7 @@ function renderNotes() {
                     "click",
                     () =>
                         editNote(
-                            note.id
+                            note._id
                         )
                 );
 
@@ -738,7 +757,7 @@ function renderNotes() {
                     "click",
                     () =>
                         deleteNote(
-                            note.id
+                            note._id
                         )
                 );
 
@@ -753,20 +772,14 @@ function renderNotes() {
 
     updateStats();
 
-    updateSubjectFilter();
-
 }
 
 
-// ---------------------------------------
+// ===================================
 // Stats
-// ---------------------------------------
+// ===================================
 
 function updateStats() {
-
-    const notes =
-        getNotes();
-
 
     const pinned =
         notes.filter(
@@ -804,29 +817,31 @@ function updateStats() {
 }
 
 
-// ---------------------------------------
-// Date
-// ---------------------------------------
+// ===================================
+// Helpers
+// ===================================
 
 function formatDate(date) {
 
     return new Date(
         date
-    ).toLocaleDateString(
+    )
+    .toLocaleDateString(
         "en-IN",
         {
-            day: "numeric",
-            month: "short",
-            year: "numeric"
+            day:
+                "numeric",
+
+            month:
+                "short",
+
+            year:
+                "numeric"
         }
     );
 
 }
 
-
-// ---------------------------------------
-// Security
-// ---------------------------------------
 
 function escapeHTML(text) {
 
@@ -835,17 +850,17 @@ function escapeHTML(text) {
             "div"
         );
 
+
     div.textContent =
         String(text);
+
 
     return div.innerHTML;
 
 }
 
 
-// ---------------------------------------
-// Search / Filter
-// ---------------------------------------
+// Search
 
 searchNotes.addEventListener(
     "input",
@@ -859,6 +874,6 @@ subjectFilter.addEventListener(
 );
 
 
-// Initial Load
+// Start
 
-renderNotes();
+loadNotes();
