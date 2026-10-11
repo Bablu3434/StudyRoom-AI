@@ -1,5 +1,9 @@
 require("dotenv").config();
 
+const profileRoutes = require("./routes/profileRoutes");
+const aiRoutes = require("./routes/aiRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
+const progressRoutes = require("./routes/progressRoutes");
 const quizRoutes = require("./routes/quizRoutes");
 const focusRoutes = require("./routes/focusRoutes");
 const noteRoutes = require("./routes/noteRoutes");
@@ -21,6 +25,10 @@ app.use("/api/tasks" , taskRoutes);
 app.use("/api/notes", noteRoutes);
 app.use("/api/focus", focusRoutes);
 app.use("/api/quiz", quizRoutes);
+app.use("/api/progress", progressRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/ai", aiRoutes);
+app.use("/api/profile", profileRoutes);
 
 app.get("/", (req, res) => {
     res.json({

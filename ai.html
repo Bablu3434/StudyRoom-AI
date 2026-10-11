@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        AI Study Assistant | StudyRoom AI
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="css/ai.css"
+    >
+
+</head>
+
+<body>
+
+
+<div class="app">
+
+
+    <aside class="sidebar">
+
+        <div class="logo">
+            StudyRoom AI
+        </div>
+
+
+        <nav>
+
+            <a href="dashboard.html">
+                Dashboard
+            </a>
+
+            <a href="subjects.html">
+                Subjects
+            </a>
+
+            <a href="planner.html">
+                Study Planner
+            </a>
+
+            <a href="timer.html">
+                Focus Timer
+            </a>
+
+            <a href="notes.html">
+                Notes
+            </a>
+
+            <a href="quiz.html">
+                Quiz
+            </a>
+
+            <a href="weak-topics.html">
+                Weak Topics
+            </a>
+
+            <a href="progress.html">
+                Progress
+            </a>
+
+            <a
+                href="ai.html"
+                class="active"
+            >
+                AI Assistant
+            </a>
+
+        </nav>
+
+    </aside>
+
+
+    <main class="main">
+
+
+        <header>
+
+            <div>
+
+                <h1>
+                    AI Study Assistant
+                </h1>
+
+                <p>
+                    Learn, revise and practise
+                    with your personal AI tutor.
+                </p>
+
+            </div>
+
+        </header>
+
+
+        <section class="assistant-layout">
+
+
+            <div class="controls-card">
+
+                <h2>
+                    Study Settings
+                </h2>
+
+                <div class="personalized-box">
+
+    <h3>
+        Recommended for You
+    </h3>
+
+    <div id="aiRecommendations">
+
+        <p>
+            Loading recommendations...
+        </p>
+
+    </div>
+
+</div>
+
+
+                <label>
+                    Subject
+                </label>
+
+                <input
+                    id="aiSubject"
+                    type="text"
+                    placeholder="e.g. Java Programming"
+                >
+
+
+                <label>
+                    Topic
+                </label>
+
+                <input
+                    id="aiTopic"
+                    type="text"
+                    placeholder="e.g. Inheritance"
+                >
+
+
+                <label>
+                    Help Type
+                </label>
+
+
+                <select id="aiMode">
+
+                    <option value="explain">
+                        Explain Topic
+                    </option>
+
+                    <option value="revision">
+                        Revision Notes
+                    </option>
+
+                    <option value="quiz">
+                        Practice Questions
+                    </option>
+
+                    <option value="study-plan">
+                        Study Plan
+                    </option>
+
+                </select>
+
+
+                <div class="quick-prompts">
+
+                    <h3>
+                        Quick Help
+                    </h3>
+
+
+                    <button
+                        data-prompt="Explain this topic from the basics with an example."
+                    >
+                        Explain Simply
+                    </button>
+
+
+                    <button
+                        data-prompt="What are the most important points I should remember for my exam?"
+                    >
+                        Exam Points
+                    </button>
+
+
+                    <button
+                        data-prompt="Explain the common mistakes students make in this topic."
+                    >
+                        Common Mistakes
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div class="chat-card">
+
+
+                <div
+                    id="chatMessages"
+                    class="chat-messages"
+                >
+
+                    <div class="message ai-message">
+
+                        <strong>
+                            StudyRoom AI
+                        </strong>
+
+                        <p>
+                            Hi! Select a subject
+                            and ask me what you
+                            want to study.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <form
+                    id="aiForm"
+                    class="chat-form"
+                >
+
+                    <textarea
+                        id="aiMessage"
+                        placeholder="Ask your study question..."
+                        maxlength="3000"
+                        required
+                    ></textarea>
+
+
+                    <button
+                        id="sendBtn"
+                        type="submit"
+                    >
+                        Ask AI
+                    </button>
+
+                </form>
+
+
+            </div>
+
+
+        </section>
+
+
+    </main>
+
+
+</div>
+
+
+<script src="js/ai.js"></script>
+
+</body>
+
+</html>

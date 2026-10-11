@@ -1,704 +1,323 @@
-// ======================================
-// StudyRoom AI - Weak Topic Detector
-// ======================================
+const API_URL =
+    "http://localhost:5000/api/quiz/weak-topics";
 
 
-// Login Check
-
-const loggedIn =
+const token =
     localStorage.getItem(
-        "studyRoomLoggedIn"
-    ) === "true";
-
-
-const user =
-    JSON.parse(
-        localStorage.getItem(
-            "studyRoomUser"
-        ) || "null"
+        "studyRoomToken"
     );
 
 
-if (!loggedIn || !user) {
-
-    window.location.replace(
-        "login.html"
-    );
-
+if (!token) {
+    window.location.href =
+        "login.html";
 }
 
 
-// Quiz System me isi key par
-// performance save ho raha tha.
-
-const performanceKey =
-    "quizPerformance_" +
-    user.email.toLowerCase();
+let weakTopics = [];
 
 
-// Elements
+// =====================================
+// ELEMENTS
+// =====================================
 
-const topicsContainer =
+// Agar tumhare HTML me id weakTopicsContainer hai,
+// to ye automatically work karega.
+
+const weakTopicsContainer =
+    document.getElementById(
+        "weakTopicsContainer"
+    )
+    ||
+    document.getElementById(
+        "weakTopicList"
+    )
+    ||
     document.getElementById(
         "topicsContainer"
     );
 
 
-const searchInput =
-    document.getElementById(
-        "searchInput"
-    );
+// =====================================
+// API HELPER
+// =====================================
+
+async function apiFetch(
+    url,
+    options = {}
+) {
+
+    const response =
+        await fetch(
+            url,
+            {
+                ...options,
+
+                headers: {
+                    "Content-Type":
+                        "application/json",
+
+                    Authorization:
+                        `Bearer ${token}`,
+
+                    ...options.headers
+                }
+            }
+        );
 
 
-const subjectFilter =
-    document.getElementById(
-        "subjectFilter"
-    );
+    if (response.status === 401) {
+
+        localStorage.removeItem(
+            "studyRoomToken"
+        );
+
+        localStorage.removeItem(
+            "studyRoomUser"
+        );
+
+        window.location.href =
+            "login.html";
+
+        return;
+    }
 
 
-const priorityFilter =
-    document.getElementById(
-        "priorityFilter"
-    );
+    const data =
+        await response.json();
 
 
-// ======================================
-// Get Performance
-// ======================================
+    if (!response.ok) {
 
-function getPerformance() {
+        throw new Error(
+            data.message ||
+            "Request failed"
+        );
+
+    }
+
+
+    return data;
+}
+
+
+// =====================================
+// LOAD WEAK TOPICS
+// =====================================
+
+async function loadWeakTopics() {
 
     try {
 
+        showLoading();
+
+
         const data =
-            JSON.parse(
-                localStorage.getItem(
-                    performanceKey
-                ) || "{}"
+            await apiFetch(
+                API_URL
             );
 
 
-        return (
-            data &&
-            typeof data === "object"
-        )
-            ? data
-            : {};
+        weakTopics =
+            data.weakTopics || [];
 
-    } catch {
 
-        return {};
+        renderWeakTopics();
+
+        updateStats();
+
+    } catch (error) {
+
+        console.error(
+            "Weak Topics Error:",
+            error
+        );
+
+
+        showError(
+            error.message
+        );
 
     }
 
 }
 
 
-// ======================================
-// Analyze Topics
-// ======================================
+// =====================================
+// PRIORITY
+// =====================================
 
-function getAnalyzedTopics() {
-
-    const performance =
-        getPerformance();
-
-
-    return Object.values(
-        performance
-    )
-
-    .map(
-        item => {
-
-
-            const attempts =
-                Number(
-                    item.attempts
-                ) || 0;
-
-
-            const correct =
-                Number(
-                    item.correct
-                ) || 0;
-
-
-            const wrong =
-                attempts - correct;
-
-
-            const accuracy =
-                attempts === 0
-                    ? 0
-                    : Math.round(
-                        (
-                            correct /
-                            attempts
-                        ) * 100
-                    );
-
-
-            let priority;
-
-            let revisionMinutes;
-
-
-            // Priority Rules
-
-            if (accuracy < 40) {
-
-                priority =
-                    "high";
-
-                revisionMinutes =
-                    40;
-
-            } else if (
-                accuracy < 55
-            ) {
-
-                priority =
-                    "medium";
-
-                revisionMinutes =
-                    30;
-
-            } else {
-
-                priority =
-                    "low";
-
-                revisionMinutes =
-                    20;
-
-            }
-
-
-            const improvementNeeded =
-                Math.max(
-                    0,
-                    70 - accuracy
-                );
-
-
-            return {
-
-                subject:
-                    item.subject,
-
-                topic:
-                    item.topic,
-
-                attempts,
-
-                correct,
-
-                wrong,
-
-                accuracy,
-
-                priority,
-
-                revisionMinutes,
-
-                improvementNeeded
-
-            };
-
-        }
-    )
-
-    // Less than 70% = Weak Topic
-
-    .filter(
-        topic =>
-            topic.attempts >= 1 &&
-            topic.accuracy < 70
-    )
-
-    // Lowest accuracy first
-
-    .sort(
-        (a, b) => {
-
-            if (
-                a.accuracy !==
-                b.accuracy
-            ) {
-
-                return (
-                    a.accuracy -
-                    b.accuracy
-                );
-
-            }
-
-
-            return (
-                b.attempts -
-                a.attempts
-            );
-
-        }
-    );
-
-}
-
-
-// ======================================
-// Recommendation
-// ======================================
-
-function getRecommendation(
-    topic
+function getPriority(
+    accuracy
 ) {
 
-    if (
-        topic.priority ===
-        "high"
-    ) {
+    if (accuracy < 40) {
 
-        return (
-            `Your accuracy in ${topic.topic} is only ` +
-            `${topic.accuracy}%. Revise the basic concepts ` +
-            `for ${topic.revisionMinutes} minutes before ` +
-            `taking another quiz.`
-        );
+        return {
+            level: "High",
+            className: "high",
+            revisionMinutes: 40,
+            message:
+                "Needs immediate revision"
+        };
 
     }
 
 
-    if (
-        topic.priority ===
-        "medium"
-    ) {
+    if (accuracy < 55) {
 
-        return (
-            `Spend about ${topic.revisionMinutes} minutes ` +
-            `revising ${topic.topic}, then practice ` +
-            `another short quiz.`
-        );
-
-    }
-
-
-    return (
-        `${topic.topic} is close to the target. ` +
-        `A ${topic.revisionMinutes}-minute revision ` +
-        `and another practice quiz should help.`
-    );
-
-}
-
-
-// ======================================
-// Subject Filter
-// ======================================
-
-function updateSubjectFilter() {
-
-    const topics =
-        getAnalyzedTopics();
-
-
-    const currentValue =
-        subjectFilter.value;
-
-
-    const subjects = [
-
-        ...new Set(
-            topics.map(
-                topic =>
-                    topic.subject
-            )
-        )
-
-    ].sort();
-
-
-    subjectFilter.innerHTML = `
-
-        <option value="all">
-            All Subjects
-        </option>
-
-    `;
-
-
-    subjects.forEach(
-        subject => {
-
-            const option =
-                document.createElement(
-                    "option"
-                );
-
-
-            option.value =
-                subject;
-
-            option.textContent =
-                subject;
-
-
-            subjectFilter.appendChild(
-                option
-            );
-
-        }
-    );
-
-
-    if (
-        subjects.includes(
-            currentValue
-        )
-    ) {
-
-        subjectFilter.value =
-            currentValue;
+        return {
+            level: "Medium",
+            className: "medium",
+            revisionMinutes: 30,
+            message:
+                "Needs more practice"
+        };
 
     }
 
-}
 
-
-// ======================================
-// Statistics
-// ======================================
-
-function updateStats() {
-
-    const topics =
-        getAnalyzedTopics();
-
-
-    const highPriority =
-        topics.filter(
-            topic =>
-                topic.priority ===
-                "high"
-        ).length;
-
-
-    const totalAttempts =
-        topics.reduce(
-            (sum, topic) =>
-                sum +
-                topic.attempts,
-
-            0
-        );
-
-
-    const averageAccuracy =
-        topics.length === 0
-
-            ? 0
-
-            : Math.round(
-
-                topics.reduce(
-                    (sum, topic) =>
-                        sum +
-                        topic.accuracy,
-
-                    0
-                )
-
-                /
-
-                topics.length
-
-            );
-
-
-    document.getElementById(
-        "weakTopicCount"
-    ).textContent =
-        topics.length;
-
-
-    document.getElementById(
-        "highPriorityCount"
-    ).textContent =
-        highPriority;
-
-
-    document.getElementById(
-        "averageAccuracy"
-    ).textContent =
-        averageAccuracy + "%";
-
-
-    document.getElementById(
-        "totalAttempts"
-    ).textContent =
-        totalAttempts;
-
-
-    updateAIOverview(
-        topics
-    );
+    return {
+        level: "Low",
+        className: "low",
+        revisionMinutes: 20,
+        message:
+            "A little revision should help"
+    };
 
 }
 
 
-// ======================================
-// AI Overview
-// ======================================
+// =====================================
+// RENDER
+// =====================================
 
-function updateAIOverview(
-    topics
-) {
+function renderWeakTopics() {
 
-    const text =
-        document.getElementById(
-            "aiOverviewText"
+    if (!weakTopicsContainer) {
+
+        console.error(
+            "Weak topics container not found in HTML."
         );
-
-
-    if (
-        topics.length === 0
-    ) {
-
-        text.textContent =
-            "No weak topics detected yet. Complete more quizzes to build your performance analysis.";
 
         return;
-
     }
 
 
-    const weakest =
-        topics[0];
-
-
-    text.textContent =
-        `${weakest.topic} in ${weakest.subject} currently needs the most attention. ` +
-        `Your accuracy is ${weakest.accuracy}%. ` +
-        `A ${weakest.revisionMinutes}-minute revision session is recommended.`;
-
-}
-
-
-// ======================================
-// Render Topics
-// ======================================
-
-function renderTopics() {
-
-    const allTopics =
-        getAnalyzedTopics();
-
-
-    const search =
-        searchInput.value
-            .trim()
-            .toLowerCase();
-
-
-    const selectedSubject =
-        subjectFilter.value;
-
-
-    const selectedPriority =
-        priorityFilter.value;
-
-
-    const topics =
-        allTopics.filter(
-            topic => {
-
-
-                const matchesSearch =
-
-                    topic.topic
-                        .toLowerCase()
-                        .includes(search)
-
-                    ||
-
-                    topic.subject
-                        .toLowerCase()
-                        .includes(search);
-
-
-                const matchesSubject =
-
-                    selectedSubject ===
-                    "all"
-
-                    ||
-
-                    topic.subject ===
-                    selectedSubject;
-
-
-                const matchesPriority =
-
-                    selectedPriority ===
-                    "all"
-
-                    ||
-
-                    topic.priority ===
-                    selectedPriority;
-
-
-                return (
-                    matchesSearch &&
-                    matchesSubject &&
-                    matchesPriority
-                );
-
-            }
-        );
-
-
-    topicsContainer.innerHTML =
+    weakTopicsContainer.innerHTML =
         "";
 
 
-    // No weak topics
+    if (weakTopics.length === 0) {
 
-    if (
-        topics.length === 0
-    ) {
+        weakTopicsContainer.innerHTML = `
 
-        const hasWeakTopics =
-            allTopics.length > 0;
+            <div class="empty-weak-topics">
 
-
-        topicsContainer.innerHTML = `
-
-            <div class="empty-state">
-
-                <div class="icon">
-                    ${
-                        hasWeakTopics
-                            ? "🔍"
-                            : "🎉"
-                    }
-                </div>
-
-                <h2>
-                    ${
-                        hasWeakTopics
-                            ? "No matching topics"
-                            : "No Weak Topics Detected"
-                    }
-                </h2>
+                <h3>
+                    🎉 No weak topics found
+                </h3>
 
                 <p>
-
-                    ${
-                        hasWeakTopics
-
-                        ? "Try changing your search or filters."
-
-                        : "Complete some quizzes. Topics with accuracy below 70% will automatically appear here."
-                    }
-
+                    Great work! Complete more quizzes
+                    to keep tracking your performance.
                 </p>
 
-                ${
-                    hasWeakTopics
-
-                    ? ""
-
-                    : `
-                        <a href="quiz.html">
-                            Start Quiz
-                        </a>
-                    `
-                }
+                <a
+                    href="quiz.html"
+                    class="practice-btn"
+                >
+                    Take a Quiz
+                </a>
 
             </div>
 
         `;
 
-
-        updateStats();
-
         return;
-
     }
 
 
-    topics.forEach(
-        topic => {
+    weakTopics.forEach(
+        item => {
+
+            const priority =
+                getPriority(
+                    item.accuracy
+                );
 
 
             const card =
                 document.createElement(
-                    "article"
+                    "div"
                 );
 
 
             card.className =
-                "topic-card";
+                `weak-topic-card ${priority.className}`;
 
 
-            const revisionSubject =
-                `${topic.subject} - ${topic.topic}`;
+            const revisionURL =
 
+                "timer.html?subject="
 
-            const timerLink =
-
-                "timer.html?subject=" +
+                +
 
                 encodeURIComponent(
-                    revisionSubject
+                    `${item.subject} - ${item.topic}`
                 )
 
                 +
 
-                "&minutes=" +
+                "&minutes="
 
-                topic.revisionMinutes;
+                +
+
+                priority.revisionMinutes;
 
 
-            const quizLink =
+            const quizURL =
 
-                "quiz.html?subject=" +
+                "quiz.html?subject="
+
+                +
 
                 encodeURIComponent(
-                    topic.subject
+                    item.subject
                 )
 
                 +
 
-                "&topic=" +
+                "&topic="
+
+                +
 
                 encodeURIComponent(
-                    topic.topic
+                    item.topic
                 );
 
 
             card.innerHTML = `
 
-                <div class="topic-top">
+                <div class="weak-topic-header">
 
                     <div>
 
-                        <p class="subject-name">
+                        <span class="subject-name">
 
                             ${escapeHTML(
-                                topic.subject
+                                item.subject
                             )}
 
-                        </p>
+                        </span>
 
-                        <h2>
+                        <h3>
 
                             ${escapeHTML(
-                                topic.topic
+                                item.topic
                             )}
 
-                        </h2>
+                        </h3>
 
                     </div>
 
@@ -706,12 +325,12 @@ function renderTopics() {
                     <span
                         class="
                             priority-badge
-                            priority-${topic.priority}
+                            ${priority.className}
                         "
                     >
 
-                        ${topic.priority}
-                        priority
+                        ${priority.level}
+                        Priority
 
                     </span>
 
@@ -720,54 +339,44 @@ function renderTopics() {
 
                 <div class="accuracy-section">
 
-                    <div class="accuracy-title">
+                    <div class="accuracy-top">
 
                         <span>
-                            Current Accuracy
+                            Accuracy
                         </span>
 
                         <strong>
-                            ${topic.accuracy}%
+                            ${item.accuracy}%
                         </strong>
 
                     </div>
 
 
-                    <div class="progress-bar">
+                    <div class="accuracy-bar">
 
                         <div
-                            class="progress-fill"
+                            class="
+                                accuracy-fill
+                                ${priority.className}
+                            "
+
                             style="
                                 width:
-                                ${topic.accuracy}%;
+                                ${item.accuracy}%
                             "
-                        >
-                        </div>
+                        ></div>
 
                     </div>
 
                 </div>
 
 
-                <div class="topic-stats">
+                <div class="weak-stats">
 
-                    <div class="mini-stat">
-
-                        <strong>
-                            ${topic.attempts}
-                        </strong>
-
-                        <span>
-                            Attempts
-                        </span>
-
-                    </div>
-
-
-                    <div class="mini-stat">
+                    <div>
 
                         <strong>
-                            ${topic.correct}
+                            ${item.correct}
                         </strong>
 
                         <span>
@@ -777,14 +386,40 @@ function renderTopics() {
                     </div>
 
 
-                    <div class="mini-stat">
+                    <div>
 
                         <strong>
-                            ${topic.wrong}
+                            ${item.totalQuestions}
                         </strong>
 
                         <span>
-                            Incorrect
+                            Questions
+                        </span>
+
+                    </div>
+
+
+                    <div>
+
+                        <strong>
+                            ${item.quizAttempts}
+                        </strong>
+
+                        <span>
+                            Quizzes
+                        </span>
+
+                    </div>
+
+
+                    <div>
+
+                        <strong>
+                            ${item.bestScore}%
+                        </strong>
+
+                        <span>
+                            Best Score
                         </span>
 
                     </div>
@@ -795,52 +430,39 @@ function renderTopics() {
                 <div class="recommendation">
 
                     <strong>
-                        AI Recommendation
+                        Recommendation
                     </strong>
 
                     <p>
-                        ${escapeHTML(
-                            getRecommendation(
-                                topic
-                            )
-                        )}
+                        ${priority.message}.
+                        Revise for approximately
+
+                        <b>
+                            ${priority.revisionMinutes}
+                            minutes
+                        </b>
+
+                        and then attempt another quiz.
                     </p>
 
                 </div>
 
 
-                <p class="improvement-text">
-
-                    Target accuracy:
-                    <strong>70%</strong>
-
-                    •
-
-                    Need
-                    <strong>
-                        ${topic.improvementNeeded}
-                        percentage points
-                    </strong>
-                    improvement
-
-                </p>
-
-
-                <div class="topic-actions">
+                <div class="weak-actions">
 
                     <a
-                        href="${timerLink}"
+                        href="${revisionURL}"
                         class="revision-btn"
                     >
-                        ⏱ Start Revision
+                        Start Revision
                     </a>
 
 
                     <a
-                        href="${quizLink}"
+                        href="${quizURL}"
                         class="quiz-btn"
                     >
-                        🧠 Practice Quiz
+                        Practice Quiz
                     </a>
 
                 </div>
@@ -848,68 +470,225 @@ function renderTopics() {
             `;
 
 
-            topicsContainer.appendChild(
+            weakTopicsContainer.appendChild(
                 card
             );
 
         }
     );
 
+}
 
-    updateStats();
+
+// =====================================
+// STATS
+// =====================================
+
+function updateStats() {
+
+    const high =
+        weakTopics.filter(
+            item =>
+                item.accuracy < 40
+        ).length;
+
+
+    const medium =
+        weakTopics.filter(
+            item =>
+
+                item.accuracy >= 40
+
+                &&
+
+                item.accuracy < 55
+
+        ).length;
+
+
+    const low =
+        weakTopics.filter(
+            item =>
+
+                item.accuracy >= 55
+
+                &&
+
+                item.accuracy < 70
+
+        ).length;
+
+
+    setText(
+        "totalWeakTopics",
+        weakTopics.length
+    );
+
+
+    setText(
+        "highPriorityTopics",
+        high
+    );
+
+
+    setText(
+        "mediumPriorityTopics",
+        medium
+    );
+
+
+    setText(
+        "lowPriorityTopics",
+        low
+    );
+
+
+    // Alternative IDs support
+
+    setText(
+        "highPriority",
+        high
+    );
+
+
+    setText(
+        "mediumPriority",
+        medium
+    );
+
+
+    setText(
+        "lowPriority",
+        low
+    );
 
 }
 
 
-// ======================================
-// Escape HTML
-// ======================================
+// =====================================
+// LOADING
+// =====================================
+
+function showLoading() {
+
+    if (!weakTopicsContainer)
+        return;
+
+
+    weakTopicsContainer.innerHTML = `
+
+        <div class="loading-state">
+
+            <h3>
+                Loading performance...
+            </h3>
+
+            <p>
+                Analysing your quiz results.
+            </p>
+
+        </div>
+
+    `;
+
+}
+
+
+// =====================================
+// ERROR
+// =====================================
+
+function showError(
+    message
+) {
+
+    if (!weakTopicsContainer)
+        return;
+
+
+    weakTopicsContainer.innerHTML = `
+
+        <div class="error-state">
+
+            <h3>
+                Could not load weak topics
+            </h3>
+
+            <p>
+                ${escapeHTML(
+                    message
+                )}
+            </p>
+
+            <button
+                id="retryWeakTopics"
+            >
+                Try Again
+            </button>
+
+        </div>
+
+    `;
+
+
+    document
+        .getElementById(
+            "retryWeakTopics"
+        )
+        ?.addEventListener(
+            "click",
+            loadWeakTopics
+        );
+
+}
+
+
+// =====================================
+// HELPERS
+// =====================================
+
+function setText(
+    id,
+    value
+) {
+
+    const element =
+        document.getElementById(
+            id
+        );
+
+
+    if (element) {
+
+        element.textContent =
+            value;
+
+    }
+
+}
+
 
 function escapeHTML(
     text
 ) {
 
-    const element =
+    const div =
         document.createElement(
             "div"
         );
 
 
-    element.textContent =
-        String(text);
+    div.textContent =
+        String(text ?? "");
 
 
-    return element.innerHTML;
+    return div.innerHTML;
 
 }
 
 
-// ======================================
-// Events
-// ======================================
+// =====================================
+// START
+// =====================================
 
-searchInput.addEventListener(
-    "input",
-    renderTopics
-);
-
-
-subjectFilter.addEventListener(
-    "change",
-    renderTopics
-);
-
-
-priorityFilter.addEventListener(
-    "change",
-    renderTopics
-);
-
-
-// ======================================
-// Initial Load
-// ======================================
-
-updateSubjectFilter();
-
-renderTopics();
+loadWeakTopics();

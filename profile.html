@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Profile | StudyRoom AI
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="css/profile.css"
+    >
+
+</head>
+
+<body>
+
+
+<div class="page">
+
+    <div class="profile-card">
+
+        <div class="profile-header">
+
+            <div>
+
+                <h1>
+                    Study Profile
+                </h1>
+
+                <p>
+                    Personalize your learning plan
+                </p>
+
+            </div>
+
+            <a
+                href="dashboard.html"
+                class="back-btn"
+            >
+                Dashboard
+            </a>
+
+        </div>
+
+
+        <div class="user-box">
+
+            <div class="avatar">
+                S
+            </div>
+
+            <div>
+
+                <h2 id="profileName">
+                    Student
+                </h2>
+
+                <p id="profileEmail">
+                    Loading...
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div
+            id="examCountdown"
+            class="countdown-box"
+        >
+
+            Add your exam date to
+            activate exam countdown.
+
+        </div>
+
+
+        <form id="profileForm">
+
+
+            <div class="form-grid">
+
+
+                <div>
+
+                    <label>
+                        Course
+                    </label>
+
+                    <input
+                        id="course"
+                        type="text"
+                        placeholder="e.g. BCA"
+                    >
+
+                </div>
+
+
+                <div>
+
+                    <label>
+                        Semester
+                    </label>
+
+                    <input
+                        id="semester"
+                        type="text"
+                        placeholder="e.g. Semester 3"
+                    >
+
+                </div>
+
+
+                <div>
+
+                    <label>
+                        Daily Study Goal
+                    </label>
+
+                    <select
+                        id="dailyStudyGoal"
+                    >
+
+                        <option value="60">
+                            1 Hour
+                        </option>
+
+                        <option value="90">
+                            1.5 Hours
+                        </option>
+
+                        <option value="120">
+                            2 Hours
+                        </option>
+
+                        <option value="180">
+                            3 Hours
+                        </option>
+
+                        <option value="240">
+                            4 Hours
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div>
+
+                    <label>
+                        Exam Date
+                    </label>
+
+                    <input
+                        id="examDate"
+                        type="date"
+                    >
+
+                </div>
+
+
+            </div>
+
+
+            <div class="goal-box">
+
+                <label>
+                    Main Study Goal
+                </label>
+
+                <textarea
+                    id="mainGoal"
+                    maxlength="300"
+                    placeholder="Example: Improve Java and DBMS before semester exams."
+                ></textarea>
+
+            </div>
+
+
+            <button
+                type="submit"
+                id="saveProfileBtn"
+            >
+                Save Profile
+            </button>
+
+
+            <p
+                id="profileMessage"
+                class="message"
+            ></p>
+
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<script src="js/profile.js"></script>
+
+</body>
+
+</html>
