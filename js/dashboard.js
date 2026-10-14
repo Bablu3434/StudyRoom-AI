@@ -2,11 +2,19 @@ const API_URL =
     "http://localhost:5000/api/dashboard";
 
 
+const DAILY_PLAN_API =
+    "http://localhost:5000/api/ai/daily-plan";
+
+
 const token =
     localStorage.getItem(
         "studyRoomToken"
     );
 
+
+// =====================================
+// AUTH CHECK
+// =====================================
 
 if (!token) {
 
@@ -17,12 +25,10 @@ if (!token) {
 
 
 // =====================================
-// API
+// API FETCH
 // =====================================
 
-async function apiFetch(
-    url
-) {
+async function apiFetch(url) {
 
     const response =
         await fetch(
@@ -54,7 +60,11 @@ async function apiFetch(
         window.location.href =
             "login.html";
 
-        return;
+
+        throw new Error(
+            "Session expired"
+        );
+
     }
 
 
@@ -73,6 +83,7 @@ async function apiFetch(
 
 
     return data;
+
 }
 
 
@@ -90,9 +101,20 @@ async function loadDashboard() {
             );
 
 
+        if (
+            !data ||
+            !data.dashboard
+        ) {
+
+            throw new Error(
+                "Dashboard data not found"
+            );
+
+        }
+
+
         const dashboard =
             data.dashboard;
-
 
 
         renderUser(
@@ -103,7 +125,8 @@ async function loadDashboard() {
         renderStats(
             dashboard
         );
-        
+
+
         renderDailyGoal(
             dashboard.studyGoal
         );
@@ -111,28 +134,30 @@ async function loadDashboard() {
 
         renderExamCountdown(
             dashboard.examCountdown
-     );
-
+        );
 
 
         renderTodayTasks(
-            dashboard.today.tasks
+            dashboard.today?.tasks || []
         );
 
 
         renderUpcomingTasks(
-            dashboard.upcomingTasks
+            dashboard.upcomingTasks || []
         );
 
 
         renderWeakTopics(
-            dashboard.weakTopics
+            dashboard.weakTopics || []
         );
 
 
         renderActivities(
-            dashboard.recentActivities
+            dashboard.recentActivities || []
         );
+
+
+        renderTodayDate();
 
     } catch (error) {
 
@@ -150,25 +175,27 @@ async function loadDashboard() {
 // USER
 // =====================================
 
-function renderUser(
-    user
-) {
+function renderUser(user) {
+
+    if (!user)
+        return;
+
 
     setText(
         "userName",
-        user.name
+        user.name || "Student"
     );
 
 
     setText(
         "welcomeName",
-        user.name
+        user.name || "Student"
     );
 
 
     setText(
         "userEmail",
-        user.email
+        user.email || ""
     );
 
 }
@@ -183,11 +210,11 @@ function renderStats(
 ) {
 
     const today =
-        dashboard.today;
+        dashboard.today || {};
 
 
     const stats =
-        dashboard.stats;
+        dashboard.stats || {};
 
 
     setText(
@@ -208,38 +235,122 @@ function renderStats(
 
     setText(
         "todayTasksCount",
-        `${today.completedTasks}/${today.totalTasks}`
+        `${today.completedTasks || 0}/${today.totalTasks || 0}`
     );
 
 
     setText(
         "taskCompletion",
-        `${stats.taskCompletion}%`
+        `${stats.taskCompletion || 0}%`
     );
 
 
     setText(
         "quizAverage",
-        `${stats.quizAverage}%`
+        `${stats.quizAverage || 0}%`
     );
 
 
     setText(
         "subjectProgress",
-        `${stats.subjectProgress}%`
+        `${stats.subjectProgress || 0}%`
     );
 
 
     setText(
         "totalSubjects",
-        stats.totalSubjects
+        stats.totalSubjects || 0
     );
 
 
     setText(
         "focusSessions",
-        today.focusSessions
+        today.focusSessions || 0
     );
+
+}
+
+
+// =====================================
+// DAILY STUDY GOAL
+// =====================================
+
+function renderDailyGoal(goal) {
+
+    const completed =
+        Number(
+            goal?.completedMinutes || 0
+        );
+
+
+    const target =
+        Number(
+            goal?.targetMinutes || 120
+        );
+
+
+    const remaining =
+        Number(
+            goal?.remainingMinutes ??
+            Math.max(
+                target - completed,
+                0
+            )
+        );
+
+
+    const progress =
+        Math.min(
+            100,
+            Math.max(
+                0,
+                Number(
+                    goal?.progress ||
+                    (
+                        target > 0
+                            ? Math.round(
+                                (
+                                    completed /
+                                    target
+                                ) * 100
+                            )
+                            : 0
+                    )
+                )
+            )
+        );
+
+
+    setText(
+        "dailyGoalText",
+        `${completed} / ${target} min`
+    );
+
+
+    setText(
+        "dailyGoalPercent",
+        `${progress}%`
+    );
+
+
+    setText(
+        "dailyGoalRemaining",
+        `${remaining} min remaining`
+    );
+
+
+    const bar =
+        document.getElementById(
+            "dailyGoalBar"
+        );
+
+
+    if (bar) {
+
+        bar.style.width =
+            `${progress}%`;
+
+    }
 
 }
 
@@ -280,6 +391,7 @@ function renderTodayTasks(
 
 
     if (
+        !Array.isArray(tasks) ||
         tasks.length === 0
     ) {
 
@@ -291,7 +403,10 @@ function renderTodayTasks(
                     No study tasks for today.
                 </p>
 
-                <a href="planner.html">
+                <a
+                    href="planner.html"
+                    class="add-task-btn"
+                >
                     Add Study Task
                 </a>
 
@@ -307,7 +422,7 @@ function renderTodayTasks(
     tasks
         .slice(0, 5)
         .forEach(
-            task => {
+            (task) => {
 
                 const row =
                     document.createElement(
@@ -330,38 +445,21 @@ function renderTodayTasks(
                 }
 
 
-                const timerURL =
-
-                    "timer.html?subject="
-
-                    +
-
-                    encodeURIComponent(
-                        task.subject
-                    )
-
-                    +
-
-                    "&minutes="
-
-                    +
-
-                    task.duration;
-
-
                 row.innerHTML = `
 
                     <div class="task-main">
 
                         <strong>
                             ${escapeHTML(
-                                task.subject
+                                task.subject ||
+                                "General"
                             )}
                         </strong>
 
                         <span>
                             ${escapeHTML(
-                                task.topic
+                                task.topic ||
+                                "Study"
                             )}
                         </span>
 
@@ -371,27 +469,54 @@ function renderTodayTasks(
                     <div class="task-side">
 
                         <span>
-                            ${task.duration} min
+                            ${
+                                Number(
+                                    task.duration
+                                ) || 25
+                            } min
                         </span>
 
                         ${
                             task.completed
 
                                 ? `
-                                    <span
+
+                                    <button
+                                        type="button"
                                         class="done-badge"
+                                        disabled
                                     >
-                                        Done
-                                    </span>
+                                        ✓ Done
+                                    </button>
+
                                 `
 
                                 : `
-                                    <a
-                                        href="${timerURL}"
+
+                                    <button
+                                        type="button"
+
                                         class="start-task-btn"
+
+                                        data-subject="${escapeHTML(
+                                            task.subject ||
+                                            "General"
+                                        )}"
+
+                                        data-topic="${escapeHTML(
+                                            task.topic ||
+                                            "Study"
+                                        )}"
+
+                                        data-minutes="${
+                                            Number(
+                                                task.duration
+                                            ) || 25
+                                        }"
                                     >
                                         Start
-                                    </a>
+                                    </button>
+
                                 `
                         }
 
@@ -408,6 +533,154 @@ function renderTodayTasks(
         );
 
 }
+
+
+// =====================================
+// BUTTON EVENTS
+// =====================================
+
+document.addEventListener(
+    "click",
+    function (event) {
+
+        // =================================
+        // START TASK BUTTON
+        // =================================
+
+        const startButton =
+            event.target.closest(
+                ".start-task-btn"
+            );
+
+
+        if (
+            startButton
+        ) {
+
+            event.preventDefault();
+
+
+            const subject =
+                startButton.dataset.subject ||
+                "General";
+
+
+            const topic =
+                startButton.dataset.topic ||
+                "Study";
+
+
+            const minutes =
+                Number(
+                    startButton.dataset.minutes
+                ) || 25;
+
+
+            const timerURL =
+                "timer.html"
+
+                +
+
+                `?subject=${encodeURIComponent(
+                    subject
+                )}`
+
+                +
+
+                `&topic=${encodeURIComponent(
+                    topic
+                )}`
+
+                +
+
+                `&minutes=${minutes}`;
+
+
+            console.log(
+                "Opening Timer:",
+                {
+                    subject,
+                    topic,
+                    minutes
+                }
+            );
+
+
+            window.location.href =
+                timerURL;
+
+
+            return;
+
+        }
+
+
+        // =================================
+        // ADD TASK BUTTON
+        // =================================
+
+        const addTaskElement =
+            event.target.closest(
+                "#addTaskBtn, .add-task-btn, [data-action='add-task']"
+            );
+
+
+        if (
+            addTaskElement
+        ) {
+
+            event.preventDefault();
+
+
+            window.location.href =
+                "planner.html";
+
+
+            return;
+
+        }
+
+
+        // =================================
+        // FALLBACK FOR EXISTING BUTTON
+        // =================================
+        // Isse HTML change kiye bina bhi
+        // "+ Add Task" button work karega.
+
+        const clickedElement =
+            event.target.closest(
+                "button, a"
+            );
+
+
+        if (
+            clickedElement
+        ) {
+
+            const text =
+                clickedElement
+                    .textContent
+                    .trim()
+                    .toLowerCase();
+
+
+            if (
+                text === "+ add task" ||
+                text === "add task"
+            ) {
+
+                event.preventDefault();
+
+
+                window.location.href =
+                    "planner.html";
+
+            }
+
+        }
+
+    }
+);
 
 
 // =====================================
@@ -433,6 +706,7 @@ function renderUpcomingTasks(
 
 
     if (
+        !Array.isArray(tasks) ||
         tasks.length === 0
     ) {
 
@@ -450,7 +724,7 @@ function renderUpcomingTasks(
 
 
     tasks.forEach(
-        task => {
+        (task) => {
 
             const row =
                 document.createElement(
@@ -468,13 +742,15 @@ function renderUpcomingTasks(
 
                     <strong>
                         ${escapeHTML(
-                            task.subject
+                            task.subject ||
+                            "General"
                         )}
                     </strong>
 
                     <p>
                         ${escapeHTML(
-                            task.topic
+                            task.topic ||
+                            "Study"
                         )}
                     </p>
 
@@ -482,9 +758,11 @@ function renderUpcomingTasks(
 
 
                 <span>
+
                     ${formatDate(
                         task.studyDate
                     )}
+
                 </span>
 
             `;
@@ -530,6 +808,7 @@ function renderWeakTopics(
 
 
     if (
+        !Array.isArray(topics) ||
         topics.length === 0
     ) {
 
@@ -555,7 +834,7 @@ function renderWeakTopics(
 
 
     topics.forEach(
-        item => {
+        (item) => {
 
             const revisionMinutes =
 
@@ -582,21 +861,23 @@ function renderWeakTopics(
 
             const revisionURL =
 
-                "timer.html?subject="
+                "timer.html"
 
                 +
 
-                encodeURIComponent(
-                    `${item.subject} - ${item.topic}`
-                )
+                `?subject=${encodeURIComponent(
+                    item.subject
+                )}`
 
                 +
 
-                "&minutes="
+                `&topic=${encodeURIComponent(
+                    item.topic
+                )}`
 
                 +
 
-                revisionMinutes;
+                `&minutes=${revisionMinutes}`;
 
 
             row.innerHTML = `
@@ -621,7 +902,11 @@ function renderWeakTopics(
                 <div class="weak-right">
 
                     <strong>
-                        ${item.accuracy}%
+                        ${
+                            Number(
+                                item.accuracy
+                            ) || 0
+                        }%
                     </strong>
 
                     <a
@@ -675,6 +960,7 @@ function renderActivities(
 
 
     if (
+        !Array.isArray(activities) ||
         activities.length === 0
     ) {
 
@@ -694,7 +980,7 @@ function renderActivities(
 
 
     activities.forEach(
-        activity => {
+        (activity) => {
 
             const row =
                 document.createElement(
@@ -706,7 +992,8 @@ function renderActivities(
                 "activity-item";
 
 
-            let icon = "📚";
+            let icon =
+                "📚";
 
 
             if (
@@ -714,7 +1001,8 @@ function renderActivities(
                 "focus"
             ) {
 
-                icon = "⏱️";
+                icon =
+                    "⏱️";
 
             }
 
@@ -724,7 +1012,8 @@ function renderActivities(
                 "quiz"
             ) {
 
-                icon = "📝";
+                icon =
+                    "📝";
 
             }
 
@@ -734,7 +1023,8 @@ function renderActivities(
                 "task"
             ) {
 
-                icon = "✅";
+                icon =
+                    "✅";
 
             }
 
@@ -749,15 +1039,21 @@ function renderActivities(
                 <div class="activity-content">
 
                     <strong>
+
                         ${escapeHTML(
-                            activity.title
+                            activity.title ||
+                            "Activity"
                         )}
+
                     </strong>
 
                     <p>
+
                         ${escapeHTML(
-                            activity.description
+                            activity.description ||
+                            ""
                         )}
+
                     </p>
 
                 </div>
@@ -785,124 +1081,9 @@ function renderActivities(
 
 
 // =====================================
-// LOGOUT
+// DAILY AI STUDY PLAN
 // =====================================
 
-const logoutBtn =
-    document.getElementById(
-        "logoutBtn"
-    );
-
-
-if (logoutBtn) {
-
-    logoutBtn.addEventListener(
-        "click",
-        function () {
-
-            localStorage.removeItem(
-                "studyRoomToken"
-            );
-
-
-            localStorage.removeItem(
-                "studyRoomUser"
-            );
-
-
-            window.location.href =
-                "login.html";
-
-        }
-    );
-
-}
-
-
-// =====================================
-// HELPERS
-// =====================================
-
-function setText(
-    id,
-    value
-) {
-
-    const element =
-        document.getElementById(
-            id
-        );
-
-
-    if (element) {
-
-        element.textContent =
-            value;
-
-    }
-
-}
-
-
-function formatMinutes(
-    minutes
-) {
-
-    const total =
-        Number(
-            minutes || 0
-        );
-
-
-    const hours =
-        Math.floor(
-            total / 60
-        );
-
-
-    const remaining =
-        total % 60;
-
-
-    if (hours === 0) {
-
-        return `${remaining}m`;
-
-    }
-
-
-    if (remaining === 0) {
-
-        return `${hours}h`;
-
-    }
-
-
-    return `${hours}h ${remaining}m`;
-
-}
-
-
-function formatDate(
-    date
-) {
-
-    return new Date(
-        date + "T00:00:00"
-    )
-    .toLocaleDateString(
-        "en-IN",
-        {
-            day: "numeric",
-            month: "short"
-        }
-    );
-
-}
-
-// =====================================
-//daily plan date format
-// =====================================
 async function loadDailyStudyPlan() {
 
     const container =
@@ -923,7 +1104,7 @@ async function loadDailyStudyPlan() {
 
         const response =
             await fetch(
-                "http://localhost:5000/api/ai/daily-plan",
+                DAILY_PLAN_API,
                 {
                     headers: {
 
@@ -950,6 +1131,7 @@ async function loadDailyStudyPlan() {
 
             window.location.href =
                 "login.html";
+
 
             return;
 
@@ -1001,7 +1183,7 @@ async function loadDailyStudyPlan() {
 
         container.innerHTML = `
 
-            <div>
+            <div class="daily-plan-error">
 
                 <strong>
                     Could not load today's study plan.
@@ -1025,18 +1207,27 @@ async function loadDailyStudyPlan() {
         `;
 
 
-        document
-            .getElementById(
+        const retryButton =
+            document.getElementById(
                 "retryDailyPlan"
-            )
-            ?.addEventListener(
+            );
+
+
+        if (
+            retryButton
+        ) {
+
+            retryButton.addEventListener(
                 "click",
                 loadDailyStudyPlan
             );
 
+        }
+
     }
 
 }
+
 
 // =====================================
 // EXAM COUNTDOWN
@@ -1046,7 +1237,10 @@ function renderExamCountdown(
     exam
 ) {
 
-    if (!exam) {
+    if (
+        !exam ||
+        !exam.examDate
+    ) {
 
         setText(
             "examDays",
@@ -1065,17 +1259,23 @@ function renderExamCountdown(
     }
 
 
+    const days =
+        Number(
+            exam.daysRemaining
+        );
+
+
     if (
-        exam.daysRemaining > 1
+        days > 1
     ) {
 
         setText(
             "examDays",
-            `${exam.daysRemaining} Days Left`
+            `${days} Days Left`
         );
 
     } else if (
-        exam.daysRemaining === 1
+        days === 1
     ) {
 
         setText(
@@ -1084,7 +1284,7 @@ function renderExamCountdown(
         );
 
     } else if (
-        exam.daysRemaining === 0
+        days === 0
     ) {
 
         setText(
@@ -1104,12 +1304,217 @@ function renderExamCountdown(
 
     setText(
         "examDateText",
-        `Exam Date: ${
-            formatFullDate(
-                exam.examDate
-            )
-        }`
+        `Exam Date: ${formatFullDate(
+            exam.examDate
+        )}`
     );
+
+}
+
+
+// =====================================
+// CURRENT DATE
+// =====================================
+
+function renderTodayDate() {
+
+    const dateText =
+        new Date()
+            .toLocaleDateString(
+                "en-US",
+                {
+                    weekday:
+                        "long",
+
+                    month:
+                        "long",
+
+                    day:
+                        "numeric"
+                }
+            );
+
+
+    const possibleIds = [
+
+        "todayDate",
+
+        "currentDate",
+
+        "dashboardDate",
+
+        "todayPlanDate"
+
+    ];
+
+
+    possibleIds.forEach(
+        (id) => {
+
+            const element =
+                document.getElementById(
+                    id
+                );
+
+
+            if (
+                element
+            ) {
+
+                element.textContent =
+                    dateText;
+
+            }
+
+        }
+    );
+
+}
+
+
+// =====================================
+// LOGOUT
+// =====================================
+
+const logoutBtn =
+    document.getElementById(
+        "logoutBtn"
+    );
+
+
+if (
+    logoutBtn
+) {
+
+    logoutBtn.addEventListener(
+        "click",
+        function () {
+
+            localStorage.removeItem(
+                "studyRoomToken"
+            );
+
+
+            localStorage.removeItem(
+                "studyRoomUser"
+            );
+
+
+            window.location.href =
+                "login.html";
+
+        }
+    );
+
+}
+
+
+// =====================================
+// HELPERS
+// =====================================
+
+function setText(
+    id,
+    value
+) {
+
+    const element =
+        document.getElementById(
+            id
+        );
+
+
+    if (
+        element
+    ) {
+
+        element.textContent =
+            value;
+
+    }
+
+}
+
+
+function formatMinutes(
+    minutes
+) {
+
+    const total =
+        Number(
+            minutes || 0
+        );
+
+
+    const hours =
+        Math.floor(
+            total / 60
+        );
+
+
+    const remaining =
+        total % 60;
+
+
+    if (
+        hours === 0
+    ) {
+
+        return `${remaining}m`;
+
+    }
+
+
+    if (
+        remaining === 0
+    ) {
+
+        return `${hours}h`;
+
+    }
+
+
+    return `${hours}h ${remaining}m`;
+
+}
+
+
+function formatDate(
+    date
+) {
+
+    if (!date)
+        return "-";
+
+
+    const parsedDate =
+        new Date(
+            `${date}T00:00:00`
+        );
+
+
+    if (
+        Number.isNaN(
+            parsedDate.getTime()
+        )
+    ) {
+
+        return "-";
+
+    }
+
+
+    return parsedDate
+        .toLocaleDateString(
+            "en-IN",
+            {
+                day:
+                    "numeric",
+
+                month:
+                    "short"
+            }
+        );
 
 }
 
@@ -1118,21 +1523,197 @@ function formatFullDate(
     date
 ) {
 
-    return new Date(
-        `${date}T00:00:00`
-    )
-    .toLocaleDateString(
-        "en-IN",
-        {
-            day: "numeric",
-            month: "long",
-            year: "numeric"
-        }
-    );
+    if (!date)
+        return "-";
+
+
+    let parsedDate;
+
+
+    if (
+        typeof date === "string" &&
+        /^\d{4}-\d{2}-\d{2}$/.test(
+            date
+        )
+    ) {
+
+        parsedDate =
+            new Date(
+                `${date}T00:00:00`
+            );
+
+    } else {
+
+        parsedDate =
+            new Date(
+                date
+            );
+
+    }
+
+
+    if (
+        Number.isNaN(
+            parsedDate.getTime()
+        )
+    ) {
+
+        return "-";
+
+    }
+
+
+    return parsedDate
+        .toLocaleDateString(
+            "en-IN",
+            {
+                day:
+                    "numeric",
+
+                month:
+                    "long",
+
+                year:
+                    "numeric"
+            }
+        );
 
 }
 
 
+function formatActivityDate(
+    date
+) {
+
+    if (!date)
+        return "";
+
+
+    const parsedDate =
+        new Date(
+            date
+        );
+
+
+    if (
+        Number.isNaN(
+            parsedDate.getTime()
+        )
+    ) {
+
+        return "";
+
+    }
+
+
+    const now =
+        new Date();
+
+
+    const difference =
+        now.getTime() -
+        parsedDate.getTime();
+
+
+    const minutes =
+        Math.floor(
+            difference /
+            60000
+        );
+
+
+    const hours =
+        Math.floor(
+            minutes / 60
+        );
+
+
+    const days =
+        Math.floor(
+            hours / 24
+        );
+
+
+    if (
+        minutes < 1
+    ) {
+
+        return "Just now";
+
+    }
+
+
+    if (
+        minutes < 60
+    ) {
+
+        return `${minutes}m ago`;
+
+    }
+
+
+    if (
+        hours < 24
+    ) {
+
+        return `${hours}h ago`;
+
+    }
+
+
+    if (
+        days < 7
+    ) {
+
+        return `${days}d ago`;
+
+    }
+
+
+    return parsedDate
+        .toLocaleDateString(
+            "en-IN",
+            {
+                day:
+                    "numeric",
+
+                month:
+                    "short"
+            }
+        );
+
+}
+
+
+function escapeHTML(
+    value
+) {
+
+    return String(
+        value ?? ""
+    )
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
+}
 
 
 // =====================================
@@ -1140,4 +1721,5 @@ function formatFullDate(
 // =====================================
 
 loadDashboard();
+
 loadDailyStudyPlan();

@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Settings | StudyRoom AI</title>
+    
+
+    <link
+        rel="stylesheet"
+        href="css/settings.css"
+    >
+
+</head>
+
+<body>
+
+<div class="app">
+
+
+    <!-- =========================
+         SIDEBAR
+    ========================== -->
+
+    <aside class="sidebar">
+
+        <div class="logo">
+
+            <div class="logo-icon">
+                AI
+            </div>
+
+            <h2>
+                StudyRoom
+            </h2>
+
+        </div>
+
+
+        <nav>
+
+            <a href="dashboard.html">
+                🏠 Dashboard
+            </a>
+
+            <a href="subjects.html">
+                📚 Subjects
+            </a>
+
+            <a href="planner.html">
+                🗓️ Study Planner
+            </a>
+
+            <a href="timer.html">
+                ⏱ Focus Timer
+            </a>
+
+            <a href="notes.html">
+                📝 Notes
+            </a>
+
+            <a href="quiz.html">
+                🧠 Quiz
+            </a>
+
+            <a href="progress.html">
+                📊 Progress
+            </a>
+
+            <a href="weak-topics.html">
+                🎯 Weak Topics
+            </a>
+
+            <a href="ai.html">
+                🤖 AI Assistant
+            </a>
+
+            <a href="profile.html">
+                👤 Profile
+            </a>
+
+            <a
+                href="settings.html"
+                class="active"
+            >
+                ⚙ Settings
+            </a>
+
+        </nav>
+
+
+        <button
+            id="logoutBtn"
+            class="logout-btn"
+        >
+            🚪 Logout
+        </button>
+
+    </aside>
+
+
+    <!-- =========================
+         MAIN CONTENT
+    ========================== -->
+
+    <main class="main-content">
+
+        <div class="page-header">
+
+            <div>
+
+                <h1>
+                    Settings
+                </h1>
+
+                <p>
+                    Customize your StudyRoom experience.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div
+            id="settingsMessage"
+            class="message"
+        ></div>
+
+
+        <!-- =========================
+             STUDY SETTINGS
+        ========================== -->
+
+        <section class="settings-card">
+
+            <div class="card-title">
+
+                <div class="settings-icon">
+                    🎯
+                </div>
+
+                <div>
+
+                    <h2>
+                        Study Preferences
+                    </h2>
+
+                    <p>
+                        Set your default study preferences.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="settings-grid">
+
+
+                <div class="form-group">
+
+                    <label for="dailyStudyGoal">
+                        Daily Study Goal
+                    </label>
+
+                    <select id="dailyStudyGoal">
+
+                        <option value="60">
+                            1 Hour
+                        </option>
+
+                        <option value="90">
+                            1 Hour 30 Minutes
+                        </option>
+
+                        <option value="120">
+                            2 Hours
+                        </option>
+
+                        <option value="180">
+                            3 Hours
+                        </option>
+
+                        <option value="240">
+                            4 Hours
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="focusDuration">
+                        Default Focus Time
+                    </label>
+
+                    <select id="focusDuration">
+
+                        <option value="25">
+                            25 Minutes
+                        </option>
+
+                        <option value="30">
+                            30 Minutes
+                        </option>
+
+                        <option value="45">
+                            45 Minutes
+                        </option>
+
+                        <option value="60">
+                            60 Minutes
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="breakDuration">
+                        Default Break Time
+                    </label>
+
+                    <select id="breakDuration">
+
+                        <option value="5">
+                            5 Minutes
+                        </option>
+
+                        <option value="10">
+                            10 Minutes
+                        </option>
+
+                        <option value="15">
+                            15 Minutes
+                        </option>
+
+                        <option value="20">
+                            20 Minutes
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="theme">
+                        Theme
+                    </label>
+
+                    <select id="theme">
+
+                        <option value="light">
+                            Light
+                        </option>
+
+                        <option value="dark">
+                            Dark
+                        </option>
+
+                        <option value="system">
+                            System Default
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             OPTIONS
+        ========================== -->
+
+        <section class="settings-card">
+
+            <div class="card-title">
+
+                <div class="settings-icon">
+                    🔔
+                </div>
+
+                <div>
+
+                    <h2>
+                        Study Options
+                    </h2>
+
+                    <p>
+                        Control additional StudyRoom features.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="setting-row">
+
+                <div>
+
+                    <strong>
+                        Study Reminders
+                    </strong>
+
+                    <p>
+                        Allow StudyRoom to remind you about study sessions.
+                    </p>
+
+                </div>
+
+
+                <label class="switch">
+
+                    <input
+                        type="checkbox"
+                        id="studyReminders"
+                    >
+
+                    <span class="slider"></span>
+
+                </label>
+
+            </div>
+
+
+            <div class="setting-row">
+
+                <div>
+
+                    <strong>
+                        Auto Daily Plan
+                    </strong>
+
+                    <p>
+                        Load your personalized study plan on Dashboard.
+                    </p>
+
+                </div>
+
+
+                <label class="switch">
+
+                    <input
+                        type="checkbox"
+                        id="autoDailyPlan"
+                        checked
+                    >
+
+                    <span class="slider"></span>
+
+                </label>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             BUTTONS
+        ========================== -->
+
+        <div class="settings-actions">
+
+            <button
+                type="button"
+                id="resetSettingsBtn"
+                class="reset-btn"
+            >
+                Reset Settings
+            </button>
+
+
+            <button
+                type="button"
+                id="saveSettingsBtn"
+                class="save-btn"
+            >
+                Save Settings
+            </button>
+
+        </div>
+
+
+    </main>
+
+</div>
+
+
+<script src="js/settings.js"></script>
+
+</body>
+
+</html>
