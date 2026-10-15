@@ -1388,22 +1388,7 @@ if (
 
     logoutBtn.addEventListener(
         "click",
-        function () {
-
-            localStorage.removeItem(
-                "studyRoomToken"
-            );
-
-
-            localStorage.removeItem(
-                "studyRoomUser"
-            );
-
-
-            window.location.href =
-                "login.html";
-
-        }
+        logout
     );
 
 }

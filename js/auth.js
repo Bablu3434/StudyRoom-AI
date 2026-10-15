@@ -3,6 +3,90 @@ const API_URL =
 
 
 // ================================
+// PASSWORD SHOW / HIDE
+// ================================
+
+function setupPasswordToggle(
+    inputId,
+    buttonId
+) {
+    
+
+    const input =
+        document.getElementById(
+            inputId
+        );
+
+
+    const button =
+        document.getElementById(
+            buttonId
+        );
+
+
+    if (
+        !input ||
+        !button
+    ) {
+
+        return;
+
+    }
+
+
+    button.addEventListener(
+        "click",
+        function () {
+
+            if (
+                input.type ===
+                "password"
+            ) {
+
+                input.type =
+                    "text";
+
+                button.textContent =
+                    "Hide";
+
+            } else {
+
+                input.type =
+                    "password";
+
+                button.textContent =
+                    "Show";
+
+            }
+
+        }
+    );
+
+}
+
+
+// Login password
+setupPasswordToggle(
+    "loginPassword",
+    "toggleLoginPassword"
+);
+
+
+// Register password
+setupPasswordToggle(
+    "registerPassword",
+    "toggleRegisterPassword"
+);
+
+
+// Confirm password
+setupPasswordToggle(
+    "confirmPassword",
+    "toggleConfirmPassword"
+);
+
+
+// ================================
 // REGISTER
 // ================================
 
@@ -55,6 +139,7 @@ if (registerForm) {
                 );
 
                 return;
+
             }
 
 
@@ -94,6 +179,7 @@ if (registerForm) {
                     );
 
                     return;
+
                 }
 
 
@@ -204,6 +290,7 @@ if (loginForm) {
                     );
 
                     return;
+
                 }
 
 

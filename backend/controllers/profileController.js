@@ -18,6 +18,8 @@ const getProfile =
                 });
 
 
+            // Create default profile
+            // if it does not exist
             if (!profile) {
 
                 profile =
@@ -34,7 +36,7 @@ const getProfile =
             }
 
 
-            res.json({
+            return res.json({
 
                 success: true,
 
@@ -47,19 +49,19 @@ const getProfile =
                         req.user.email,
 
                     course:
-                        profile.course,
+                        profile.course || "",
 
                     semester:
-                        profile.semester,
+                        profile.semester || "",
 
                     dailyStudyGoal:
-                        profile.dailyStudyGoal,
+                        profile.dailyStudyGoal || 120,
 
                     examDate:
-                        profile.examDate,
+                        profile.examDate || null,
 
                     mainGoal:
-                        profile.mainGoal
+                        profile.mainGoal || ""
 
                 }
 
@@ -73,14 +75,16 @@ const getProfile =
             );
 
 
-            res.status(500).json({
+            return res
+                .status(500)
+                .json({
 
-                success: false,
+                    success: false,
 
-                message:
-                    "Could not load profile"
+                    message:
+                        "Could not load profile"
 
-            });
+                });
 
         }
 
@@ -102,72 +106,169 @@ const updateProfile =
                 dailyStudyGoal,
                 examDate,
                 mainGoal
-            } = req.body;
+            } = req.body || {};
 
 
-            const goalMinutes =
-                Number(
-                    dailyStudyGoal
-                );
+            // =================================
+            // BUILD ONLY PROVIDED FIELDS
+            // =================================
 
+            const updateData = {
+
+                user:
+                    req.user._id
+
+            };
+
+
+            // =================================
+            // COURSE
+            // =================================
 
             if (
-                !Number.isFinite(
-                    goalMinutes
-                )
-                ||
-                goalMinutes < 15
-                ||
-                goalMinutes > 720
+                typeof course ===
+                "string"
             ) {
 
-                return res
-                    .status(400)
-                    .json({
-
-                        success: false,
-
-                        message:
-                            "Daily study goal must be between 15 and 720 minutes"
-
-                    });
+                updateData.course =
+                    course.trim();
 
             }
 
 
-            let parsedExamDate =
-                null;
+            // =================================
+            // SEMESTER
+            // =================================
+
+            if (
+                typeof semester ===
+                "string"
+            ) {
+
+                updateData.semester =
+                    semester.trim();
+
+            }
 
 
-            if (examDate) {
+            // =================================
+            // DAILY STUDY GOAL
+            // =================================
 
-                parsedExamDate =
-                    new Date(
-                        `${examDate}T00:00:00`
+            if (
+                dailyStudyGoal !==
+                undefined
+            ) {
+
+                const goalMinutes =
+                    Number(
+                        dailyStudyGoal
                     );
 
 
                 if (
-                    Number.isNaN(
-                        parsedExamDate.getTime()
+                    !Number.isFinite(
+                        goalMinutes
                     )
+                    ||
+                    goalMinutes < 15
+                    ||
+                    goalMinutes > 720
                 ) {
 
                     return res
                         .status(400)
                         .json({
 
-                            success: false,
+                            success:
+                                false,
 
                             message:
-                                "Invalid exam date"
+                                "Daily study goal must be between 15 and 720 minutes"
 
                         });
 
                 }
 
+
+                updateData.dailyStudyGoal =
+                    goalMinutes;
+
             }
 
+
+            // =================================
+            // EXAM DATE
+            // =================================
+
+            if (
+                examDate !==
+                undefined
+            ) {
+
+                if (
+                    examDate === null ||
+                    examDate === ""
+                ) {
+
+                    updateData.examDate =
+                        null;
+
+                } else {
+
+                    const parsedExamDate =
+                        new Date(
+                            `${examDate}T00:00:00`
+                        );
+
+
+                    if (
+                        Number.isNaN(
+                            parsedExamDate.getTime()
+                        )
+                    ) {
+
+                        return res
+                            .status(400)
+                            .json({
+
+                                success:
+                                    false,
+
+                                message:
+                                    "Invalid exam date"
+
+                            });
+
+                    }
+
+
+                    updateData.examDate =
+                        parsedExamDate;
+
+                }
+
+            }
+
+
+            // =================================
+            // MAIN GOAL
+            // =================================
+
+            if (
+                typeof mainGoal ===
+                "string"
+            ) {
+
+                updateData.mainGoal =
+                    mainGoal.trim();
+
+            }
+
+
+            // =================================
+            // UPDATE PROFILE
+            // =================================
 
             const profile =
                 await Profile.findOneAndUpdate(
@@ -177,38 +278,29 @@ const updateProfile =
                             req.user._id
                     },
 
-                    {
-                        user:
-                            req.user._id,
-
-                        course:
-                            course?.trim() || "",
-
-                        semester:
-                            semester?.trim() || "",
-
-                        dailyStudyGoal:
-                            goalMinutes,
-
-                        examDate:
-                            parsedExamDate,
-
-                        mainGoal:
-                            mainGoal?.trim() || ""
-                    },
+                    updateData,
 
                     {
-                        new: true,
-                        upsert: true,
-                        runValidators: true
+                        returnDocument:
+                            "after",
+
+                        upsert:
+                            true,
+
+                        runValidators:
+                            true,
+
+                        setDefaultsOnInsert:
+                            true
                     }
 
                 );
 
 
-            res.json({
+            return res.json({
 
-                success: true,
+                success:
+                    true,
 
                 message:
                     "Profile updated successfully",
@@ -225,21 +317,31 @@ const updateProfile =
             );
 
 
-            res.status(500).json({
+            return res
+                .status(500)
+                .json({
 
-                success: false,
+                    success:
+                        false,
 
-                message:
-                    "Could not update profile"
+                    message:
+                        "Could not update profile"
 
-            });
+                });
 
         }
 
     };
 
 
+// =====================================
+// EXPORTS
+// =====================================
+
 module.exports = {
+
     getProfile,
+
     updateProfile
+
 };
