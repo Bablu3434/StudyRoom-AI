@@ -1382,13 +1382,24 @@ const logoutBtn =
     );
 
 
-if (
-    logoutBtn
-) {
+if (logoutBtn) {
 
     logoutBtn.addEventListener(
         "click",
-        logout
+        function () {
+
+            localStorage.removeItem(
+                "studyRoomToken"
+            );
+
+            localStorage.removeItem(
+                "studyRoomUser"
+            );
+
+            window.location.href =
+                "login.html";
+
+        }
     );
 
 }
@@ -1697,6 +1708,75 @@ function escapeHTML(
             /'/g,
             "&#039;"
         );
+
+}
+
+// =====================================
+// START FOCUS SESSION
+// =====================================
+
+const startFocusBtn =
+    document.getElementById(
+        "startFocusBtn"
+    );
+
+
+if (startFocusBtn) {
+
+    startFocusBtn.addEventListener(
+        "click",
+        function () {
+
+            let focusMinutes = 25;
+
+
+            // Settings me saved focus time check karo
+
+            try {
+
+                const settings =
+                    JSON.parse(
+                        localStorage.getItem(
+                            "studyRoomSettings"
+                        )
+                    );
+
+
+                if (
+                    settings &&
+                    Number(
+                        settings.focusDuration
+                    ) > 0
+                ) {
+
+                    focusMinutes =
+                        Number(
+                            settings.focusDuration
+                        );
+
+                }
+
+            } catch (error) {
+
+                console.error(
+                    "Focus settings error:",
+                    error
+                );
+
+            }
+
+
+            const timerURL =
+                `timer.html?subject=${encodeURIComponent(
+                    "Focus Session"
+                )}&minutes=${focusMinutes}`;
+
+
+            window.location.href =
+                timerURL;
+
+        }
+    );
 
 }
 

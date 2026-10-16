@@ -17,7 +17,7 @@ if (!token) {
 
 
 // =====================================
-// Elements
+// ELEMENTS
 // =====================================
 
 const display =
@@ -25,20 +25,24 @@ const display =
         "timerDisplay"
     );
 
+
 const timerRing =
     document.getElementById(
         "timerRing"
     );
+
 
 const timerLabel =
     document.getElementById(
         "timerLabel"
     );
 
+
 const timerDescription =
     document.getElementById(
         "timerDescription"
     );
+
 
 const statusText =
     document.getElementById(
@@ -51,6 +55,7 @@ const focusModeBtn =
         "focusMode"
     );
 
+
 const breakModeBtn =
     document.getElementById(
         "breakMode"
@@ -62,15 +67,18 @@ const startBtn =
         "startBtn"
     );
 
+
 const pauseBtn =
     document.getElementById(
         "pauseBtn"
     );
 
+
 const resetBtn =
     document.getElementById(
         "resetBtn"
     );
+
 
 const subjectInput =
     document.getElementById(
@@ -82,7 +90,51 @@ let sessions = [];
 
 
 // =====================================
-// URL Parameters
+// LOAD SAVED SETTINGS
+// =====================================
+
+function getSavedSettings() {
+
+    try {
+
+        const saved =
+            localStorage.getItem(
+                "studyRoomSettings"
+            );
+
+
+        if (!saved) {
+
+            return {};
+
+        }
+
+
+        return JSON.parse(
+            saved
+        ) || {};
+
+    } catch (error) {
+
+        console.error(
+            "Could not read timer settings:",
+            error
+        );
+
+
+        return {};
+
+    }
+
+}
+
+
+const savedSettings =
+    getSavedSettings();
+
+
+// =====================================
+// URL PARAMETERS
 // =====================================
 
 const params =
@@ -92,14 +144,46 @@ const params =
 
 
 const selectedSubject =
-    params.get("subject");
+    params.get(
+        "subject"
+    );
+
+
+const selectedTopic =
+    params.get(
+        "topic"
+    );
 
 
 const requestedMinutes =
     Number(
-        params.get("minutes")
+        params.get(
+            "minutes"
+        )
     );
 
+
+// =====================================
+// TIMER DURATIONS
+// =====================================
+
+// Saved default focus duration
+const savedFocusMinutes =
+    Number(
+        savedSettings.focusDuration
+    );
+
+
+// Saved default break duration
+const savedBreakMinutes =
+    Number(
+        savedSettings.breakDuration
+    );
+
+
+// URL duration gets first priority.
+// Otherwise use Settings.
+// Otherwise use 25 minutes.
 
 const focusMinutes =
 
@@ -117,14 +201,54 @@ const focusMinutes =
 
         ? requestedMinutes
 
-        : 25;
+        : (
+            Number.isInteger(
+                savedFocusMinutes
+            )
 
+            &&
+
+            savedFocusMinutes >= 1
+
+            &&
+
+            savedFocusMinutes <= 300
+
+                ? savedFocusMinutes
+
+                : 25
+        );
+
+
+// Break duration comes from Settings
 
 const breakMinutes =
-    5;
+
+    Number.isInteger(
+        savedBreakMinutes
+    )
+
+    &&
+
+    savedBreakMinutes >= 1
+
+    &&
+
+    savedBreakMinutes <= 120
+
+        ? savedBreakMinutes
+
+        : 5;
 
 
-if (selectedSubject) {
+// =====================================
+// PRE-FILL SUBJECT
+// =====================================
+
+if (
+    selectedSubject &&
+    subjectInput
+) {
 
     subjectInput.value =
         selectedSubject.slice(
@@ -136,7 +260,7 @@ if (selectedSubject) {
 
 
 // =====================================
-// Timer State
+// TIMER STATE
 // =====================================
 
 let currentMode =
@@ -164,7 +288,7 @@ let activeSubject =
 
 
 // =====================================
-// API Helper
+// API HELPER
 // =====================================
 
 async function apiFetch(
@@ -176,6 +300,7 @@ async function apiFetch(
         await fetch(
             url,
             {
+
                 ...options,
 
                 headers: {
@@ -187,7 +312,9 @@ async function apiFetch(
                         `Bearer ${token}`,
 
                     ...options.headers
+
                 }
+
             }
         );
 
@@ -200,14 +327,20 @@ async function apiFetch(
             "studyRoomToken"
         );
 
+
         localStorage.removeItem(
             "studyRoomUser"
         );
 
+
         window.location.href =
             "login.html";
 
-        return;
+
+        throw new Error(
+            "Session expired"
+        );
+
     }
 
 
@@ -226,11 +359,12 @@ async function apiFetch(
 
 
     return data;
+
 }
 
 
 // =====================================
-// Load Sessions
+// LOAD SESSIONS
 // =====================================
 
 async function loadSessions() {
@@ -244,7 +378,11 @@ async function loadSessions() {
 
 
         sessions =
-            data.sessions;
+            Array.isArray(
+                data.sessions
+            )
+                ? data.sessions
+                : [];
 
 
         renderHistory();
@@ -252,12 +390,17 @@ async function loadSessions() {
     } catch (error) {
 
         console.error(
+            "Load Sessions Error:",
             error
         );
 
 
-        statusText.textContent =
-            "Could not load session history.";
+        if (statusText) {
+
+            statusText.textContent =
+                "Could not load session history.";
+
+        }
 
     }
 
@@ -265,12 +408,13 @@ async function loadSessions() {
 
 
 // =====================================
-// Timer Helpers
+// TIMER HELPERS
 // =====================================
 
 function getTotalSeconds() {
 
-    return currentMode === "focus"
+    return currentMode ===
+        "focus"
 
         ? focusMinutes * 60
 
@@ -279,7 +423,9 @@ function getTotalSeconds() {
 }
 
 
-function formatTime(seconds) {
+function formatTime(
+    seconds
+) {
 
     const minutes =
         Math.floor(
@@ -292,8 +438,13 @@ function formatTime(seconds) {
 
 
     return (
-        String(minutes)
-            .padStart(2, "0")
+        String(
+            minutes
+        )
+            .padStart(
+                2,
+                "0"
+            )
 
         +
 
@@ -301,53 +452,86 @@ function formatTime(seconds) {
 
         +
 
-        String(secs)
-            .padStart(2, "0")
+        String(
+            secs
+        )
+            .padStart(
+                2,
+                "0"
+            )
     );
 
 }
 
 
+// =====================================
+// UPDATE DISPLAY
+// =====================================
+
 function updateDisplay() {
 
-    display.textContent =
-        formatTime(
-            remainingSeconds
-        );
+    if (display) {
+
+        display.textContent =
+            formatTime(
+                remainingSeconds
+            );
+
+    }
 
 
     const total =
         getTotalSeconds();
 
 
-    const percentage =
+    let percentage =
+        0;
 
-        (
+
+    if (
+        total > 0
+    ) {
+
+        percentage =
             (
-                total -
-                remainingSeconds
-            )
+                (
+                    total -
+                    remainingSeconds
+                )
 
-            /
+                /
 
-            total
-        )
+                total
 
-        * 100;
+            ) * 100;
 
-
-    timerRing.style.setProperty(
-        "--progress",
-        percentage + "%"
-    );
+    }
 
 
-    startBtn.disabled =
-        running;
+    if (timerRing) {
+
+        timerRing.style.setProperty(
+            "--progress",
+            `${percentage}%`
+        );
+
+    }
 
 
-    pauseBtn.disabled =
-        !running;
+    if (startBtn) {
+
+        startBtn.disabled =
+            running;
+
+    }
+
+
+    if (pauseBtn) {
+
+        pauseBtn.disabled =
+            !running;
+
+    }
 
 
     document.title =
@@ -357,6 +541,10 @@ function updateDisplay() {
 
 }
 
+
+// =====================================
+// STOP INTERVAL
+// =====================================
 
 function stopInterval() {
 
@@ -386,7 +574,7 @@ function stopInterval() {
 
 
 // =====================================
-// Set Mode
+// SET MODE
 // =====================================
 
 function setMode(
@@ -405,49 +593,66 @@ function setMode(
         getTotalSeconds();
 
 
-    focusModeBtn.classList.toggle(
-        "active",
-        mode === "focus"
-    );
+    if (focusModeBtn) {
+
+        focusModeBtn.classList.toggle(
+            "active",
+            mode === "focus"
+        );
+
+    }
 
 
-    breakModeBtn.classList.toggle(
-        "active",
-        mode === "break"
-    );
+    if (breakModeBtn) {
+
+        breakModeBtn.classList.toggle(
+            "active",
+            mode === "break"
+        );
+
+    }
 
 
-    timerLabel.textContent =
+    if (timerLabel) {
 
-        mode === "focus"
-
-            ? "FOCUS SESSION"
-
-            : "SHORT BREAK";
-
-
-    timerDescription.textContent =
-
-        mode === "focus"
-
-            ? "Time to concentrate"
-
-            : "Time to recharge";
-
-
-    statusText.textContent =
-
-        message
-
-        ||
-
-        (
+        timerLabel.textContent =
             mode === "focus"
 
-                ? "Ready for your focus session."
+                ? "FOCUS SESSION"
 
-                : "Ready for your break."
-        );
+                : "SHORT BREAK";
+
+    }
+
+
+    if (timerDescription) {
+
+        timerDescription.textContent =
+            mode === "focus"
+
+                ? "Time to concentrate"
+
+                : "Time to recharge";
+
+    }
+
+
+    if (statusText) {
+
+        statusText.textContent =
+            message
+
+            ||
+
+            (
+                mode === "focus"
+
+                    ? "Ready for your focus session."
+
+                    : "Ready for your break."
+            );
+
+    }
 
 
     updateDisplay();
@@ -456,13 +661,16 @@ function setMode(
 
 
 // =====================================
-// Start Timer
+// START TIMER
 // =====================================
 
 function startTimer() {
 
-    if (running)
+    if (running) {
+
         return;
+
+    }
 
 
     if (
@@ -470,15 +678,29 @@ function startTimer() {
         "focus"
     ) {
 
-        activeSubject =
-
+        const subject =
             subjectInput
-                .value
-                .trim()
+                ?.value
+                ?.trim();
 
-            ||
 
+        activeSubject =
+            subject ||
             "General Study";
+
+
+        // Add topic to saved session name
+        // if it came from Dashboard/Planner
+
+        if (
+            selectedTopic &&
+            selectedTopic.trim()
+        ) {
+
+            activeSubject =
+                `${activeSubject} - ${selectedTopic.trim()}`;
+
+        }
 
     }
 
@@ -496,13 +718,16 @@ function startTimer() {
         1000;
 
 
-    statusText.textContent =
+    if (statusText) {
 
-        currentMode === "focus"
+        statusText.textContent =
+            currentMode === "focus"
 
-            ? "Your focus session is running."
+                ? "Your focus session is running."
 
-            : "Enjoy your break.";
+                : "Enjoy your break.";
+
+    }
 
 
     intervalId =
@@ -518,13 +743,16 @@ function startTimer() {
 
 
 // =====================================
-// Update Timer
+// UPDATE TIMER
 // =====================================
 
 function updateTimer() {
 
-    if (!running)
+    if (!running) {
+
         return;
+
+    }
 
 
     remainingSeconds =
@@ -533,7 +761,6 @@ function updateTimer() {
             0,
 
             Math.ceil(
-
                 (
                     endTime -
                     Date.now()
@@ -564,13 +791,16 @@ function updateTimer() {
 
 
 // =====================================
-// Pause
+// PAUSE
 // =====================================
 
 function pauseTimer() {
 
-    if (!running)
+    if (!running) {
+
         return;
+
+    }
 
 
     remainingSeconds =
@@ -579,7 +809,6 @@ function pauseTimer() {
             0,
 
             Math.ceil(
-
                 (
                     endTime -
                     Date.now()
@@ -596,8 +825,12 @@ function pauseTimer() {
     stopInterval();
 
 
-    statusText.textContent =
-        "Timer paused.";
+    if (statusText) {
+
+        statusText.textContent =
+            "Timer paused.";
+
+    }
 
 
     updateDisplay();
@@ -606,7 +839,7 @@ function pauseTimer() {
 
 
 // =====================================
-// Reset
+// RESET
 // =====================================
 
 function resetTimer() {
@@ -618,8 +851,12 @@ function resetTimer() {
         getTotalSeconds();
 
 
-    statusText.textContent =
-        "Timer reset.";
+    if (statusText) {
+
+        statusText.textContent =
+            "Timer reset.";
+
+    }
 
 
     updateDisplay();
@@ -628,7 +865,7 @@ function resetTimer() {
 
 
 // =====================================
-// Save Focus Session
+// SAVE FOCUS SESSION
 // =====================================
 
 async function saveSession() {
@@ -637,6 +874,7 @@ async function saveSession() {
         await apiFetch(
             API_URL,
             {
+
                 method:
                     "POST",
 
@@ -650,6 +888,7 @@ async function saveSession() {
                             focusMinutes
 
                     })
+
             }
         );
 
@@ -660,7 +899,7 @@ async function saveSession() {
 
 
 // =====================================
-// Finish Timer
+// FINISH TIMER
 // =====================================
 
 async function finishTimer() {
@@ -677,8 +916,12 @@ async function finishTimer() {
         "focus"
     ) {
 
-        statusText.textContent =
-            "Saving completed session...";
+        if (statusText) {
+
+            statusText.textContent =
+                "Saving completed session...";
+
+        }
 
 
         try {
@@ -693,13 +936,14 @@ async function finishTimer() {
 
                 "break",
 
-                "Focus session saved! Take a 5-minute break."
+                `Focus session saved! Take a ${breakMinutes}-minute break.`
 
             );
 
         } catch (error) {
 
             console.error(
+                "Save Focus Session Error:",
                 error
             );
 
@@ -708,7 +952,7 @@ async function finishTimer() {
 
                 "break",
 
-                "Focus finished, but the session could not be saved."
+                `Focus finished, but the session could not be saved. Take a ${breakMinutes}-minute break.`
 
             );
 
@@ -730,7 +974,7 @@ async function finishTimer() {
 
 
 // =====================================
-// History / Statistics
+// HISTORY / STATISTICS
 // =====================================
 
 function renderHistory() {
@@ -742,28 +986,35 @@ function renderHistory() {
 
     const todaySessions =
         sessions.filter(
-            item =>
+            (item) => {
 
-                new Date(
-                    item.completedAt
-                )
-                .toDateString()
+                return (
+                    new Date(
+                        item.completedAt
+                    )
+                        .toDateString()
 
-                ===
+                    ===
 
-                today
+                    today
+                );
+
+            }
         );
 
 
     const totalMinutes =
         todaySessions.reduce(
-            (sum, item) =>
+            (sum, item) => {
 
-                sum +
-                Number(
-                    item.minutes || 0
-                ),
+                return (
+                    sum +
+                    Number(
+                        item.minutes || 0
+                    )
+                );
 
+            },
             0
         );
 
@@ -778,27 +1029,49 @@ function renderHistory() {
         totalMinutes % 60;
 
 
-    document.getElementById(
-        "todayStudyTime"
-    ).textContent =
-
-        hours > 0
-
-            ? `${hours}h ${minutes}m`
-
-            : `${minutes} min`;
+    const todayStudyTime =
+        document.getElementById(
+            "todayStudyTime"
+        );
 
 
-    document.getElementById(
-        "todaySessions"
-    ).textContent =
-        todaySessions.length;
+    if (todayStudyTime) {
+
+        todayStudyTime.textContent =
+            hours > 0
+
+                ? `${hours}h ${minutes}m`
+
+                : `${minutes} min`;
+
+    }
+
+
+    const todaySessionsElement =
+        document.getElementById(
+            "todaySessions"
+        );
+
+
+    if (todaySessionsElement) {
+
+        todaySessionsElement.textContent =
+            todaySessions.length;
+
+    }
 
 
     const historyList =
         document.getElementById(
             "historyList"
         );
+
+
+    if (!historyList) {
+
+        return;
+
+    }
 
 
     historyList.replaceChildren();
@@ -835,7 +1108,7 @@ function renderHistory() {
     sessions
         .slice(0, 5)
         .forEach(
-            item => {
+            (item) => {
 
                 const row =
                     document.createElement(
@@ -860,7 +1133,8 @@ function renderHistory() {
 
 
                 title.textContent =
-                    item.subject;
+                    item.subject ||
+                    "General Study";
 
 
                 const date =
@@ -873,9 +1147,9 @@ function renderHistory() {
                     new Date(
                         item.completedAt
                     )
-                    .toLocaleString(
-                        "en-IN"
-                    );
+                        .toLocaleString(
+                            "en-IN"
+                        );
 
 
                 const duration =
@@ -911,50 +1185,78 @@ function renderHistory() {
 
 
 // =====================================
-// Events
+// EVENTS
 // =====================================
 
-startBtn.addEventListener(
-    "click",
-    startTimer
-);
+if (startBtn) {
+
+    startBtn.addEventListener(
+        "click",
+        startTimer
+    );
+
+}
 
 
-pauseBtn.addEventListener(
-    "click",
-    pauseTimer
-);
+if (pauseBtn) {
+
+    pauseBtn.addEventListener(
+        "click",
+        pauseTimer
+    );
+
+}
 
 
-resetBtn.addEventListener(
-    "click",
-    resetTimer
-);
+if (resetBtn) {
+
+    resetBtn.addEventListener(
+        "click",
+        resetTimer
+    );
+
+}
 
 
-focusModeBtn.addEventListener(
-    "click",
-    () =>
-        setMode(
-            "focus"
-        )
-);
+if (focusModeBtn) {
+
+    focusModeBtn.addEventListener(
+        "click",
+        () => {
+
+            setMode(
+                "focus"
+            );
+
+        }
+    );
+
+}
 
 
-breakModeBtn.addEventListener(
-    "click",
-    () =>
-        setMode(
-            "break"
-        )
-);
+if (breakModeBtn) {
+
+    breakModeBtn.addEventListener(
+        "click",
+        () => {
+
+            setMode(
+                "break"
+            );
+
+        }
+    );
+
+}
 
 
 document.addEventListener(
     "visibilitychange",
     function () {
 
-        if (running) {
+        if (
+            running
+        ) {
 
             updateTimer();
 
@@ -965,11 +1267,23 @@ document.addEventListener(
 
 
 // =====================================
-// Initial
+// INITIALIZE
 // =====================================
 
-focusModeBtn.textContent =
-    `Focus (${focusMinutes}m)`;
+if (focusModeBtn) {
+
+    focusModeBtn.textContent =
+        `Focus (${focusMinutes}m)`;
+
+}
+
+
+if (breakModeBtn) {
+
+    breakModeBtn.textContent =
+        `Break (${breakMinutes}m)`;
+
+}
 
 
 setMode(
