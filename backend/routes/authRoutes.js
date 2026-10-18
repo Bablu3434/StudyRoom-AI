@@ -1,24 +1,23 @@
 const express =
     require("express");
 
+
 const {
     registerUser,
-    loginUser
-} = require(
-    "../controllers/authController"
-);
+    loginUser,
+    forgotPassword,
+    resetPassword
+} =
+    require("../controllers/authController");
+
 
 const protect =
-    require(
-        "../middleware/authMiddleware"
-    );
+    require("../middleware/authMiddleware");
 
 
 const router =
     express.Router();
 
-
-// Register
 
 router.post(
     "/register",
@@ -26,35 +25,35 @@ router.post(
 );
 
 
-// Login
-
 router.post(
     "/login",
     loginUser
 );
 
 
-// Logged-in user details
+router.post(
+    "/forgot-password",
+    forgotPassword
+);
+
+
+router.post(
+    "/reset-password/:token",
+    resetPassword
+);
+
 
 router.get(
     "/me",
     protect,
-    async (req, res) => {
+    (req, res) => {
 
         res.json({
 
             success: true,
 
-            user: {
-                id:
-                    req.user._id,
-
-                name:
-                    req.user.name,
-
-                email:
-                    req.user.email
-            }
+            user:
+                req.user
 
         });
 

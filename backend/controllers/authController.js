@@ -1,3 +1,4 @@
+const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 
 const User = require(
@@ -283,8 +284,311 @@ const loginUser =
 
     };
 
+    // =====================================
+// FORGOT PASSWORD
+// POST /api/auth/forgot-password
+// =====================================
+
+const forgotPassword =
+    async (req, res) => {
+
+        try {
+
+            const {
+                email
+            } = req.body;
+
+
+            if (
+                !email ||
+                typeof email !== "string"
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+
+                        success: false,
+
+                        message:
+                            "Please enter your email"
+
+                    });
+
+            }
+
+
+            const user =
+                await User.findOne({
+
+                    email:
+                        email
+                            .trim()
+                            .toLowerCase()
+
+                });
+
+
+            // Generic response
+            // prevents email enumeration
+
+            if (!user) {
+
+                return res.json({
+
+                    success: true,
+
+                    message:
+                        "If an account exists with this email, a password reset link has been created."
+
+                });
+
+            }
+
+
+            // Create random token
+
+            const resetToken =
+                crypto
+                    .randomBytes(32)
+                    .toString("hex");
+
+
+            // Store HASHED token in database
+
+            const hashedToken =
+                crypto
+                    .createHash("sha256")
+                    .update(resetToken)
+                    .digest("hex");
+
+
+            user.resetPasswordToken =
+                hashedToken;
+
+
+            user.resetPasswordExpires =
+                Date.now() +
+                15 * 60 * 1000;
+
+
+            await user.save();
+
+
+            // Local development reset link
+
+            const resetUrl =
+                `http://127.0.0.1:5500/reset-password.html?token=${resetToken}`;
+
+
+            console.log(
+                "Password Reset Link:",
+                resetUrl
+            );
+
+
+            return res.json({
+
+                success: true,
+
+                message:
+                    "Password reset link created successfully.",
+
+                // DEV ONLY
+                resetUrl
+
+            });
+
+        } catch (error) {
+
+            console.error(
+                "Forgot Password Error:",
+                error
+            );
+
+
+            return res
+                .status(500)
+                .json({
+
+                    success: false,
+
+                    message:
+                        "Could not create password reset link"
+
+                });
+
+        }
+
+    };
+
+
+// =====================================
+// RESET PASSWORD
+// POST /api/auth/reset-password/:token
+// =====================================
+
+const resetPassword =
+    async (req, res) => {
+
+        try {
+
+            const {
+                token
+            } = req.params;
+
+
+            const {
+                password,
+                confirmPassword
+            } = req.body;
+
+
+            if (
+                !token
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+
+                        success: false,
+
+                        message:
+                            "Invalid reset link"
+
+                    });
+
+            }
+
+
+            if (
+                typeof password !== "string" ||
+                password.length < 6
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+
+                        success: false,
+
+                        message:
+                            "Password must be at least 6 characters"
+
+                    });
+
+            }
+
+
+            if (
+                password !==
+                confirmPassword
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+
+                        success: false,
+
+                        message:
+                            "Passwords do not match"
+
+                    });
+
+            }
+
+
+            const hashedToken =
+                crypto
+                    .createHash("sha256")
+                    .update(token)
+                    .digest("hex");
+
+
+            const user =
+                await User.findOne({
+
+                    resetPasswordToken:
+                        hashedToken,
+
+                    resetPasswordExpires: {
+                        $gt: Date.now()
+                    }
+
+                });
+
+
+            if (!user) {
+
+                return res
+                    .status(400)
+                    .json({
+
+                        success: false,
+
+                        message:
+                            "Reset link is invalid or has expired"
+
+                    });
+
+            }
+
+
+            // This triggers User pre-save hashing
+
+            user.password =
+                password;
+
+
+            user.resetPasswordToken =
+                null;
+
+
+            user.resetPasswordExpires =
+                null;
+
+
+            await user.save();
+
+
+            return res.json({
+
+                success: true,
+
+                message:
+                    "Password reset successfully"
+
+            });
+
+        } catch (error) {
+
+            console.error(
+                "Reset Password Error:",
+                error
+            );
+
+
+            return res
+                .status(500)
+                .json({
+
+                    success: false,
+
+                    message:
+                        "Could not reset password"
+
+                });
+
+        }
+
+    };
+
 
 module.exports = {
     registerUser,
-    loginUser
+    loginUser,
+    forgotPassword,
+    resetPassword
 };
