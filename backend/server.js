@@ -23,7 +23,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/subjects", subjectRoutes);
 app.use("/api/tasks" , taskRoutes);
 app.use("/api/notes", noteRoutes);
-app.use("/api/focus", focusRoutes);
+app.use("/api/focus-sessions", focusRoutes);
 app.use("/api/quiz", quizRoutes);
 app.use("/api/progress", progressRoutes);
 app.use("/api/dashboard", dashboardRoutes);
