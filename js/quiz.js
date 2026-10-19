@@ -2,13 +2,9 @@
 // StudyRoom AI - Quiz System
 // =====================================
 
+const QUIZ_ATTEMPT_API =
+    "http://localhost:5000/api/quiz/attempts";
 
-// -------------------------------------
-// Login Protection
-// -------------------------------------
-
-const QUIZ_API =
-    "http://localhost:5000/api/quiz";
 
 const quizToken =
     localStorage.getItem(
@@ -16,13 +12,32 @@ const quizToken =
     );
 
 
-if (!quizToken) {
+const user =
+    JSON.parse(
+        localStorage.getItem(
+            "studyRoomUser"
+        ) || "null"
+    );
+
+
+// =====================================
+// LOGIN PROTECTION
+// =====================================
+
+if (
+    !quizToken ||
+    !user
+) {
 
     window.location.href =
         "login.html";
 
 }
 
+
+// =====================================
+// API HELPER
+// =====================================
 
 async function quizApiFetch(
     url,
@@ -33,6 +48,7 @@ async function quizApiFetch(
         await fetch(
             url,
             {
+
                 ...options,
 
                 headers: {
@@ -44,7 +60,9 @@ async function quizApiFetch(
                         `Bearer ${quizToken}`,
 
                     ...options.headers
+
                 }
+
             }
         );
 
@@ -57,6 +75,7 @@ async function quizApiFetch(
             "studyRoomToken"
         );
 
+
         localStorage.removeItem(
             "studyRoomUser"
         );
@@ -65,12 +84,47 @@ async function quizApiFetch(
         window.location.href =
             "login.html";
 
-        return;
+
+        throw new Error(
+            "Login session expired."
+        );
+
     }
 
 
-    const data =
-        await response.json();
+    const contentType =
+        response.headers.get(
+            "content-type"
+        );
+
+
+    let data;
+
+
+    if (
+        contentType &&
+        contentType.includes(
+            "application/json"
+        )
+    ) {
+
+        data =
+            await response.json();
+
+    } else {
+
+        const text =
+            await response.text();
+
+
+        throw new Error(
+            `Server returned ${response.status}: ${text.slice(
+                0,
+                120
+            )}`
+        );
+
+    }
 
 
     if (!response.ok) {
@@ -84,87 +138,17 @@ async function quizApiFetch(
 
 
     return data;
-} //add new code 
-
-async function saveQuizResultToDatabase(
-    subject,
-    topic,
-    score,
-    totalQuestions
-) {
-
-    try {
-
-        const data =
-            await quizApiFetch(
-                `${QUIZ_API}/attempts`,
-                {
-                    method:
-                        "POST",
-
-                    body:
-                        JSON.stringify({
-                            subject,
-                            topic,
-                            score,
-                            totalQuestions
-                        })
-                }
-            );
-
-
-        console.log(
-            "Quiz saved:",
-            data.attempt
-        );
-
-
-        return data.attempt;
-
-    } catch (error) {
-
-        console.error(
-            "Quiz save error:",
-            error
-        );
-
-
-        alert(
-            "Quiz completed, but result could not be saved."
-        );
-
-    }
-
-} //add new funcation 
-const loggedIn =
-    localStorage.getItem(
-        "studyRoomLoggedIn"
-    ) === "true";
-
-
-const user =
-    JSON.parse(
-        localStorage.getItem(
-            "studyRoomUser"
-        ) || "null"
-    );
-
-
-if (!loggedIn || !user) {
-
-    window.location.replace(
-        "login.html"
-    );
 
 }
 
 
-// -------------------------------------
-// Storage Keys
-// -------------------------------------
+// =====================================
+// STORAGE KEYS
+// =====================================
 
 const userEmail =
-    user.email.toLowerCase();
+    user.email
+        .toLowerCase();
 
 
 const historyKey =
@@ -178,17 +162,21 @@ const performanceKey =
 
 
 // =====================================
-// Question Bank
+// QUESTION BANK
 // =====================================
 
 const questionBank = [
 
-    // Java
+    // =====================================
+    // JAVA
+    // =====================================
 
     {
-        subject: "Java Programming",
+        subject:
+            "Java Programming",
 
-        topic: "Variables",
+        topic:
+            "Variables",
 
         question:
             "Which keyword is used to declare a constant in Java?",
@@ -200,14 +188,17 @@ const questionBank = [
             "fixed"
         ],
 
-        answer: 1
+        answer:
+            1
     },
 
 
     {
-        subject: "Java Programming",
+        subject:
+            "Java Programming",
 
-        topic: "Variables",
+        topic:
+            "Variables",
 
         question:
             "Which data type is commonly used for whole numbers in Java?",
@@ -219,14 +210,17 @@ const questionBank = [
             "char"
         ],
 
-        answer: 2
+        answer:
+            2
     },
 
 
     {
-        subject: "Java Programming",
+        subject:
+            "Java Programming",
 
-        topic: "Inheritance",
+        topic:
+            "Inheritance",
 
         question:
             "Which keyword is used for class inheritance in Java?",
@@ -238,14 +232,17 @@ const questionBank = [
             "super"
         ],
 
-        answer: 2
+        answer:
+            2
     },
 
 
     {
-        subject: "Java Programming",
+        subject:
+            "Java Programming",
 
-        topic: "Inheritance",
+        topic:
+            "Inheritance",
 
         question:
             "Java supports multiple inheritance of classes directly.",
@@ -257,14 +254,17 @@ const questionBank = [
             "Only with static classes"
         ],
 
-        answer: 1
+        answer:
+            1
     },
 
 
     {
-        subject: "Java Programming",
+        subject:
+            "Java Programming",
 
-        topic: "Polymorphism",
+        topic:
+            "Polymorphism",
 
         question:
             "Method overloading is an example of which type of polymorphism?",
@@ -276,14 +276,17 @@ const questionBank = [
             "None"
         ],
 
-        answer: 1
+        answer:
+            1
     },
 
 
     {
-        subject: "Java Programming",
+        subject:
+            "Java Programming",
 
-        topic: "Polymorphism",
+        topic:
+            "Polymorphism",
 
         question:
             "Method overriding is mainly associated with which concept?",
@@ -295,16 +298,21 @@ const questionBank = [
             "Arrays"
         ],
 
-        answer: 0
+        answer:
+            0
     },
 
 
+    // =====================================
     // DBMS
+    // =====================================
 
     {
-        subject: "DBMS",
+        subject:
+            "DBMS",
 
-        topic: "Normalization",
+        topic:
+            "Normalization",
 
         question:
             "What is the main purpose of normalization?",
@@ -316,14 +324,17 @@ const questionBank = [
             "Increase duplicate records"
         ],
 
-        answer: 1
+        answer:
+            1
     },
 
 
     {
-        subject: "DBMS",
+        subject:
+            "DBMS",
 
-        topic: "Normalization",
+        topic:
+            "Normalization",
 
         question:
             "First Normal Form mainly removes which type of values?",
@@ -335,14 +346,17 @@ const questionBank = [
             "Foreign keys"
         ],
 
-        answer: 1
+        answer:
+            1
     },
 
 
     {
-        subject: "DBMS",
+        subject:
+            "DBMS",
 
-        topic: "SQL",
+        topic:
+            "SQL",
 
         question:
             "Which SQL command is used to retrieve data?",
@@ -354,14 +368,17 @@ const questionBank = [
             "DROP"
         ],
 
-        answer: 2
+        answer:
+            2
     },
 
 
     {
-        subject: "DBMS",
+        subject:
+            "DBMS",
 
-        topic: "SQL",
+        topic:
+            "SQL",
 
         question:
             "Which SQL command removes a table completely?",
@@ -373,14 +390,17 @@ const questionBank = [
             "CLEAR"
         ],
 
-        answer: 2
+        answer:
+            2
     },
 
 
     {
-        subject: "DBMS",
+        subject:
+            "DBMS",
 
-        topic: "Keys",
+        topic:
+            "Keys",
 
         question:
             "Which key uniquely identifies each record in a table?",
@@ -392,16 +412,21 @@ const questionBank = [
             "Index"
         ],
 
-        answer: 1
+        answer:
+            1
     },
 
 
-    // Mathematics
+    // =====================================
+    // MATHEMATICS
+    // =====================================
 
     {
-        subject: "Mathematics",
+        subject:
+            "Mathematics",
 
-        topic: "Algebra",
+        topic:
+            "Algebra",
 
         question:
             "What is the value of x if x + 5 = 10?",
@@ -413,14 +438,17 @@ const questionBank = [
             "15"
         ],
 
-        answer: 1
+        answer:
+            1
     },
 
 
     {
-        subject: "Mathematics",
+        subject:
+            "Mathematics",
 
-        topic: "Algebra",
+        topic:
+            "Algebra",
 
         question:
             "What is 3 × 4 + 2?",
@@ -432,14 +460,17 @@ const questionBank = [
             "24"
         ],
 
-        answer: 0
+        answer:
+            0
     },
 
 
     {
-        subject: "Mathematics",
+        subject:
+            "Mathematics",
 
-        topic: "Integration",
+        topic:
+            "Integration",
 
         question:
             "Integration is commonly considered the reverse process of:",
@@ -451,14 +482,17 @@ const questionBank = [
             "Factorization"
         ],
 
-        answer: 1
+        answer:
+            1
     },
 
 
     {
-        subject: "Mathematics",
+        subject:
+            "Mathematics",
 
-        topic: "Integration",
+        topic:
+            "Integration",
 
         question:
             "The integral of 1 with respect to x is:",
@@ -470,14 +504,15 @@ const questionBank = [
             "x²"
         ],
 
-        answer: 1
+        answer:
+            1
     }
 
 ];
 
 
 // =====================================
-// Elements
+// ELEMENTS
 // =====================================
 
 const subjectSelect =
@@ -589,24 +624,48 @@ const newQuizBtn =
 
 
 // =====================================
-// Quiz State
+// QUIZ STATE
 // =====================================
 
-let quizQuestions = [];
+let quizQuestions =
+    [];
 
-let currentQuestionIndex = 0;
 
-let score = 0;
+let currentQuestionIndex =
+    0;
 
-let answered = false;
 
-let selectedSubject = "";
+let score =
+    0;
 
-let selectedTopic = "";
+
+let answered =
+    false;
+
+
+let selectedSubject =
+    "";
+
+
+let selectedTopic =
+    "";
+
+
+// Stores current quiz result topic-wise.
+// This is what will be sent to MongoDB.
+
+let currentTopicResults =
+    {};
+
+
+// Prevent same result from being saved twice.
+
+let quizResultSaved =
+    false;
 
 
 // =====================================
-// Subject List
+// SUBJECT LIST
 // =====================================
 
 function loadSubjects() {
@@ -635,6 +694,7 @@ function loadSubjects() {
             option.value =
                 subject;
 
+
             option.textContent =
                 subject;
 
@@ -653,12 +713,12 @@ loadSubjects();
 
 
 // =====================================
-// Topics
+// TOPICS
 // =====================================
 
 subjectSelect.addEventListener(
     "change",
-    function() {
+    function () {
 
         const subject =
             this.value;
@@ -719,6 +779,7 @@ subjectSelect.addEventListener(
                 option.value =
                     topic;
 
+
                 option.textContent =
                     topic;
 
@@ -739,7 +800,7 @@ subjectSelect.addEventListener(
 
 
 // =====================================
-// Shuffle
+// SHUFFLE
 // =====================================
 
 function shuffleArray(array) {
@@ -749,8 +810,11 @@ function shuffleArray(array) {
 
 
     for (
-        let i = copy.length - 1;
+        let i =
+            copy.length - 1;
+
         i > 0;
+
         i--
     ) {
 
@@ -778,12 +842,12 @@ function shuffleArray(array) {
 
 
 // =====================================
-// Start Quiz
+// START QUIZ
 // =====================================
 
 startQuizBtn.addEventListener(
     "click",
-    function() {
+    function () {
 
         selectedSubject =
             subjectSelect.value;
@@ -816,7 +880,8 @@ startQuizBtn.addEventListener(
 
 
         if (
-            selectedTopic !== "all"
+            selectedTopic !==
+            "all"
         ) {
 
             availableQuestions =
@@ -839,13 +904,13 @@ startQuizBtn.addEventListener(
             shuffleArray(
                 availableQuestions
             )
-            .slice(
-                0,
-                Math.min(
-                    requestedCount,
-                    availableQuestions.length
-                )
-            );
+                .slice(
+                    0,
+                    Math.min(
+                        requestedCount,
+                        availableQuestions.length
+                    )
+                );
 
 
         if (
@@ -861,15 +926,32 @@ startQuizBtn.addEventListener(
         }
 
 
-        currentQuestionIndex = 0;
+        currentQuestionIndex =
+            0;
 
-        score = 0;
 
-        answered = false;
+        score =
+            0;
+
+
+        answered =
+            false;
+
+
+        currentTopicResults =
+            {};
+
+
+        quizResultSaved =
+            false;
 
 
         liveScore.textContent =
             "0";
+
+
+        nextQuestionBtn.textContent =
+            "Next Question";
 
 
         quizSetup.classList.add(
@@ -898,12 +980,13 @@ startQuizBtn.addEventListener(
 
 
 // =====================================
-// Render Question
+// RENDER QUESTION
 // =====================================
 
 function renderQuestion() {
 
-    answered = false;
+    answered =
+        false;
 
 
     nextQuestionBtn.disabled =
@@ -942,7 +1025,12 @@ function renderQuestion() {
 
     const progress =
         (
-            currentQuestionIndex /
+            (
+                currentQuestionIndex
+                +
+                1
+            )
+            /
             quizQuestions.length
         ) * 100;
 
@@ -964,6 +1052,10 @@ function renderQuestion() {
                 );
 
 
+            button.type =
+                "button";
+
+
             button.className =
                 "option-btn";
 
@@ -976,7 +1068,7 @@ function renderQuestion() {
 
             button.addEventListener(
                 "click",
-                function() {
+                function () {
 
                     selectAnswer(
                         index,
@@ -998,7 +1090,7 @@ function renderQuestion() {
 
 
 // =====================================
-// Select Answer
+// SELECT ANSWER
 // =====================================
 
 function selectAnswer(
@@ -1006,11 +1098,15 @@ function selectAnswer(
     selectedButton
 ) {
 
-    if (answered)
+    if (answered) {
+
         return;
 
+    }
 
-    answered = true;
+
+    answered =
+        true;
 
 
     const question =
@@ -1046,46 +1142,73 @@ function selectAnswer(
         score++;
 
 
-        selectedButton.classList.add(
-            "correct"
-        );
+        selectedButton
+            .classList
+            .add(
+                "correct"
+            );
 
 
         answerMessage.textContent =
             "✓ Correct answer!";
 
 
-        answerMessage.classList.add(
-            "correct-message"
-        );
+        answerMessage
+            .classList
+            .add(
+                "correct-message"
+            );
 
     } else {
 
-        selectedButton.classList.add(
-            "wrong"
-        );
+        selectedButton
+            .classList
+            .add(
+                "wrong"
+            );
 
 
-        buttons[
-            question.answer
-        ]
-        .classList.add(
-            "correct"
-        );
+        const correctButton =
+            buttons[
+                question.answer
+            ];
+
+
+        if (correctButton) {
+
+            correctButton
+                .classList
+                .add(
+                    "correct"
+                );
+
+        }
 
 
         answerMessage.textContent =
             "✕ Incorrect. Correct answer is highlighted.";
 
 
-        answerMessage.classList.add(
-            "wrong-message"
-        );
+        answerMessage
+            .classList
+            .add(
+                "wrong-message"
+            );
 
     }
 
 
+    // Existing localStorage tracking
+
     updateTopicPerformance(
+        question,
+        isCorrect
+    );
+
+
+    // NEW MongoDB topic tracking
+
+    recordTopicResult(
         question,
         isCorrect
     );
@@ -1118,15 +1241,70 @@ function selectAnswer(
 
 
 // =====================================
-// Next Question
+// CURRENT QUIZ TOPIC RESULT
+// =====================================
+
+function recordTopicResult(
+    question,
+    isCorrect
+) {
+
+    const key =
+        question.subject +
+        "||" +
+        question.topic;
+
+
+    if (
+        !currentTopicResults[key]
+    ) {
+
+        currentTopicResults[key] = {
+
+            subject:
+                question.subject,
+
+            topic:
+                question.topic,
+
+            score:
+                0,
+
+            totalQuestions:
+                0
+
+        };
+
+    }
+
+
+    currentTopicResults[key]
+        .totalQuestions++;
+
+
+    if (isCorrect) {
+
+        currentTopicResults[key]
+            .score++;
+
+    }
+
+}
+
+
+// =====================================
+// NEXT QUESTION
 // =====================================
 
 nextQuestionBtn.addEventListener(
     "click",
-    function() {
+    async function () {
 
-        if (!answered)
+        if (!answered) {
+
             return;
+
+        }
 
 
         if (
@@ -1136,11 +1314,16 @@ nextQuestionBtn.addEventListener(
 
             currentQuestionIndex++;
 
+
             renderQuestion();
 
         } else {
 
-            finishQuiz();
+            nextQuestionBtn.disabled =
+                true;
+
+
+            await finishQuiz();
 
         }
 
@@ -1149,7 +1332,7 @@ nextQuestionBtn.addEventListener(
 
 
 // =====================================
-// Performance Tracking
+// PERFORMANCE TRACKING - LOCAL
 // =====================================
 
 function getPerformance() {
@@ -1171,7 +1354,13 @@ function getPerformance() {
             ? data
             : {};
 
-    } catch {
+    } catch (error) {
+
+        console.error(
+            "Performance Data Error:",
+            error
+        );
+
 
         return {};
 
@@ -1179,6 +1368,10 @@ function getPerformance() {
 
 }
 
+
+// =====================================
+// UPDATE LOCAL TOPIC PERFORMANCE
+// =====================================
 
 function updateTopicPerformance(
     question,
@@ -1195,7 +1388,9 @@ function updateTopicPerformance(
         question.topic;
 
 
-    if (!performance[key]) {
+    if (
+        !performance[key]
+    ) {
 
         performance[key] = {
 
@@ -1216,12 +1411,14 @@ function updateTopicPerformance(
     }
 
 
-    performance[key].attempts++;
+    performance[key]
+        .attempts++;
 
 
     if (correct) {
 
-        performance[key].correct++;
+        performance[key]
+            .correct++;
 
     }
 
@@ -1237,10 +1434,92 @@ function updateTopicPerformance(
 
 
 // =====================================
-// Quiz Finish
+// SAVE CURRENT QUIZ TO DATABASE
 // =====================================
 
-function finishQuiz() {
+async function saveQuizResultsToDatabase() {
+
+    if (
+        quizResultSaved
+    ) {
+
+        return;
+
+    }
+
+
+    const results =
+        Object.values(
+            currentTopicResults
+        );
+
+
+    if (
+        results.length === 0
+    ) {
+
+        return;
+
+    }
+
+
+    for (
+        const result of results
+    ) {
+
+        const data =
+            await quizApiFetch(
+                QUIZ_ATTEMPT_API,
+                {
+
+                    method:
+                        "POST",
+
+                    body:
+                        JSON.stringify({
+
+                            subject:
+                                result.subject,
+
+                            topic:
+                                result.topic,
+
+                            score:
+                                result.score,
+
+                            totalQuestions:
+                                result.totalQuestions
+
+                        })
+
+                }
+            );
+
+
+        console.log(
+            "Quiz attempt saved:",
+            data.attempt
+        );
+
+    }
+
+
+    quizResultSaved =
+        true;
+
+
+    console.log(
+        "All topic results saved to MongoDB."
+    );
+
+}
+
+
+// =====================================
+// QUIZ FINISH
+// =====================================
+
+async function finishQuiz() {
 
     const percentage =
         Math.round(
@@ -1251,10 +1530,18 @@ function finishQuiz() {
         );
 
 
+    // =====================================
+    // SAVE LOCAL HISTORY
+    // =====================================
+
     saveQuizHistory(
         percentage
     );
 
+
+    // =====================================
+    // SHOW RESULT
+    // =====================================
 
     quizArea.classList.add(
         "hidden"
@@ -1297,7 +1584,9 @@ function finishQuiz() {
         );
 
 
-    if (percentage >= 80) {
+    if (
+        percentage >= 80
+    ) {
 
         resultMessage.textContent =
             "Excellent performance! 🚀";
@@ -1317,17 +1606,50 @@ function finishQuiz() {
     }
 
 
+    // =====================================
+    // UPDATE LOCAL UI
+    // =====================================
+
     renderDashboardStats();
+
 
     renderHistory();
 
+
     renderWeakTopics();
+
+
+    // =====================================
+    // SAVE TO MONGODB
+    // =====================================
+
+    try {
+
+        await saveQuizResultsToDatabase();
+
+
+        console.log(
+            "Quiz successfully synced with Weak Topic Detector."
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Quiz Database Save Error:",
+            error
+        );
+
+
+        resultMessage.textContent +=
+            " Result could not be synced with the server.";
+
+    }
 
 }
 
 
 // =====================================
-// Quiz History
+// QUIZ HISTORY
 // =====================================
 
 function getHistory() {
@@ -1348,7 +1670,13 @@ function getHistory() {
             ? history
             : [];
 
-    } catch {
+    } catch (error) {
+
+        console.error(
+            "Quiz History Error:",
+            error
+        );
+
 
         return [];
 
@@ -1356,6 +1684,10 @@ function getHistory() {
 
 }
 
+
+// =====================================
+// SAVE QUIZ HISTORY
+// =====================================
 
 function saveQuizHistory(
     percentage
@@ -1378,8 +1710,7 @@ function saveQuizHistory(
                 ? "Mixed Topics"
                 : selectedTopic,
 
-        score:
-            score,
+        score,
 
         total:
             quizQuestions.length,
@@ -1407,7 +1738,7 @@ function saveQuizHistory(
 
 
 // =====================================
-// Statistics
+// STATISTICS
 // =====================================
 
 function renderDashboardStats() {
@@ -1420,12 +1751,17 @@ function renderDashboardStats() {
         history.length;
 
 
-    let average = 0;
+    let average =
+        0;
 
-    let best = 0;
+
+    let best =
+        0;
 
 
-    if (total > 0) {
+    if (
+        total > 0
+    ) {
 
         average =
             Math.round(
@@ -1436,10 +1772,16 @@ function renderDashboardStats() {
                         quiz
                     ) =>
                         sum +
-                        quiz.percentage,
+                        Number(
+                            quiz.percentage || 0
+                        ),
 
                     0
-                ) / total
+                )
+
+                /
+
+                total
 
             );
 
@@ -1449,7 +1791,9 @@ function renderDashboardStats() {
 
                 ...history.map(
                     quiz =>
-                        quiz.percentage
+                        Number(
+                            quiz.percentage || 0
+                        )
                 )
 
             );
@@ -1457,34 +1801,34 @@ function renderDashboardStats() {
     }
 
 
-    document.getElementById(
-        "totalQuizzes"
-    ).textContent =
-        total;
+    setText(
+        "totalQuizzes",
+        total
+    );
 
 
-    document.getElementById(
-        "averageScore"
-    ).textContent =
-        average + "%";
+    setText(
+        "averageScore",
+        average + "%"
+    );
 
 
-    document.getElementById(
-        "bestScore"
-    ).textContent =
-        best + "%";
+    setText(
+        "bestScore",
+        best + "%"
+    );
 
 
-    document.getElementById(
-        "weakTopicCount"
-    ).textContent =
-        getWeakTopics().length;
+    setText(
+        "weakTopicCount",
+        getWeakTopics().length
+    );
 
 }
 
 
 // =====================================
-// Weak Topics
+// LOCAL WEAK TOPICS
 // =====================================
 
 function getWeakTopics() {
@@ -1496,43 +1840,56 @@ function getWeakTopics() {
     return Object.values(
         performance
     )
-    .map(
-        item => {
+        .map(
+            item => {
 
-            const accuracy =
-                item.attempts === 0
-                    ? 0
-                    : Math.round(
-                        (
-                            item.correct /
-                            item.attempts
-                        ) * 100
-                    );
+                const accuracy =
+                    item.attempts === 0
+
+                        ? 0
+
+                        : Math.round(
+                            (
+                                item.correct /
+                                item.attempts
+                            ) * 100
+                        );
 
 
-            return {
-                ...item,
-                accuracy
-            };
+                return {
 
-        }
-    )
-    .filter(
-        item =>
-            item.attempts >= 1 &&
-            item.accuracy < 70
-    )
-    .sort(
-        (
-            a,
-            b
-        ) =>
-            a.accuracy -
-            b.accuracy
-    );
+                    ...item,
+
+                    accuracy
+
+                };
+
+            }
+        )
+        .filter(
+            item =>
+
+                item.attempts >= 1
+
+                &&
+
+                item.accuracy < 70
+        )
+        .sort(
+            (
+                a,
+                b
+            ) =>
+                a.accuracy -
+                b.accuracy
+        );
 
 }
 
+
+// =====================================
+// RENDER LOCAL WEAK TOPICS
+// =====================================
 
 function renderWeakTopics() {
 
@@ -1546,6 +1903,13 @@ function renderWeakTopics() {
         );
 
 
+    if (!container) {
+
+        return;
+
+    }
+
+
     container.innerHTML =
         "";
 
@@ -1557,11 +1921,14 @@ function renderWeakTopics() {
         container.innerHTML = `
 
             <p class="empty-message">
+
                 No weak topics detected.
                 Keep practicing!
+
             </p>
 
         `;
+
 
         return;
 
@@ -1611,17 +1978,17 @@ function renderWeakTopics() {
                 } correct`;
 
 
-            const score =
+            const scoreElement =
                 document.createElement(
                     "span"
                 );
 
 
-            score.className =
+            scoreElement.className =
                 "weak-score";
 
 
-            score.textContent =
+            scoreElement.textContent =
                 item.accuracy +
                 "% Accuracy";
 
@@ -1634,7 +2001,7 @@ function renderWeakTopics() {
 
             row.append(
                 info,
-                score
+                scoreElement
             );
 
 
@@ -1649,7 +2016,7 @@ function renderWeakTopics() {
 
 
 // =====================================
-// Render History
+// RENDER HISTORY
 // =====================================
 
 function renderHistory() {
@@ -1664,6 +2031,13 @@ function renderHistory() {
         );
 
 
+    if (!historyList) {
+
+        return;
+
+    }
+
+
     historyList.innerHTML =
         "";
 
@@ -1675,10 +2049,13 @@ function renderHistory() {
         historyList.innerHTML = `
 
             <p class="empty-message">
+
                 No quizzes completed yet.
+
             </p>
 
         `;
+
 
         return;
 
@@ -1686,7 +2063,10 @@ function renderHistory() {
 
 
     history
-        .slice(0, 8)
+        .slice(
+            0,
+            8
+        )
         .forEach(
             quiz => {
 
@@ -1726,17 +2106,17 @@ function renderHistory() {
                     quiz.topic;
 
 
-                const score =
+                const scoreElement =
                     document.createElement(
                         "div"
                     );
 
 
-                score.className =
+                scoreElement.className =
                     "history-score";
 
 
-                score.textContent =
+                scoreElement.textContent =
                     quiz.percentage +
                     "%";
 
@@ -1755,19 +2135,21 @@ function renderHistory() {
                     new Date(
                         quiz.date
                     )
-                    .toLocaleDateString(
-                        "en-IN",
-                        {
-                            day:
-                                "numeric",
+                        .toLocaleDateString(
+                            "en-IN",
+                            {
 
-                            month:
-                                "short",
+                                day:
+                                    "numeric",
 
-                            year:
-                                "numeric"
-                        }
-                    );
+                                month:
+                                    "short",
+
+                                year:
+                                    "numeric"
+
+                            }
+                        );
 
 
                 info.append(
@@ -1778,7 +2160,7 @@ function renderHistory() {
 
                 row.append(
                     info,
-                    score,
+                    scoreElement,
                     date
                 );
 
@@ -1794,12 +2176,37 @@ function renderHistory() {
 
 
 // =====================================
-// Quit Quiz
+// HELPER
+// =====================================
+
+function setText(
+    id,
+    value
+) {
+
+    const element =
+        document.getElementById(
+            id
+        );
+
+
+    if (element) {
+
+        element.textContent =
+            value;
+
+    }
+
+}
+
+
+// =====================================
+// QUIT QUIZ
 // =====================================
 
 quitQuizBtn.addEventListener(
     "click",
-    function() {
+    function () {
 
         const quit =
             confirm(
@@ -1807,8 +2214,11 @@ quitQuizBtn.addEventListener(
             );
 
 
-        if (!quit)
+        if (!quit) {
+
             return;
+
+        }
 
 
         quizArea.classList.add(
@@ -1820,17 +2230,29 @@ quitQuizBtn.addEventListener(
             "hidden"
         );
 
+
+        currentTopicResults =
+            {};
+
+
+        quizResultSaved =
+            false;
+
+
+        nextQuestionBtn.textContent =
+            "Next Question";
+
     }
 );
 
 
 // =====================================
-// New Quiz
+// NEW QUIZ
 // =====================================
 
 newQuizBtn.addEventListener(
     "click",
-    function() {
+    function () {
 
         resultArea.classList.add(
             "hidden"
@@ -1841,16 +2263,30 @@ newQuizBtn.addEventListener(
             "hidden"
         );
 
+
+        currentTopicResults =
+            {};
+
+
+        quizResultSaved =
+            false;
+
+
+        nextQuestionBtn.textContent =
+            "Next Question";
+
     }
 );
 
 
 // =====================================
-// Initial Load
+// INITIAL LOAD
 // =====================================
 
 renderDashboardStats();
 
+
 renderHistory();
+
 
 renderWeakTopics();

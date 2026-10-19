@@ -1,3 +1,5 @@
+const mongose = require("mongoose");
+
 const QuizAttempt =
     require("../models/QuizAttempt");
 
