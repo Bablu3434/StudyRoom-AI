@@ -7,7 +7,7 @@
 body {
     font-family: Arial, sans-serif;
     background: #f5f7fb;
-    color: #172033;
+    color: #111827;
 }
 
 .dashboard-layout {
@@ -141,10 +141,10 @@ body {
 }
 
 .small-text {
-    color: #939baa;
-
+    color: #111827;
+    font-weight: 600;
     font-size: 13px;
-
+    font-family: 'Poppins', sans-serif;
     margin-bottom: 5px;
 }
 
