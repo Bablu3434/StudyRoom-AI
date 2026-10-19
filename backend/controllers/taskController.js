@@ -54,6 +54,7 @@ const createTask =
                 topic,
                 duration,
                 studyDate,
+                studyTime,
                 priority
             } = req.body;
 
@@ -62,7 +63,8 @@ const createTask =
                 !subject ||
                 !topic ||
                 !duration ||
-                !studyDate
+                !studyDate ||
+                !studyTime
             ) {
 
                 return res
@@ -70,7 +72,8 @@ const createTask =
                     .json({
                         success: false,
                         message:
-                            "Please fill all required fields"
+                            "Subject, topic, duration, study date and study time are required"
+
                     });
 
             }
@@ -109,9 +112,11 @@ const createTask =
                         topic.trim(),
 
                     duration:
-                        numericDuration,
+                        Number(duration),
 
                     studyDate,
+
+                    studyTime,
 
                     priority:
                         priority || "medium"
@@ -176,6 +181,7 @@ const updateTask =
                 topic,
                 duration,
                 studyDate,
+                studyTime,
                 priority
             } = req.body;
 
@@ -217,6 +223,11 @@ const updateTask =
             if (studyDate !== undefined) {
                 task.studyDate =
                     studyDate;
+            }
+
+            if (studyTime !== undefined) {
+                task.studyTime =
+                    studyTime;
             }
 
             if (priority !== undefined) {

@@ -1,12 +1,20 @@
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 
-const User = require(
-    "../models/User"
-);
+const User = require("../models/User");
+
+const sendEmail =
+    require("../utils/sendEmail");
+
+const {
+    generateOtp,
+    hashOtp
+} = require("../utils/otp");
 
 
-// Generate JWT
+// =====================================
+// GENERATE JWT
+// =====================================
 
 function generateToken(userId) {
 
@@ -14,20 +22,19 @@ function generateToken(userId) {
         {
             id: userId
         },
-
         process.env.JWT_SECRET,
-
         {
             expiresIn: "7d"
         }
     );
+
 }
 
 
-// ================================
+// =====================================
 // REGISTER
 // POST /api/auth/register
-// ================================
+// =====================================
 
 const registerUser =
     async (req, res) => {
@@ -54,10 +61,14 @@ const registerUser =
                         message:
                             "Please fill all fields"
                     });
+
             }
 
 
-            if (password.length < 6) {
+            if (
+                typeof password !== "string" ||
+                password.length < 6
+            ) {
 
                 return res
                     .status(400)
@@ -66,6 +77,7 @@ const registerUser =
                         message:
                             "Password must be at least 6 characters"
                     });
+
             }
 
 
@@ -77,8 +89,7 @@ const registerUser =
 
             const existingUser =
                 await User.findOne({
-                    email:
-                        normalizedEmail
+                    email: normalizedEmail
                 });
 
 
@@ -91,11 +102,13 @@ const registerUser =
                         message:
                             "Account already exists"
                     });
+
             }
 
 
             const user =
                 await User.create({
+
                     name:
                         name.trim(),
 
@@ -103,6 +116,7 @@ const registerUser =
                         normalizedEmail,
 
                     password
+
                 });
 
 
@@ -124,6 +138,7 @@ const registerUser =
                     token,
 
                     user: {
+
                         id:
                             user._id,
 
@@ -132,6 +147,7 @@ const registerUser =
 
                         email:
                             user.email
+
                     }
 
                 });
@@ -160,10 +176,10 @@ const registerUser =
     };
 
 
-// ================================
+// =====================================
 // LOGIN
 // POST /api/auth/login
-// ================================
+// =====================================
 
 const loginUser =
     async (req, res) => {
@@ -184,10 +200,14 @@ const loginUser =
                 return res
                     .status(400)
                     .json({
+
                         success: false,
+
                         message:
                             "Email and password are required"
+
                     });
+
             }
 
 
@@ -211,10 +231,14 @@ const loginUser =
                 return res
                     .status(401)
                     .json({
+
                         success: false,
+
                         message:
                             "Invalid email or password"
+
                     });
+
             }
 
 
@@ -229,38 +253,149 @@ const loginUser =
                 return res
                     .status(401)
                     .json({
+
                         success: false,
+
                         message:
                             "Invalid email or password"
+
                     });
+
             }
 
 
-            const token =
-                generateToken(
-                    user._id
+            // =====================================
+            // GENERATE LOGIN OTP
+            // =====================================
+
+            const otp =
+                generateOtp();
+
+
+            user.loginOtpHash =
+                hashOtp(
+                    otp
                 );
+
+
+            user.loginOtpExpires =
+                new Date(
+                    Date.now() +
+                    5 * 60 * 1000
+                );
+
+
+            user.loginOtpAttempts =
+                0;
+
+
+            await user.save();
+
+
+            // =====================================
+            // SEND LOGIN OTP
+            // =====================================
+
+            try {
+
+                await sendEmail({
+
+                    to:
+                        user.email,
+
+                    subject:
+                        "StudyRoom AI Login OTP",
+
+                    html: `
+                        <div style="
+                            font-family: Arial, sans-serif;
+                            max-width: 520px;
+                            margin: auto;
+                            padding: 24px;
+                        ">
+
+                            <h2>
+                                StudyRoom AI
+                            </h2>
+
+                            <p>
+                                Hello ${user.name},
+                            </p>
+
+                            <p>
+                                Your login verification code is:
+                            </p>
+
+                            <div style="
+                                font-size: 32px;
+                                font-weight: bold;
+                                letter-spacing: 8px;
+                                margin: 24px 0;
+                            ">
+                                ${otp}
+                            </div>
+
+                            <p>
+                                This OTP is valid for
+                                <strong>5 minutes</strong>.
+                            </p>
+
+                            <p>
+                                If you did not try to login,
+                                you can ignore this email.
+                            </p>
+
+                        </div>
+                    `
+
+                });
+
+            } catch (emailError) {
+
+                console.error(
+                    "Login OTP Email Error:",
+                    emailError
+                );
+
+
+                user.loginOtpHash =
+                    null;
+
+                user.loginOtpExpires =
+                    null;
+
+                user.loginOtpAttempts =
+                    0;
+
+
+                await user.save();
+
+
+                return res
+                    .status(500)
+                    .json({
+
+                        success: false,
+
+                        message:
+                            "Could not send OTP email"
+
+                    });
+
+            }
 
 
             return res.json({
 
                 success: true,
 
+                otpRequired: true,
+
                 message:
-                    "Login successful",
+                    "OTP sent to your registered email.",
 
-                token,
-
-                user: {
-                    id:
-                        user._id,
-
-                    name:
-                        user.name,
-
-                    email:
-                        user.email
-                }
+                email:
+                    user.email
 
             });
 
@@ -275,16 +410,300 @@ const loginUser =
             return res
                 .status(500)
                 .json({
+
                     success: false,
+
                     message:
                         "Server error while logging in"
+
                 });
 
         }
 
     };
 
-    // =====================================
+
+// =====================================
+// VERIFY LOGIN OTP
+// POST /api/auth/verify-login-otp
+// =====================================
+
+const verifyLoginOtp =
+    async (req, res) => {
+
+        try {
+
+            const {
+                email,
+                otp
+            } = req.body;
+
+
+            if (
+                !email ||
+                !otp
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+
+                        success: false,
+
+                        message:
+                            "Email and OTP are required"
+
+                    });
+
+            }
+
+
+            const normalizedEmail =
+                email
+                    .trim()
+                    .toLowerCase();
+
+
+            const user =
+                await User.findOne({
+                    email:
+                        normalizedEmail
+                });
+
+
+            if (
+                !user ||
+                !user.loginOtpHash ||
+                !user.loginOtpExpires
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+
+                        success: false,
+
+                        message:
+                            "OTP is invalid or expired"
+
+                    });
+
+            }
+
+
+            // =====================================
+            // OTP EXPIRED
+            // =====================================
+
+            if (
+                user.loginOtpExpires.getTime() <
+                Date.now()
+            ) {
+
+                user.loginOtpHash =
+                    null;
+
+                user.loginOtpExpires =
+                    null;
+
+                user.loginOtpAttempts =
+                    0;
+
+
+                await user.save();
+
+
+                return res
+                    .status(400)
+                    .json({
+
+                        success: false,
+
+                        message:
+                            "OTP has expired. Please login again."
+
+                    });
+
+            }
+
+
+            // =====================================
+            // MAXIMUM ATTEMPTS
+            // =====================================
+
+            if (
+                user.loginOtpAttempts >= 5
+            ) {
+
+                user.loginOtpHash =
+                    null;
+
+                user.loginOtpExpires =
+                    null;
+
+                user.loginOtpAttempts =
+                    0;
+
+
+                await user.save();
+
+
+                return res
+                    .status(429)
+                    .json({
+
+                        success: false,
+
+                        message:
+                            "Too many incorrect attempts. Please login again."
+
+                    });
+
+            }
+
+
+            const enteredOtp =
+                String(
+                    otp
+                ).trim();
+
+
+            if (
+                !/^\d{6}$/.test(
+                    enteredOtp
+                )
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+
+                        success: false,
+
+                        message:
+                            "Please enter a valid 6-digit OTP"
+
+                    });
+
+            }
+
+
+            const enteredOtpHash =
+                hashOtp(
+                    enteredOtp
+                );
+
+
+            // =====================================
+            // WRONG OTP
+            // =====================================
+
+            if (
+                enteredOtpHash !==
+                user.loginOtpHash
+            ) {
+
+                user.loginOtpAttempts +=
+                    1;
+
+
+                await user.save();
+
+
+                const remainingAttempts =
+                    Math.max(
+                        0,
+                        5 -
+                        user.loginOtpAttempts
+                    );
+
+
+                return res
+                    .status(400)
+                    .json({
+
+                        success: false,
+
+                        message:
+                            `Incorrect OTP. ${remainingAttempts} attempt(s) remaining.`
+
+                    });
+
+            }
+
+
+            // =====================================
+            // CORRECT OTP
+            // =====================================
+
+            user.loginOtpHash =
+                null;
+
+            user.loginOtpExpires =
+                null;
+
+            user.loginOtpAttempts =
+                0;
+
+
+            await user.save();
+
+
+            const token =
+                generateToken(
+                    user._id
+                );
+
+
+            return res.json({
+
+                success: true,
+
+                message:
+                    "OTP verified. Login successful.",
+
+                token,
+
+                user: {
+
+                    id:
+                        user._id,
+
+                    name:
+                        user.name,
+
+                    email:
+                        user.email
+
+                }
+
+            });
+
+        } catch (error) {
+
+            console.error(
+                "Verify Login OTP Error:",
+                error
+            );
+
+
+            return res
+                .status(500)
+                .json({
+
+                    success: false,
+
+                    message:
+                        "Could not verify OTP"
+
+                });
+
+        }
+
+    };
+
+
+// =====================================
 // FORGOT PASSWORD
 // POST /api/auth/forgot-password
 // =====================================
@@ -318,19 +737,18 @@ const forgotPassword =
             }
 
 
+            const normalizedEmail =
+                email
+                    .trim()
+                    .toLowerCase();
+
+
             const user =
                 await User.findOne({
-
                     email:
-                        email
-                            .trim()
-                            .toLowerCase()
-
+                        normalizedEmail
                 });
 
-
-            // Generic response
-            // prevents email enumeration
 
             if (!user) {
 
@@ -339,63 +757,145 @@ const forgotPassword =
                     success: true,
 
                     message:
-                        "If an account exists with this email, a password reset link has been created."
+                        "If an account exists with this email, an OTP has been sent."
 
                 });
 
             }
 
 
-            // Create random token
+            // =====================================
+            // GENERATE RESET OTP
+            // =====================================
 
-            const resetToken =
-                crypto
-                    .randomBytes(32)
-                    .toString("hex");
-
-
-            // Store HASHED token in database
-
-            const hashedToken =
-                crypto
-                    .createHash("sha256")
-                    .update(resetToken)
-                    .digest("hex");
+            const otp =
+                generateOtp();
 
 
-            user.resetPasswordToken =
-                hashedToken;
+            user.resetOtpHash =
+                hashOtp(
+                    otp
+                );
 
 
-            user.resetPasswordExpires =
-                Date.now() +
-                15 * 60 * 1000;
+            user.resetOtpExpires =
+                new Date(
+                    Date.now() +
+                    5 * 60 * 1000
+                );
+
+
+            user.resetOtpAttempts =
+                0;
 
 
             await user.save();
 
 
-            // Local development reset link
+            // =====================================
+            // SEND RESET OTP
+            // =====================================
 
-            const resetUrl =
-                `http://127.0.0.1:5500/reset-password.html?token=${resetToken}`;
+            try {
+
+                await sendEmail({
+
+                    to:
+                        user.email,
+
+                    subject:
+                        "StudyRoom AI Password Reset OTP",
+
+                    html: `
+                        <div style="
+                            font-family: Arial, sans-serif;
+                            max-width: 520px;
+                            margin: auto;
+                            padding: 24px;
+                        ">
+
+                            <h2>
+                                StudyRoom AI
+                            </h2>
+
+                            <p>
+                                Hello ${user.name},
+                            </p>
+
+                            <p>
+                                Your password reset OTP is:
+                            </p>
+
+                            <div style="
+                                font-size: 32px;
+                                font-weight: bold;
+                                letter-spacing: 8px;
+                                margin: 24px 0;
+                            ">
+                                ${otp}
+                            </div>
+
+                            <p>
+                                This OTP is valid for
+                                <strong>5 minutes</strong>.
+                            </p>
+
+                            <p>
+                                If you did not request a password reset,
+                                you can ignore this email.
+                            </p>
+
+                        </div>
+                    `
+
+                });
+
+            } catch (emailError) {
+
+                console.error(
+                    "Reset OTP Email Error:",
+                    emailError
+                );
 
 
-            console.log(
-                "Password Reset Link:",
-                resetUrl
-            );
+                user.resetOtpHash =
+                    null;
+
+                user.resetOtpExpires =
+                    null;
+
+                user.resetOtpAttempts =
+                    0;
+
+
+                await user.save();
+
+
+                return res
+                    .status(500)
+                    .json({
+
+                        success: false,
+
+                        message:
+                            "Could not send password reset OTP"
+
+                    });
+
+            }
 
 
             return res.json({
 
                 success: true,
 
-                message:
-                    "Password reset link created successfully.",
+                otpRequired: true,
 
-                // DEV ONLY
-                resetUrl
+                message:
+                    "Password reset OTP sent successfully.",
+
+                email:
+                    user.email
 
             });
 
@@ -414,7 +914,298 @@ const forgotPassword =
                     success: false,
 
                     message:
-                        "Could not create password reset link"
+                        "Could not process password reset request"
+
+                });
+
+        }
+
+    };
+
+    // =====================================
+// VERIFY RESET OTP
+// POST /api/auth/verify-reset-otp
+// =====================================
+
+const verifyResetOtp =
+    async (req, res) => {
+
+        try {
+
+            const {
+                email,
+                otp
+            } = req.body;
+
+
+            if (
+                !email ||
+                !otp
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+
+                        success: false,
+
+                        message:
+                            "Email and OTP are required"
+
+                    });
+
+            }
+
+
+            const normalizedEmail =
+                email
+                    .trim()
+                    .toLowerCase();
+
+
+            const user =
+                await User.findOne({
+
+                    email:
+                        normalizedEmail
+
+                });
+
+
+            if (
+                !user ||
+                !user.resetOtpHash ||
+                !user.resetOtpExpires
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+
+                        success: false,
+
+                        message:
+                            "OTP is invalid or expired"
+
+                    });
+
+            }
+
+
+            // =====================================
+            // CHECK OTP EXPIRY
+            // =====================================
+
+            if (
+                user.resetOtpExpires.getTime() <
+                Date.now()
+            ) {
+
+                user.resetOtpHash =
+                    null;
+
+                user.resetOtpExpires =
+                    null;
+
+                user.resetOtpAttempts =
+                    0;
+
+
+                await user.save();
+
+
+                return res
+                    .status(400)
+                    .json({
+
+                        success: false,
+
+                        message:
+                            "OTP has expired. Please request a new OTP."
+
+                    });
+
+            }
+
+
+            // =====================================
+            // CHECK MAX ATTEMPTS
+            // =====================================
+
+            if (
+                user.resetOtpAttempts >= 5
+            ) {
+
+                user.resetOtpHash =
+                    null;
+
+                user.resetOtpExpires =
+                    null;
+
+                user.resetOtpAttempts =
+                    0;
+
+
+                await user.save();
+
+
+                return res
+                    .status(429)
+                    .json({
+
+                        success: false,
+
+                        message:
+                            "Too many incorrect attempts. Please request a new OTP."
+
+                    });
+
+            }
+
+
+            const enteredOtp =
+                String(
+                    otp
+                ).trim();
+
+
+            if (
+                !/^\d{6}$/.test(
+                    enteredOtp
+                )
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+
+                        success: false,
+
+                        message:
+                            "Please enter a valid 6-digit OTP"
+
+                    });
+
+            }
+
+
+            const enteredOtpHash =
+                hashOtp(
+                    enteredOtp
+                );
+
+
+            // =====================================
+            // WRONG OTP
+            // =====================================
+
+            if (
+                enteredOtpHash !==
+                user.resetOtpHash
+            ) {
+
+                user.resetOtpAttempts +=
+                    1;
+
+
+                await user.save();
+
+
+                const remainingAttempts =
+                    Math.max(
+
+                        0,
+
+                        5 -
+                        user.resetOtpAttempts
+
+                    );
+
+
+                return res
+                    .status(400)
+                    .json({
+
+                        success: false,
+
+                        message:
+                            `Incorrect OTP. ${remainingAttempts} attempt(s) remaining.`
+
+                    });
+
+            }
+
+
+            // =====================================
+            // OTP CORRECT
+            // =====================================
+
+            user.resetOtpHash =
+                null;
+
+            user.resetOtpExpires =
+                null;
+
+            user.resetOtpAttempts =
+                0;
+
+
+            // Create temporary reset token
+
+            const resetToken =
+                crypto
+                    .randomBytes(32)
+                    .toString("hex");
+
+
+            const hashedResetToken =
+                crypto
+                    .createHash("sha256")
+                    .update(resetToken)
+                    .digest("hex");
+
+
+            user.resetPasswordToken =
+                hashedResetToken;
+
+
+            user.resetPasswordExpires =
+                new Date(
+                    Date.now() +
+                    15 * 60 * 1000
+                );
+
+
+            await user.save();
+
+
+            return res.json({
+
+                success: true,
+
+                message:
+                    "OTP verified successfully.",
+
+                resetToken
+
+            });
+
+        } catch (error) {
+
+            console.error(
+                "Verify Reset OTP Error:",
+                error
+            );
+
+
+            return res
+                .status(500)
+                .json({
+
+                    success: false,
+
+                    message:
+                        "Could not verify password reset OTP"
 
                 });
 
@@ -425,6 +1216,7 @@ const forgotPassword =
 
 // =====================================
 // RESET PASSWORD
+// CURRENT TOKEN-BASED VERSION
 // POST /api/auth/reset-password/:token
 // =====================================
 
@@ -444,9 +1236,7 @@ const resetPassword =
             } = req.body;
 
 
-            if (
-                !token
-            ) {
+            if (!token) {
 
                 return res
                     .status(400)
@@ -502,9 +1292,15 @@ const resetPassword =
 
             const hashedToken =
                 crypto
-                    .createHash("sha256")
-                    .update(token)
-                    .digest("hex");
+                    .createHash(
+                        "sha256"
+                    )
+                    .update(
+                        token
+                    )
+                    .digest(
+                        "hex"
+                    );
 
 
             const user =
@@ -514,7 +1310,8 @@ const resetPassword =
                         hashedToken,
 
                     resetPasswordExpires: {
-                        $gt: Date.now()
+                        $gt:
+                            new Date()
                     }
 
                 });
@@ -535,8 +1332,6 @@ const resetPassword =
 
             }
 
-
-            // This triggers User pre-save hashing
 
             user.password =
                 password;
@@ -586,9 +1381,22 @@ const resetPassword =
     };
 
 
+// =====================================
+// EXPORTS
+// =====================================
+
 module.exports = {
+
     registerUser,
+
     loginUser,
+
+    verifyLoginOtp,
+
     forgotPassword,
+
+    verifyResetOtp,
+
     resetPassword
+
 };

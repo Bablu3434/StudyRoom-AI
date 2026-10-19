@@ -1,82 +1,169 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Study Planner | StudyRoom AI</title>
 
-    <link rel="stylesheet" href="../css/planner.css">
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Study Planner | StudyRoom AI
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="../css/planner.css"
+    >
+
 </head>
+
 
 <body>
 
+
 <header class="navbar">
-    <a href="dashboard.html" class="logo">
+
+    <a
+        href="dashboard.html"
+        class="logo"
+    >
         <span>AI</span>
         StudyRoom
     </a>
 
-    <a href="dashboard.html" class="back-btn">
+
+    <a
+        href="dashboard.html"
+        class="back-btn"
+    >
         ← Dashboard
     </a>
+
 </header>
+
 
 
 <main class="container">
 
+
+    <!-- =====================================
+         PAGE HEADER
+    ====================================== -->
+
     <section class="page-header">
+
         <div>
-            <span>STUDY PLANNER</span>
-            <h1>Plan Your Study Day</h1>
+
+            <span>
+                STUDY PLANNER
+            </span>
+
+
+            <h1>
+                Plan Your Study Day
+            </h1>
+
 
             <p>
-                Create your study tasks, organize subjects
-                and complete your daily goals.
+                Create your study tasks,
+                organize subjects and complete
+                your daily goals.
             </p>
+
         </div>
 
+
         <button id="openTaskModal">
+
             + Add Study Task
+
         </button>
+
     </section>
 
 
-    <!-- Stats -->
+
+    <!-- =====================================
+         STATS
+    ====================================== -->
 
     <section class="stats-grid">
 
-        <div class="stat-card">
-            <p>Total Tasks</p>
-            <h2 id="totalTasks">0</h2>
-        </div>
 
         <div class="stat-card">
-            <p>Completed</p>
-            <h2 id="completedTasks">0</h2>
+
+            <p>
+                Total Tasks
+            </p>
+
+            <h2 id="totalTasks">
+                0
+            </h2>
+
         </div>
 
-        <div class="stat-card">
-            <p>Pending</p>
-            <h2 id="pendingTasks">0</h2>
-        </div>
 
         <div class="stat-card">
-            <p>Total Study Time</p>
-            <h2 id="totalTime">0m</h2>
+
+            <p>
+                Completed
+            </p>
+
+            <h2 id="completedTasks">
+                0
+            </h2>
+
         </div>
+
+
+        <div class="stat-card">
+
+            <p>
+                Pending
+            </p>
+
+            <h2 id="pendingTasks">
+                0
+            </h2>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <p>
+                Total Study Time
+            </p>
+
+            <h2 id="totalTime">
+                0m
+            </h2>
+
+        </div>
+
 
     </section>
 
 
-    <!-- Filters -->
+
+    <!-- =====================================
+         FILTERS
+    ====================================== -->
 
     <section class="filter-bar">
+
 
         <input
             type="text"
             id="searchInput"
             placeholder="Search subject or topic..."
         >
+
 
         <select id="filterStatus">
 
@@ -94,36 +181,63 @@
 
         </select>
 
+
     </section>
 
 
-    <!-- Tasks -->
+
+    <!-- =====================================
+         TASK LIST
+    ====================================== -->
 
     <section class="planner-card">
 
+
         <div class="planner-heading">
+
             <div>
-                <h2>Study Tasks</h2>
-                <p>Your planned learning activities</p>
+
+                <h2>
+                    Study Tasks
+                </h2>
+
+                <p>
+                    Your planned learning activities
+                </p>
+
             </div>
+
         </div>
+
 
         <div id="taskList"></div>
 
+
     </section>
+
 
 </main>
 
 
-<!-- Add / Edit Modal -->
 
-<div class="modal" id="taskModal">
+<!-- =====================================
+     ADD / EDIT TASK MODAL
+====================================== -->
+
+<div
+    class="modal"
+    id="taskModal"
+>
+
 
     <div class="modal-box">
 
+
         <div class="modal-header">
 
+
             <div>
+
                 <h2 id="modalTitle">
                     Add Study Task
                 </h2>
@@ -131,23 +245,39 @@
                 <p>
                     Enter your study task details.
                 </p>
+
             </div>
 
-            <button id="closeModal">
+
+            <button
+                type="button"
+                id="closeModal"
+            >
                 ×
             </button>
+
 
         </div>
 
 
+
         <form id="taskForm">
 
-            <input type="hidden" id="editingTaskId">
 
+            <input
+                type="hidden"
+                id="editingTaskId"
+            >
+
+
+
+            <!-- SUBJECT -->
 
             <div class="input-group">
 
-                <label>Subject</label>
+                <label for="subject">
+                    Subject
+                </label>
 
                 <input
                     type="text"
@@ -160,9 +290,14 @@
             </div>
 
 
+
+            <!-- TOPIC -->
+
             <div class="input-group">
 
-                <label>Topic</label>
+                <label for="topic">
+                    Topic
+                </label>
 
                 <input
                     type="text"
@@ -175,11 +310,17 @@
             </div>
 
 
+
+            <!-- DURATION + DATE -->
+
             <div class="form-row">
+
 
                 <div class="input-group">
 
-                    <label>Study Duration</label>
+                    <label for="duration">
+                        Study Duration
+                    </label>
 
                     <input
                         type="number"
@@ -193,9 +334,12 @@
                 </div>
 
 
+
                 <div class="input-group">
 
-                    <label>Study Date</label>
+                    <label for="studyDate">
+                        Study Date
+                    </label>
 
                     <input
                         type="date"
@@ -205,12 +349,38 @@
 
                 </div>
 
+
             </div>
 
 
+
+            <!-- =====================================
+                 STUDY TIME
+            ====================================== -->
+
             <div class="input-group">
 
-                <label>Priority</label>
+                <label for="studyTime">
+                    Study Time
+                </label>
+
+                <input
+                    type="time"
+                    id="studyTime"
+                    required
+                >
+
+            </div>
+
+
+
+            <!-- PRIORITY -->
+
+            <div class="input-group">
+
+                <label for="priority">
+                    Priority
+                </label>
 
                 <select id="priority">
 
@@ -218,7 +388,10 @@
                         Low
                     </option>
 
-                    <option value="medium" selected>
+                    <option
+                        value="medium"
+                        selected
+                    >
                         Medium
                     </option>
 
@@ -231,7 +404,11 @@
             </div>
 
 
+
+            <!-- ACTIONS -->
+
             <div class="modal-actions">
+
 
                 <button
                     type="button"
@@ -241,6 +418,7 @@
                     Cancel
                 </button>
 
+
                 <button
                     type="submit"
                     class="save-btn"
@@ -248,17 +426,29 @@
                     Save Task
                 </button>
 
+
             </div>
+
 
         </form>
 
+
     </div>
+
 
 </div>
 
 
 
+<!-- =====================================
+     SCRIPTS
+====================================== -->
+
+<script src="js/notifications.js"></script>
+
 <script src="js/planner.js"></script>
 
+
 </body>
+
 </html>

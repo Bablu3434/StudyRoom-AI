@@ -245,6 +245,46 @@ async function saveSettings() {
             "Saving...";
 
 
+        // =====================================
+        // NOTIFICATION PERMISSION
+        // =====================================
+
+        if (
+            studyReminders.checked
+        ) {
+
+            if (
+                typeof requestNotificationPermission !==
+                "function"
+            ) {
+
+                throw new Error(
+                    "Notification system is not loaded."
+                );
+
+            }
+
+
+            const allowed =
+                await requestNotificationPermission();
+
+
+            if (!allowed) {
+
+                studyReminders.checked =
+                    false;
+
+
+                showMessage(
+                    "Notification permission is required for study reminders.",
+                    "error"
+                );
+
+            }
+
+        }
+
+
         const settings = {
 
             focusDuration:
@@ -415,27 +455,27 @@ function resetSettings() {
 
 
     focusDuration.value =
-        25;
+        defaultSettings.focusDuration;
 
 
     breakDuration.value =
-        5;
+        defaultSettings.breakDuration;
 
 
     theme.value =
-        "light";
+        defaultSettings.theme;
 
 
     studyReminders.checked =
-        false;
+        defaultSettings.studyReminders;
 
 
     autoDailyPlan.checked =
-        true;
+        defaultSettings.autoDailyPlan;
 
 
     applyTheme(
-        "light"
+        defaultSettings.theme
     );
 
 
@@ -517,6 +557,13 @@ function showMessage(
     type
 ) {
 
+    if (!settingsMessage) {
+
+        return;
+
+    }
+
+
     settingsMessage.textContent =
         message;
 
@@ -564,28 +611,46 @@ function logout() {
 // EVENTS
 // =====================================
 
-saveSettingsBtn.addEventListener(
-    "click",
-    saveSettings
-);
+if (
+    saveSettingsBtn
+) {
+
+    saveSettingsBtn.addEventListener(
+        "click",
+        saveSettings
+    );
+
+}
 
 
-resetSettingsBtn.addEventListener(
-    "click",
-    resetSettings
-);
+if (
+    resetSettingsBtn
+) {
+
+    resetSettingsBtn.addEventListener(
+        "click",
+        resetSettings
+    );
+
+}
 
 
-theme.addEventListener(
-    "change",
-    () => {
+if (
+    theme
+) {
 
-        applyTheme(
-            theme.value
-        );
+    theme.addEventListener(
+        "change",
+        () => {
 
-    }
-);
+            applyTheme(
+                theme.value
+            );
+
+        }
+    );
+
+}
 
 
 const logoutBtn =

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Verify Reset OTP | StudyRoom AI
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="css/verify-reset-otp.css"
+    >
+
+</head>
+
+<body>
+
+    <main class="otp-card">
+
+        <h1>
+            Verify OTP
+        </h1>
+
+
+        <p class="subtitle">
+            Enter the 6-digit OTP sent to your registered email.
+        </p>
+
+
+        <form id="resetOtpForm">
+
+            <label for="resetOtpInput">
+                Enter OTP
+            </label>
+
+
+            <input
+                type="text"
+                id="resetOtpInput"
+                inputmode="numeric"
+                maxlength="6"
+                placeholder="Enter 6-digit OTP"
+                autocomplete="one-time-code"
+                required
+            >
+
+
+            <button
+                type="submit"
+                id="verifyResetOtpBtn"
+            >
+                Verify OTP
+            </button>
+
+        </form>
+
+
+        <div id="resetOtpMessage"></div>
+
+
+        <p class="back-text">
+
+            <a href="forgot-password.html">
+                Back to Forgot Password
+            </a>
+
+        </p>
+
+    </main>
+
+
+    <script src="js/verify-reset-otp.js"></script>
+
+</body>
+
+</html>

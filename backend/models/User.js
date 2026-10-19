@@ -29,6 +29,36 @@ const userSchema =
                 minlength: 6
             },
 
+            loginOtpHash: {
+    type: String,
+    default: null
+},
+
+loginOtpExpires: {
+    type: Date,
+    default: null
+},
+
+loginOtpAttempts: {
+    type: Number,
+    default: 0
+},
+
+resetOtpHash: {
+    type: String,
+    default: null
+},
+
+resetOtpExpires: {
+    type: Date,
+    default: null
+},
+
+resetOtpAttempts: {
+    type: Number,
+    default: 0
+},
+
             resetPasswordToken: {
                 type: String,
                 default: null

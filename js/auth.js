@@ -2,15 +2,14 @@ const API_URL =
     "http://localhost:5000/api/auth";
 
 
-// ================================
+// =====================================
 // PASSWORD SHOW / HIDE
-// ================================
+// =====================================
 
 function setupPasswordToggle(
     inputId,
     buttonId
 ) {
-    
 
     const input =
         document.getElementById(
@@ -86,9 +85,9 @@ setupPasswordToggle(
 );
 
 
-// ================================
+// =====================================
 // REGISTER
-// ================================
+// =====================================
 
 const registerForm =
     document.getElementById(
@@ -149,20 +148,28 @@ if (registerForm) {
                     await fetch(
                         `${API_URL}/register`,
                         {
+
                             method:
                                 "POST",
 
                             headers: {
+
                                 "Content-Type":
                                     "application/json"
+
                             },
 
                             body:
                                 JSON.stringify({
+
                                     name,
+
                                     email,
+
                                     password
+
                                 })
+
                         }
                     );
 
@@ -182,6 +189,9 @@ if (registerForm) {
 
                 }
 
+
+                // Registration currently
+                // logs user in directly.
 
                 localStorage.setItem(
                     "studyRoomToken",
@@ -208,6 +218,7 @@ if (registerForm) {
             } catch (error) {
 
                 console.error(
+                    "Registration Error:",
                     error
                 );
 
@@ -224,9 +235,9 @@ if (registerForm) {
 }
 
 
-// ================================
+// =====================================
 // LOGIN
-// ================================
+// =====================================
 
 const loginForm =
     document.getElementById(
@@ -255,25 +266,46 @@ if (loginForm) {
                 ).value;
 
 
+            if (
+                !email ||
+                !password
+            ) {
+
+                alert(
+                    "Please enter email and password."
+                );
+
+                return;
+
+            }
+
+
             try {
 
                 const response =
                     await fetch(
                         `${API_URL}/login`,
                         {
+
                             method:
                                 "POST",
 
                             headers: {
+
                                 "Content-Type":
                                     "application/json"
+
                             },
 
                             body:
                                 JSON.stringify({
+
                                     email,
+
                                     password
+
                                 })
+
                         }
                     );
 
@@ -294,26 +326,89 @@ if (loginForm) {
                 }
 
 
-                localStorage.setItem(
-                    "studyRoomToken",
-                    data.token
+                // =====================================
+                // OTP REQUIRED
+                // =====================================
+
+                if (
+                    data.otpRequired === true
+                ) {
+
+                    // Remove any old login session
+
+                    localStorage.removeItem(
+                        "studyRoomToken"
+                    );
+
+
+                    localStorage.removeItem(
+                        "studyRoomUser"
+                    );
+
+
+                    // Save email temporarily
+                    // for OTP verification page
+
+                    sessionStorage.setItem(
+                        "studyRoomOtpEmail",
+                        data.email || email
+                    );
+
+
+                    // Go to OTP page
+
+                    window.location.href =
+                        "verify-login-otp.html";
+
+
+                    return;
+
+                }
+
+
+                // =====================================
+                // FALLBACK DIRECT LOGIN
+                // =====================================
+
+                // This is kept only for compatibility
+                // if backend ever returns a JWT directly.
+
+                if (
+                    data.token &&
+                    data.user
+                ) {
+
+                    localStorage.setItem(
+                        "studyRoomToken",
+                        data.token
+                    );
+
+
+                    localStorage.setItem(
+                        "studyRoomUser",
+                        JSON.stringify(
+                            data.user
+                        )
+                    );
+
+
+                    window.location.href =
+                        "dashboard.html";
+
+
+                    return;
+
+                }
+
+
+                alert(
+                    "Unexpected login response."
                 );
-
-
-                localStorage.setItem(
-                    "studyRoomUser",
-                    JSON.stringify(
-                        data.user
-                    )
-                );
-
-
-                window.location.href =
-                    "dashboard.html";
 
             } catch (error) {
 
                 console.error(
+                    "Login Error:",
                     error
                 );
 

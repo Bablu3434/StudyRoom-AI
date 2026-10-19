@@ -2,17 +2,9 @@ const API_URL =
     "http://localhost:5000/api/auth";
 
 
-const params =
-    new URLSearchParams(
-        window.location.search
-    );
-
-
-const token =
-    params.get(
-        "token"
-    );
-
+// =====================================
+// ELEMENTS
+// =====================================
 
 const form =
     document.getElementById(
@@ -26,129 +18,215 @@ const message =
     );
 
 
-if (!token) {
+const passwordInput =
+    document.getElementById(
+        "newPassword"
+    );
 
-    message.textContent =
-        "Invalid password reset link.";
+
+const confirmPasswordInput =
+    document.getElementById(
+        "confirmNewPassword"
+    );
 
 
-    form.style.display =
-        "none";
+// =====================================
+// GET RESET TOKEN
+// =====================================
+
+// New OTP flow
+let resetToken =
+    sessionStorage.getItem(
+        "studyRoomResetToken"
+    );
+
+
+// Old URL flow support
+if (!resetToken) {
+
+    const params =
+        new URLSearchParams(
+            window.location.search
+        );
+
+
+    resetToken =
+        params.get(
+            "token"
+        );
 
 }
 
 
-form.addEventListener(
-    "submit",
-    async function (event) {
+// =====================================
+// INVALID RESET SESSION
+// =====================================
 
-        event.preventDefault();
+if (!resetToken) {
 
-
-        const password =
-            document
-                .getElementById(
-                    "newPassword"
-                )
-                .value;
+    message.textContent =
+        "Invalid or expired password reset session.";
 
 
-        const confirmPassword =
-            document
-                .getElementById(
-                    "confirmNewPassword"
-                )
-                .value;
+    if (form) {
+
+        form.style.display =
+            "none";
+
+    }
+
+}
 
 
-        if (
-            password !==
-            confirmPassword
-        ) {
+// =====================================
+// RESET PASSWORD
+// =====================================
 
-            message.textContent =
-                "Passwords do not match.";
+if (
+    form &&
+    resetToken
+) {
 
-            return;
+    form.addEventListener(
+        "submit",
+        async function (event) {
 
-        }
-
-
-        message.textContent =
-            "Resetting password...";
-
-
-        try {
-
-            const response =
-                await fetch(
-                    `${API_URL}/reset-password/${encodeURIComponent(
-                        token
-                    )}`,
-                    {
-
-                        method:
-                            "POST",
-
-                        headers: {
-
-                            "Content-Type":
-                                "application/json"
-
-                        },
-
-                        body:
-                            JSON.stringify({
-
-                                password,
-
-                                confirmPassword
-
-                            })
-
-                    }
-                );
+            event.preventDefault();
 
 
-            const data =
-                await response.json();
+            const password =
+                passwordInput.value;
 
 
-            if (!response.ok) {
+            const confirmPassword =
+                confirmPasswordInput.value;
 
-                throw new Error(
-                    data.message ||
-                    "Password reset failed"
-                );
+
+            // =====================================
+            // VALIDATION
+            // =====================================
+
+            if (
+                password.length < 6
+            ) {
+
+                message.textContent =
+                    "Password must be at least 6 characters.";
+
+                return;
+
+            }
+
+
+            if (
+                password !==
+                confirmPassword
+            ) {
+
+                message.textContent =
+                    "Passwords do not match.";
+
+                return;
 
             }
 
 
             message.textContent =
-                "Password changed successfully. Redirecting to login...";
+                "Resetting password...";
 
 
-            setTimeout(
-                () => {
+            try {
 
-                    window.location.href =
-                        "login.html";
+                const response =
+                    await fetch(
+                        `${API_URL}/reset-password/${encodeURIComponent(
+                            resetToken
+                        )}`,
+                        {
 
-                },
-                1500
-            );
+                            method:
+                                "POST",
 
-        } catch (error) {
+                            headers: {
 
-            console.error(
-                error
-            );
+                                "Content-Type":
+                                    "application/json"
+
+                            },
+
+                            body:
+                                JSON.stringify({
+
+                                    password,
+
+                                    confirmPassword
+
+                                })
+
+                        }
+                    );
 
 
-            message.textContent =
-                error.message;
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.message ||
+                        "Password reset failed"
+                    );
+
+                }
+
+
+                // =====================================
+                // CLEAR RESET SESSION
+                // =====================================
+
+                sessionStorage.removeItem(
+                    "studyRoomResetToken"
+                );
+
+
+                sessionStorage.removeItem(
+                    "studyRoomResetEmail"
+                );
+
+
+                message.textContent =
+                    "Password changed successfully. Redirecting to login...";
+
+
+                form.style.display =
+                    "none";
+
+
+                setTimeout(
+                    () => {
+
+                        window.location.href =
+                            "login.html";
+
+                    },
+                    1500
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Reset Password Error:",
+                    error
+                );
+
+
+                message.textContent =
+                    error.message;
+
+            }
 
         }
+    );
 
-    }
-);
+}

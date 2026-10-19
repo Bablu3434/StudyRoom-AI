@@ -1,0 +1,327 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+
+body {
+    min-height: 100vh;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    background:
+        #f5f7fb;
+
+    color:
+        #111827;
+}
+
+
+/* =====================================
+   OTP CARD
+===================================== */
+
+.otp-card {
+    width: 100%;
+    max-width: 460px;
+
+    background:
+        #ffffff;
+
+    padding:
+        42px 38px;
+
+    border-radius:
+        20px;
+
+    box-shadow:
+        0 15px 45px
+        rgba(15, 23, 42, 0.08);
+}
+
+
+/* =====================================
+   HEADING
+===================================== */
+
+.otp-card h1 {
+    margin-bottom:
+        10px;
+
+    font-size:
+        32px;
+
+    font-weight:
+        700;
+
+    color:
+        #111827;
+}
+
+
+.subtitle {
+    margin-bottom:
+        28px;
+
+    color:
+        #6b7280;
+
+    font-size:
+        15px;
+
+    line-height:
+        1.6;
+}
+
+
+/* =====================================
+   FORM
+===================================== */
+
+#resetOtpForm {
+    display: flex;
+
+    flex-direction:
+        column;
+
+    gap:
+        12px;
+}
+
+
+#resetOtpForm label {
+    font-size:
+        14px;
+
+    font-weight:
+        600;
+
+    color:
+        #111827;
+}
+
+
+#resetOtpInput {
+    width: 100%;
+
+    height:
+        54px;
+
+    padding:
+        0 16px;
+
+    border:
+        1px solid #d7ddea;
+
+    border-radius:
+        10px;
+
+    outline:
+        none;
+
+    font-size:
+        22px;
+
+    font-weight:
+        700;
+
+    letter-spacing:
+        6px;
+
+    text-align:
+        center;
+
+    background:
+        #ffffff;
+
+    color:
+        #111827;
+
+    transition:
+        0.2s ease;
+}
+
+
+#resetOtpInput::placeholder {
+    font-size:
+        14px;
+
+    font-weight:
+        400;
+
+    letter-spacing:
+        normal;
+
+    color:
+        #9ca3af;
+}
+
+
+#resetOtpInput:focus {
+    border-color:
+        #635bff;
+
+    box-shadow:
+        0 0 0 3px
+        rgba(99, 91, 255, 0.12);
+}
+
+
+/* =====================================
+   BUTTON
+===================================== */
+
+#verifyResetOtpBtn {
+    width: 100%;
+
+    height:
+        52px;
+
+    margin-top:
+        8px;
+
+    border:
+        none;
+
+    border-radius:
+        10px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #635bff,
+            #725cff
+        );
+
+    color:
+        #ffffff;
+
+    font-size:
+        15px;
+
+    font-weight:
+        700;
+
+    cursor:
+        pointer;
+
+    transition:
+        0.2s ease;
+}
+
+
+#verifyResetOtpBtn:hover {
+    transform:
+        translateY(-1px);
+
+    box-shadow:
+        0 8px 20px
+        rgba(99, 91, 255, 0.25);
+}
+
+
+#verifyResetOtpBtn:disabled {
+    opacity:
+        0.6;
+
+    cursor:
+        not-allowed;
+
+    transform:
+        none;
+
+    box-shadow:
+        none;
+}
+
+
+/* =====================================
+   MESSAGE
+===================================== */
+
+#resetOtpMessage {
+    min-height:
+        22px;
+
+    margin-top:
+        18px;
+
+    color:
+        #475569;
+
+    font-size:
+        14px;
+
+    line-height:
+        1.5;
+
+    text-align:
+        center;
+}
+
+
+/* =====================================
+   BACK LINK
+===================================== */
+
+.back-text {
+    margin-top:
+        26px;
+
+    text-align:
+        center;
+}
+
+
+.back-text a {
+    color:
+        #635bff;
+
+    font-size:
+        14px;
+
+    font-weight:
+        600;
+
+    text-decoration:
+        none;
+}
+
+
+.back-text a:hover {
+    text-decoration:
+        underline;
+}
+
+
+/* =====================================
+   RESPONSIVE
+===================================== */
+
+@media (max-width: 520px) {
+
+    .otp-card {
+        padding:
+            32px 24px;
+
+        border-radius:
+            16px;
+    }
+
+
+    .otp-card h1 {
+        font-size:
+            27px;
+    }
+
+}

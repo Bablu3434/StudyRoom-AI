@@ -5,7 +5,9 @@ const express =
 const {
     registerUser,
     loginUser,
+    verifyLoginOtp,
     forgotPassword,
+    verifyResetOtp,
     resetPassword
 } =
     require("../controllers/authController");
@@ -19,11 +21,19 @@ const router =
     express.Router();
 
 
+// =====================================
+// REGISTER
+// =====================================
+
 router.post(
     "/register",
     registerUser
 );
 
+
+// =====================================
+// LOGIN
+// =====================================
 
 router.post(
     "/login",
@@ -31,11 +41,37 @@ router.post(
 );
 
 
+// =====================================
+// VERIFY LOGIN OTP
+// =====================================
+
+router.post(
+    "/verify-login-otp",
+    verifyLoginOtp
+);
+
+
+// =====================================
+// FORGOT PASSWORD
+// =====================================
+
 router.post(
     "/forgot-password",
     forgotPassword
 );
 
+// =====================================
+// VERIFY RESET OTP
+// =====================================
+
+router.post(
+    "/verify-reset-otp",
+    verifyResetOtp
+);
+
+// =====================================
+// RESET PASSWORD
+// =====================================
 
 router.post(
     "/reset-password/:token",
@@ -43,12 +79,16 @@ router.post(
 );
 
 
+// =====================================
+// CURRENT USER
+// =====================================
+
 router.get(
     "/me",
     protect,
     (req, res) => {
 
-        res.json({
+        return res.json({
 
             success: true,
 

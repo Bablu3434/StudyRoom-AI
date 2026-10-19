@@ -14,110 +14,132 @@ const message =
     );
 
 
-const resetLinkBox =
-    document.getElementById(
-        "resetLinkBox"
-    );
+if (form) {
+
+    form.addEventListener(
+        "submit",
+        async function (event) {
+
+            event.preventDefault();
 
 
-const resetLink =
-    document.getElementById(
-        "resetLink"
-    );
-
-
-form.addEventListener(
-    "submit",
-    async function (event) {
-
-        event.preventDefault();
-
-
-        const email =
-            document
-                .getElementById(
+            const emailInput =
+                document.getElementById(
                     "forgotEmail"
-                )
-                .value
-                .trim();
-
-
-        message.textContent =
-            "Creating reset link...";
-
-
-        resetLinkBox.style.display =
-            "none";
-
-
-        try {
-
-            const response =
-                await fetch(
-                    `${API_URL}/forgot-password`,
-                    {
-
-                        method:
-                            "POST",
-
-                        headers: {
-
-                            "Content-Type":
-                                "application/json"
-
-                        },
-
-                        body:
-                            JSON.stringify({
-                                email
-                            })
-
-                    }
                 );
 
 
-            const data =
-                await response.json();
+            const email =
+                emailInput
+                    .value
+                    .trim();
 
 
-            if (!response.ok) {
+            if (!email) {
 
-                throw new Error(
+                message.textContent =
+                    "Please enter your email.";
+
+                return;
+
+            }
+
+
+            message.textContent =
+                "Sending OTP...";
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${API_URL}/forgot-password`,
+                        {
+
+                            method:
+                                "POST",
+
+                            headers: {
+
+                                "Content-Type":
+                                    "application/json"
+
+                            },
+
+                            body:
+                                JSON.stringify({
+                                    email
+                                })
+
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                console.log(
+                    "Forgot Password Response:",
+                    data
+                );
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.message ||
+                        "Could not send OTP"
+                    );
+
+                }
+
+
+                // =====================================
+                // OTP SENT
+                // =====================================
+
+                if (
+                    data.otpRequired === true
+                ) {
+
+                    sessionStorage.setItem(
+                        "studyRoomResetEmail",
+                        data.email || email
+                    );
+
+
+                    message.textContent =
+                        "OTP sent successfully.";
+
+
+                    window.location.href =
+                        "verify-reset-otp.html";
+
+
+                    return;
+
+                }
+
+
+                message.textContent =
                     data.message ||
-                    "Request failed"
+                    "Unable to continue.";
+
+            } catch (error) {
+
+                console.error(
+                    "Forgot Password Error:",
+                    error
                 );
 
-            }
 
-
-            message.textContent =
-                data.message;
-
-
-            if (
-                data.resetUrl
-            ) {
-
-                resetLink.href =
-                    data.resetUrl;
-
-
-                resetLinkBox.style.display =
-                    "block";
+                message.textContent =
+                    error.message;
 
             }
-
-        } catch (error) {
-
-            console.error(
-                error
-            );
-
-
-            message.textContent =
-                error.message;
 
         }
+    );
 
-    }
-);
+}
