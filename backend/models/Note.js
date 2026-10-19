@@ -29,10 +29,18 @@ const noteSchema = new mongoose.Schema(
             trim: true
         },
 
+        imageUrl: {
+         type: String,
+         default: null
+        },
+
         pinned: {
             type: Boolean,
             default: false
         }
+
+        
+
     },
     {
         timestamps: true

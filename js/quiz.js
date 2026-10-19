@@ -162,350 +162,903 @@ const performanceKey =
 
 
 // =====================================
-// QUESTION BANK
+// Question Bank - 80 Questions
 // =====================================
 
 const questionBank = [
 
-    // =====================================
-    // JAVA
-    // =====================================
+    // ==================================================
+    // JAVA PROGRAMMING - VARIABLES
+    // ==================================================
 
     {
-        subject:
-            "Java Programming",
+        subject: "Java Programming",
+        topic: "Variables",
+        question: "Which keyword is used to make a variable constant in Java?",
+        options: ["static", "final", "const", "fixed"],
+        answer: 1
+    },
 
-        topic:
-            "Variables",
+    {
+        subject: "Java Programming",
+        topic: "Variables",
+        question: "Which data type is normally used to store whole numbers in Java?",
+        options: ["String", "boolean", "int", "char"],
+        answer: 2
+    },
 
-        question:
-            "Which keyword is used to declare a constant in Java?",
+    {
+        subject: "Java Programming",
+        topic: "Variables",
+        question: "Which Java data type is commonly used to store decimal numbers?",
+        options: ["double", "int", "boolean", "char"],
+        answer: 0
+    },
 
+    {
+        subject: "Java Programming",
+        topic: "Variables",
+        question: "Which data type stores a single character in Java?",
+        options: ["String", "char", "int", "byte"],
+        answer: 1
+    },
+
+    {
+        subject: "Java Programming",
+        topic: "Variables",
+        question: "Which data type stores true or false values?",
+        options: ["boolean", "char", "double", "String"],
+        answer: 0
+    },
+
+    {
+        subject: "Java Programming",
+        topic: "Variables",
+        question: "Which of the following is a non-primitive data type in Java?",
+        options: ["int", "double", "boolean", "String"],
+        answer: 3
+    },
+
+    {
+        subject: "Java Programming",
+        topic: "Variables",
+        question: "Which keyword makes a variable belong to the class instead of each object?",
+        options: ["final", "static", "private", "new"],
+        answer: 1
+    },
+
+    {
+        subject: "Java Programming",
+        topic: "Variables",
+        question: "Which is a valid declaration of an integer variable in Java?",
         options: [
-            "static",
-            "final",
-            "const",
-            "fixed"
+            "int age = 20;",
+            "integer age = 20;",
+            "age int = 20;",
+            "num age = 20;"
         ],
+        answer: 0
+    },
 
-        answer:
-            1
+    {
+        subject: "Java Programming",
+        topic: "Variables",
+        question: "Which suffix is commonly used with a long literal in Java?",
+        options: ["F", "L", "D", "S"],
+        answer: 1
+    },
+
+    {
+        subject: "Java Programming",
+        topic: "Variables",
+        question: "A local variable in Java must normally be initialized before it is used.",
+        options: ["True", "False", "Only in loops", "Only in classes"],
+        answer: 0
     },
 
 
+    // ==================================================
+    // JAVA PROGRAMMING - INHERITANCE
+    // ==================================================
+
     {
-        subject:
-            "Java Programming",
+        subject: "Java Programming",
+        topic: "Inheritance",
+        question: "Which keyword is used for class inheritance in Java?",
+        options: ["implements", "inherits", "extends", "super"],
+        answer: 2
+    },
 
-        topic:
-            "Variables",
+    {
+        subject: "Java Programming",
+        topic: "Inheritance",
+        question: "Java directly supports multiple inheritance through classes.",
+        options: ["True", "False", "Only with constructors", "Only with static methods"],
+        answer: 1
+    },
 
-        question:
-            "Which data type is commonly used for whole numbers in Java?",
+    {
+        subject: "Java Programming",
+        topic: "Inheritance",
+        question: "Which keyword is used to access members of a parent class?",
+        options: ["this", "super", "parent", "base"],
+        answer: 1
+    },
 
+    {
+        subject: "Java Programming",
+        topic: "Inheritance",
+        question: "Which relationship best represents inheritance?",
+        options: ["HAS-A", "IS-A", "USES-A", "PART-OF"],
+        answer: 1
+    },
+
+    {
+        subject: "Java Programming",
+        topic: "Inheritance",
+        question: "Which class is the root superclass of Java classes?",
+        options: ["Main", "System", "Object", "Class"],
+        answer: 2
+    },
+
+    {
+        subject: "Java Programming",
+        topic: "Inheritance",
+        question: "Which modifier allows inherited access in subclasses and package classes?",
+        options: ["private", "protected", "final", "static"],
+        answer: 1
+    },
+
+    {
+        subject: "Java Programming",
+        topic: "Inheritance",
+        question: "Which keyword prevents a class from being inherited?",
+        options: ["private", "static", "final", "protected"],
+        answer: 2
+    },
+
+    {
+        subject: "Java Programming",
+        topic: "Inheritance",
+        question: "Are constructors inherited by a child class in Java?",
         options: [
-            "String",
-            "boolean",
-            "int",
-            "char"
+            "Yes, always",
+            "No",
+            "Only private constructors",
+            "Only static constructors"
         ],
+        answer: 1
+    },
 
-        answer:
-            2
+    {
+        subject: "Java Programming",
+        topic: "Inheritance",
+        question: "Hierarchical inheritance means:",
+        options: [
+            "One child has many parents",
+            "Many child classes inherit from one parent",
+            "No class inherits another",
+            "Only interfaces are used"
+        ],
+        answer: 1
+    },
+
+    {
+        subject: "Java Programming",
+        topic: "Inheritance",
+        question: "Java can achieve multiple-inheritance-like behavior using:",
+        options: ["Packages", "Interfaces", "Loops", "Arrays"],
+        answer: 1
     },
 
 
+    // ==================================================
+    // JAVA PROGRAMMING - POLYMORPHISM
+    // ==================================================
+
     {
-        subject:
-            "Java Programming",
-
-        topic:
-            "Inheritance",
-
-        question:
-            "Which keyword is used for class inheritance in Java?",
-
+        subject: "Java Programming",
+        topic: "Polymorphism",
+        question: "Method overloading is an example of:",
         options: [
-            "implements",
-            "inherits",
-            "extends",
-            "super"
+            "Runtime polymorphism",
+            "Compile-time polymorphism",
+            "Inheritance only",
+            "Encapsulation"
         ],
-
-        answer:
-            2
+        answer: 1
     },
 
-
     {
-        subject:
-            "Java Programming",
-
-        topic:
-            "Inheritance",
-
-        question:
-            "Java supports multiple inheritance of classes directly.",
-
-        options: [
-            "True",
-            "False",
-            "Only with constructors",
-            "Only with static classes"
-        ],
-
-        answer:
-            1
-    },
-
-
-    {
-        subject:
-            "Java Programming",
-
-        topic:
-            "Polymorphism",
-
-        question:
-            "Method overloading is an example of which type of polymorphism?",
-
-        options: [
-            "Runtime",
-            "Compile-time",
-            "Dynamic only",
-            "None"
-        ],
-
-        answer:
-            1
-    },
-
-
-    {
-        subject:
-            "Java Programming",
-
-        topic:
-            "Polymorphism",
-
-        question:
-            "Method overriding is mainly associated with which concept?",
-
+        subject: "Java Programming",
+        topic: "Polymorphism",
+        question: "Method overriding is mainly related to:",
         options: [
             "Runtime polymorphism",
             "Variable declaration",
-            "Looping",
-            "Arrays"
+            "Arrays",
+            "Packages"
         ],
+        answer: 0
+    },
 
-        answer:
-            0
+    {
+        subject: "Java Programming",
+        topic: "Polymorphism",
+        question: "In method overloading, methods generally have:",
+        options: [
+            "Same name with different parameters",
+            "Different names only",
+            "Same name and identical parameters only",
+            "No parameters"
+        ],
+        answer: 0
+    },
+
+    {
+        subject: "Java Programming",
+        topic: "Polymorphism",
+        question: "Can changing only the return type overload a Java method?",
+        options: ["Yes", "No", "Only for static methods", "Only for constructors"],
+        answer: 1
+    },
+
+    {
+        subject: "Java Programming",
+        topic: "Polymorphism",
+        question: "Which annotation is commonly used when overriding a method?",
+        options: ["@Static", "@Final", "@Override", "@Overload"],
+        answer: 2
+    },
+
+    {
+        subject: "Java Programming",
+        topic: "Polymorphism",
+        question: "Runtime method selection is also called:",
+        options: [
+            "Dynamic method dispatch",
+            "Static variable binding",
+            "Compilation",
+            "Encapsulation"
+        ],
+        answer: 0
+    },
+
+    {
+        subject: "Java Programming",
+        topic: "Polymorphism",
+        question: "Which is possible in runtime polymorphism?",
+        options: [
+            "Parent reference can refer to a child object",
+            "A variable can have no type",
+            "A class can have no methods",
+            "Java ignores inheritance"
+        ],
+        answer: 0
+    },
+
+    {
+        subject: "Java Programming",
+        topic: "Polymorphism",
+        question: "Overridden methods are selected mainly on the basis of:",
+        options: [
+            "Actual object type at runtime",
+            "Variable name",
+            "Package name",
+            "File extension"
+        ],
+        answer: 0
+    },
+
+    {
+        subject: "Java Programming",
+        topic: "Polymorphism",
+        question: "Static methods in Java are generally:",
+        options: [
+            "Overridden normally",
+            "Hidden rather than overridden",
+            "Converted to constructors",
+            "Always abstract"
+        ],
+        answer: 1
+    },
+
+    {
+        subject: "Java Programming",
+        topic: "Polymorphism",
+        question: "A major benefit of polymorphism is:",
+        options: [
+            "Greater flexibility and reusable code",
+            "Preventing all inheritance",
+            "Removing all methods",
+            "Making every variable static"
+        ],
+        answer: 0
     },
 
 
-    // =====================================
-    // DBMS
-    // =====================================
+    // ==================================================
+    // DBMS - NORMALIZATION
+    // ==================================================
 
     {
-        subject:
-            "DBMS",
-
-        topic:
-            "Normalization",
-
-        question:
-            "What is the main purpose of normalization?",
-
+        subject: "DBMS",
+        topic: "Normalization",
+        question: "What is the main purpose of normalization?",
         options: [
             "Increase redundancy",
             "Reduce data redundancy",
-            "Delete tables",
+            "Delete all tables",
             "Increase duplicate records"
         ],
-
-        answer:
-            1
+        answer: 1
     },
 
-
     {
-        subject:
-            "DBMS",
-
-        topic:
-            "Normalization",
-
-        question:
-            "First Normal Form mainly removes which type of values?",
-
+        subject: "DBMS",
+        topic: "Normalization",
+        question: "First Normal Form requires attributes to contain:",
         options: [
             "Atomic values",
-            "Repeating groups",
+            "Multiple values in one field",
+            "Duplicate rows",
+            "Only foreign keys"
+        ],
+        answer: 0
+    },
+
+    {
+        subject: "DBMS",
+        topic: "Normalization",
+        question: "Second Normal Form mainly removes:",
+        options: [
+            "Partial dependency",
+            "All primary keys",
+            "All foreign keys",
+            "Tables"
+        ],
+        answer: 0
+    },
+
+    {
+        subject: "DBMS",
+        topic: "Normalization",
+        question: "Third Normal Form mainly removes:",
+        options: [
+            "Transitive dependency",
             "Primary keys",
-            "Foreign keys"
+            "Rows",
+            "All relationships"
         ],
-
-        answer:
-            1
+        answer: 0
     },
 
-
     {
-        subject:
-            "DBMS",
-
-        topic:
-            "SQL",
-
-        question:
-            "Which SQL command is used to retrieve data?",
-
+        subject: "DBMS",
+        topic: "Normalization",
+        question: "BCNF requires that every determinant should be:",
         options: [
-            "DELETE",
-            "UPDATE",
-            "SELECT",
-            "DROP"
+            "A candidate key",
+            "A foreign key only",
+            "A duplicate attribute",
+            "A null value"
         ],
-
-        answer:
-            2
+        answer: 0
     },
 
-
     {
-        subject:
-            "DBMS",
-
-        topic:
-            "SQL",
-
-        question:
-            "Which SQL command removes a table completely?",
-
+        subject: "DBMS",
+        topic: "Normalization",
+        question: "Normalization helps reduce which type of problem?",
         options: [
-            "DELETE",
-            "REMOVE",
-            "DROP",
-            "CLEAR"
+            "Data anomalies",
+            "CPU speed",
+            "Internet speed",
+            "Screen resolution"
         ],
+        answer: 0
+    },
 
-        answer:
-            2
+    {
+        subject: "DBMS",
+        topic: "Normalization",
+        question: "An update anomaly may happen because of:",
+        options: [
+            "Duplicate data stored in several places",
+            "A faster CPU",
+            "A smaller monitor",
+            "A SQL comment"
+        ],
+        answer: 0
+    },
+
+    {
+        subject: "DBMS",
+        topic: "Normalization",
+        question: "An insertion anomaly means:",
+        options: [
+            "Some information cannot be inserted without unrelated data",
+            "A query always runs faster",
+            "A table has no columns",
+            "SQL cannot use SELECT"
+        ],
+        answer: 0
+    },
+
+    {
+        subject: "DBMS",
+        topic: "Normalization",
+        question: "A deletion anomaly can cause:",
+        options: [
+            "Unintended loss of useful information",
+            "Automatic database backup",
+            "More RAM",
+            "Faster sorting"
+        ],
+        answer: 0
+    },
+
+    {
+        subject: "DBMS",
+        topic: "Normalization",
+        question: "A functional dependency describes a relationship between:",
+        options: [
+            "Attributes",
+            "Computer monitors",
+            "Operating systems",
+            "Network cables"
+        ],
+        answer: 0
     },
 
 
+    // ==================================================
+    // DBMS - SQL
+    // ==================================================
+
     {
-        subject:
-            "DBMS",
+        subject: "DBMS",
+        topic: "SQL",
+        question: "Which SQL command is used to retrieve data?",
+        options: ["DELETE", "UPDATE", "SELECT", "DROP"],
+        answer: 2
+    },
 
-        topic:
-            "Keys",
+    {
+        subject: "DBMS",
+        topic: "SQL",
+        question: "Which SQL clause is used to filter rows?",
+        options: ["ORDER BY", "WHERE", "GROUP BY", "FROM"],
+        answer: 1
+    },
 
-        question:
-            "Which key uniquely identifies each record in a table?",
+    {
+        subject: "DBMS",
+        topic: "SQL",
+        question: "Which command is used to add a new row to a table?",
+        options: ["INSERT", "SELECT", "DROP", "ALTER"],
+        answer: 0
+    },
 
+    {
+        subject: "DBMS",
+        topic: "SQL",
+        question: "Which SQL command modifies existing records?",
+        options: ["CREATE", "UPDATE", "SELECT", "DROP"],
+        answer: 1
+    },
+
+    {
+        subject: "DBMS",
+        topic: "SQL",
+        question: "Which SQL command removes selected rows from a table?",
+        options: ["DELETE", "DROP", "CREATE", "SELECT"],
+        answer: 0
+    },
+
+    {
+        subject: "DBMS",
+        topic: "SQL",
+        question: "Which SQL command removes an entire table definition?",
+        options: ["DELETE", "REMOVE", "DROP", "CLEAR"],
+        answer: 2
+    },
+
+    {
+        subject: "DBMS",
+        topic: "SQL",
+        question: "Which clause is used to sort query results?",
+        options: ["ORDER BY", "WHERE", "HAVING", "VALUES"],
+        answer: 0
+    },
+
+    {
+        subject: "DBMS",
+        topic: "SQL",
+        question: "Which clause groups rows having the same values?",
+        options: ["ORDER BY", "GROUP BY", "WHERE", "INSERT"],
+        answer: 1
+    },
+
+    {
+        subject: "DBMS",
+        topic: "SQL",
+        question: "Which clause filters grouped results?",
+        options: ["HAVING", "VALUES", "INTO", "SET"],
+        answer: 0
+    },
+
+    {
+        subject: "DBMS",
+        topic: "SQL",
+        question: "Which SQL function counts rows?",
+        options: ["SUM()", "AVG()", "COUNT()", "MAX()"],
+        answer: 2
+    },
+
+
+    // ==================================================
+    // DBMS - KEYS
+    // ==================================================
+
+    {
+        subject: "DBMS",
+        topic: "Keys",
+        question: "Which key uniquely identifies each record in a table?",
         options: [
             "Foreign Key",
             "Primary Key",
-            "Alternate Table",
-            "Index"
+            "Duplicate Key",
+            "Partial Key"
         ],
-
-        answer:
-            1
+        answer: 1
     },
 
-
-    // =====================================
-    // MATHEMATICS
-    // =====================================
-
     {
-        subject:
-            "Mathematics",
-
-        topic:
-            "Algebra",
-
-        question:
-            "What is the value of x if x + 5 = 10?",
-
+        subject: "DBMS",
+        topic: "Keys",
+        question: "A foreign key is mainly used to:",
         options: [
-            "3",
-            "5",
-            "10",
-            "15"
+            "Create relationships between tables",
+            "Delete the database",
+            "Sort a table only",
+            "Rename columns"
         ],
-
-        answer:
-            1
+        answer: 0
     },
 
-
     {
-        subject:
-            "Mathematics",
-
-        topic:
-            "Algebra",
-
-        question:
-            "What is 3 × 4 + 2?",
-
+        subject: "DBMS",
+        topic: "Keys",
+        question: "A candidate key is:",
         options: [
-            "14",
-            "18",
-            "20",
-            "24"
+            "A minimal attribute set that can uniquely identify a row",
+            "Any duplicate column",
+            "A column containing only null values",
+            "A temporary table"
         ],
+        answer: 0
+    },
 
-        answer:
-            0
+    {
+        subject: "DBMS",
+        topic: "Keys",
+        question: "A super key is:",
+        options: [
+            "An attribute set that uniquely identifies a row",
+            "A key used only for passwords",
+            "A duplicate record",
+            "A SQL query"
+        ],
+        answer: 0
+    },
+
+    {
+        subject: "DBMS",
+        topic: "Keys",
+        question: "A candidate key not selected as the primary key is called:",
+        options: [
+            "Alternate Key",
+            "Foreign Key",
+            "Null Key",
+            "Duplicate Key"
+        ],
+        answer: 0
+    },
+
+    {
+        subject: "DBMS",
+        topic: "Keys",
+        question: "A key made using more than one attribute is called:",
+        options: [
+            "Composite Key",
+            "Foreign Key",
+            "Simple Key",
+            "Null Key"
+        ],
+        answer: 0
+    },
+
+    {
+        subject: "DBMS",
+        topic: "Keys",
+        question: "A primary key normally:",
+        options: [
+            "Cannot contain NULL values",
+            "Must contain duplicate values",
+            "Must always be text",
+            "Can identify many rows with the same value"
+        ],
+        answer: 0
+    },
+
+    {
+        subject: "DBMS",
+        topic: "Keys",
+        question: "How many primary keys can a table have?",
+        options: [
+            "One",
+            "Two",
+            "Unlimited",
+            "Zero only"
+        ],
+        answer: 0
+    },
+
+    {
+        subject: "DBMS",
+        topic: "Keys",
+        question: "A surrogate key is usually:",
+        options: [
+            "An artificial identifier created for records",
+            "A duplicate foreign key",
+            "A SQL command",
+            "A database backup"
+        ],
+        answer: 0
+    },
+
+    {
+        subject: "DBMS",
+        topic: "Keys",
+        question: "Foreign keys help maintain:",
+        options: [
+            "Referential integrity",
+            "Screen brightness",
+            "CPU temperature",
+            "File compression"
+        ],
+        answer: 0
     },
 
 
+    // ==================================================
+    // MATHEMATICS - ALGEBRA
+    // ==================================================
+
     {
-        subject:
-            "Mathematics",
+        subject: "Mathematics",
+        topic: "Algebra",
+        question: "What is the value of x if x + 5 = 10?",
+        options: ["3", "5", "10", "15"],
+        answer: 1
+    },
 
-        topic:
-            "Integration",
+    {
+        subject: "Mathematics",
+        topic: "Algebra",
+        question: "What is 3 × 4 + 2?",
+        options: ["14", "18", "20", "24"],
+        answer: 0
+    },
 
-        question:
-            "Integration is commonly considered the reverse process of:",
+    {
+        subject: "Mathematics",
+        topic: "Algebra",
+        question: "Solve: 2x = 12.",
+        options: ["4", "5", "6", "8"],
+        answer: 2
+    },
 
+    {
+        subject: "Mathematics",
+        topic: "Algebra",
+        question: "Simplify: 2x + 3x.",
+        options: ["5x", "6x", "5x²", "x"],
+        answer: 0
+    },
+
+    {
+        subject: "Mathematics",
+        topic: "Algebra",
+        question: "Solve: x - 7 = 3.",
+        options: ["4", "10", "-4", "21"],
+        answer: 1
+    },
+
+    {
+        subject: "Mathematics",
+        topic: "Algebra",
+        question: "Factorize x² - 9.",
+        options: [
+            "(x - 3)(x + 3)",
+            "(x - 9)(x + 1)",
+            "(x - 3)²",
+            "(x + 9)(x - 1)"
+        ],
+        answer: 0
+    },
+
+    {
+        subject: "Mathematics",
+        topic: "Algebra",
+        question: "What are the roots of x² - 5x + 6 = 0?",
+        options: [
+            "2 and 3",
+            "1 and 6",
+            "-2 and -3",
+            "3 and 5"
+        ],
+        answer: 0
+    },
+
+    {
+        subject: "Mathematics",
+        topic: "Algebra",
+        question: "What is x² × x³?",
+        options: ["x⁵", "x⁶", "x", "x⁹"],
+        answer: 0
+    },
+
+    {
+        subject: "Mathematics",
+        topic: "Algebra",
+        question: "Which identity is correct?",
+        options: [
+            "(a + b)² = a² + 2ab + b²",
+            "(a + b)² = a² + b²",
+            "(a + b)² = a² - 2ab + b²",
+            "(a + b)² = 2a + 2b"
+        ],
+        answer: 0
+    },
+
+    {
+        subject: "Mathematics",
+        topic: "Algebra",
+        question: "If 3x + 2 = 11, what is x?",
+        options: ["2", "3", "4", "5"],
+        answer: 1
+    },
+
+
+    // ==================================================
+    // MATHEMATICS - INTEGRATION
+    // ==================================================
+
+    {
+        subject: "Mathematics",
+        topic: "Integration",
+        question: "Integration is commonly considered the reverse process of:",
         options: [
             "Multiplication",
             "Differentiation",
             "Division",
             "Factorization"
         ],
-
-        answer:
-            1
+        answer: 1
     },
 
+    {
+        subject: "Mathematics",
+        topic: "Integration",
+        question: "The integral of 1 with respect to x is:",
+        options: ["1", "x + C", "0", "x²"],
+        answer: 1
+    },
 
     {
-        subject:
-            "Mathematics",
-
-        topic:
-            "Integration",
-
-        question:
-            "The integral of 1 with respect to x is:",
-
+        subject: "Mathematics",
+        topic: "Integration",
+        question: "What is ∫x dx?",
         options: [
-            "1",
+            "x²/2 + C",
             "x + C",
-            "0",
-            "x²"
+            "2x + C",
+            "x² + C"
         ],
+        answer: 0
+    },
 
-        answer:
-            1
+    {
+        subject: "Mathematics",
+        topic: "Integration",
+        question: "What is ∫2x dx?",
+        options: [
+            "x² + C",
+            "2x² + C",
+            "2 + C",
+            "x + C"
+        ],
+        answer: 0
+    },
+
+    {
+        subject: "Mathematics",
+        topic: "Integration",
+        question: "What is ∫cos(x) dx?",
+        options: [
+            "sin(x) + C",
+            "-sin(x) + C",
+            "cos(x) + C",
+            "-cos(x) + C"
+        ],
+        answer: 0
+    },
+
+    {
+        subject: "Mathematics",
+        topic: "Integration",
+        question: "What is ∫sin(x) dx?",
+        options: [
+            "-cos(x) + C",
+            "cos(x) + C",
+            "sin(x) + C",
+            "-sin(x) + C"
+        ],
+        answer: 0
+    },
+
+    {
+        subject: "Mathematics",
+        topic: "Integration",
+        question: "What does C represent in an indefinite integral?",
+        options: [
+            "Constant of integration",
+            "Coefficient of x",
+            "Calculated limit",
+            "Curve length"
+        ],
+        answer: 0
+    },
+
+    {
+        subject: "Mathematics",
+        topic: "Integration",
+        question: "What is ∫eˣ dx?",
+        options: [
+            "eˣ + C",
+            "xeˣ + C",
+            "eˣ/x + C",
+            "1/eˣ + C"
+        ],
+        answer: 0
+    },
+
+    {
+        subject: "Mathematics",
+        topic: "Integration",
+        question: "What is ∫(1/x) dx?",
+        options: [
+            "ln|x| + C",
+            "x² + C",
+            "1/x² + C",
+            "x + C"
+        ],
+        answer: 0
+    },
+
+    {
+        subject: "Mathematics",
+        topic: "Integration",
+        question: "A definite integral is usually evaluated between:",
+        options: [
+            "Lower and upper limits",
+            "Two variable names",
+            "Two table names",
+            "Two operators"
+        ],
+        answer: 0
     }
 
 ];
@@ -899,6 +1452,22 @@ startQuizBtn.addEventListener(
                 questionCount.value
             );
 
+            // =====================================
+// CHECK AVAILABLE QUESTIONS
+// =====================================
+
+if (
+    availableQuestions.length <
+    requestedCount
+) {
+
+    alert(
+        `Only ${availableQuestions.length} questions are available for this topic. Please select a smaller quiz size.`
+    );
+
+    return;
+}
+
 
         quizQuestions =
             shuffleArray(
@@ -906,11 +1475,11 @@ startQuizBtn.addEventListener(
             )
                 .slice(
                     0,
-                    Math.min(
+                    
                         requestedCount,
-                        availableQuestions.length
+                    
                     )
-                );
+                
 
 
         if (

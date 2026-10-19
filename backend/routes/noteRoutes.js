@@ -1,7 +1,9 @@
+const noteupload = require ("../middleware/noteUpload");
+
 const express =
     require("express");
 
-const protect =
+const protect = 
     require(
         "../middleware/authMiddleware"
     );
