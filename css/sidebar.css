@@ -1,0 +1,210 @@
+* {
+    box-sizing: border-box;
+}
+
+
+/* =====================================
+   SIDEBAR
+===================================== */
+
+.app-sidebar {
+    position: fixed;
+
+    top: 0;
+    left: 0;
+    bottom: 0;
+
+    width: 258px;
+
+    padding: 28px 20px;
+
+    display: flex;
+    flex-direction: column;
+
+    background: #111827;
+
+    color: #ffffff;
+
+    z-index: 9999;
+
+    overflow-y: auto;
+}
+
+
+/* =====================================
+   BRAND
+===================================== */
+
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    margin-bottom: 38px;
+
+    padding: 0 2px;
+
+    font-size: 23px;
+    font-weight: 800;
+}
+
+
+.sidebar-logo {
+    width: 44px;
+    height: 44px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 11px;
+
+    background: #635bff;
+
+    color: white;
+
+    font-size: 14px;
+    font-weight: 700;
+}
+
+
+/* =====================================
+   NAVIGATION
+===================================== */
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+
+    gap: 7px;
+}
+
+
+.sidebar-nav a,
+.sidebar-bottom a,
+.sidebar-bottom button {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    min-height: 46px;
+
+    padding: 0 15px;
+
+    border: none;
+    border-radius: 9px;
+
+    background: transparent;
+
+    color: #cbd5e1;
+
+    text-decoration: none;
+
+    font-family: inherit;
+    font-size: 14px;
+
+    cursor: pointer;
+
+    transition: 0.2s ease;
+}
+
+
+.sidebar-nav a:hover,
+.sidebar-bottom a:hover,
+.sidebar-bottom button:hover {
+    background: #1f2937;
+
+    color: #ffffff;
+}
+
+
+.sidebar-nav a.active,
+.sidebar-bottom a.active {
+    background: linear-gradient(
+        135deg,
+        #5754ed,
+        #695cff
+    );
+
+    color: #ffffff;
+}
+
+
+/* =====================================
+   BOTTOM
+===================================== */
+
+.sidebar-bottom {
+    margin-top: auto;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 8px;
+
+    padding-top: 30px;
+}
+
+
+.sidebar-bottom button {
+    text-align: left;
+
+    background: #273244;
+
+    color: white;
+}
+
+
+/* =====================================
+   PAGE CONTENT OFFSET
+===================================== */
+
+body.has-app-sidebar {
+    padding-left: 258px;
+}
+
+
+/* =====================================
+   RESPONSIVE
+===================================== */
+
+@media (max-width: 900px) {
+
+    .app-sidebar {
+        width: 78px;
+
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+
+    .sidebar-brand span,
+    .sidebar-nav span,
+    .sidebar-bottom span {
+        display: none;
+    }
+
+
+    .sidebar-brand {
+        justify-content: center;
+    }
+
+
+    .sidebar-nav a,
+    .sidebar-bottom a,
+    .sidebar-bottom button {
+        justify-content: center;
+
+        padding: 0;
+    }
+
+
+    body.has-app-sidebar {
+        padding-left: 78px;
+    }
+
+}
