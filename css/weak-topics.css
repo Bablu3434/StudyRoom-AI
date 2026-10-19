@@ -430,9 +430,9 @@ a[href="quiz.html"].take-quiz,
 #weakTopicList,
 #topicsContainer {
     width: 100%;
-
+    
     display: grid;
-
+    margin-top: 10px;
     grid-template-columns:
         repeat(2, minmax(0, 1fr));
 
