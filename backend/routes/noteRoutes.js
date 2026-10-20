@@ -1,18 +1,12 @@
-const express =
-    require("express");
+const express = require("express");
 
+const protect = require(
+    "../middleware/authMiddleware"
+);
 
-const protect =
-    require(
-        "../middleware/authMiddleware"
-    );
-
-
-const noteUpload =
-    require(
-        "../middleware/noteUpload"
-    );
-
+const noteUpload = require(
+    "../middleware/noteUpload"
+);
 
 const {
     getNotes,
@@ -25,53 +19,54 @@ const {
 );
 
 
-const router =
-    express.Router();
+const router = express.Router();
 
 
 // =====================================
 // PROTECT ALL NOTE ROUTES
 // =====================================
 
-router.use(
-    protect
-);
+router.use(protect);
 
 
 // =====================================
 // GET ALL NOTES
-// CREATE NOTE + IMAGE
 // =====================================
 
-router
-    .route("/")
-    .get(
-        getNotes
-    )
-    .post(
-        noteUpload.single(
-            "noteImage"
-        ),
-        createNote
-    );
+router.get(
+    "/",
+    getNotes
+);
 
 
 // =====================================
-// UPDATE NOTE + IMAGE
-// DELETE NOTE
+// CREATE NOTE
+// MAXIMUM 10 IMAGES
 // =====================================
 
-router
-    .route("/:id")
-    .put(
-        noteUpload.single(
-            "noteImage"
-        ),
-        updateNote
-    )
-    .delete(
-        deleteNote
-    );
+router.post(
+    "/",
+    noteUpload.array(
+        "noteImages",
+        10
+    ),
+    createNote
+);
+
+
+// =====================================
+// UPDATE NOTE
+// MAXIMUM 10 NEW IMAGES
+// =====================================
+
+router.put(
+    "/:id",
+    noteUpload.array(
+        "noteImages",
+        10
+    ),
+    updateNote
+);
 
 
 // =====================================
@@ -85,8 +80,17 @@ router.patch(
 
 
 // =====================================
-// EXPORT ROUTER
+// DELETE NOTE
 // =====================================
 
-module.exports =
-    router;
+router.delete(
+    "/:id",
+    deleteNote
+);
+
+
+// =====================================
+// EXPORT
+// =====================================
+
+module.exports = router;

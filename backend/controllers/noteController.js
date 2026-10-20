@@ -1,37 +1,28 @@
-const Note =
-    require("../models/Note");
+const Note = require("../models/Note");
 
-const fs =
-    require("fs");
-
-const path =
-    require("path");
+const fs = require("fs");
+const path = require("path");
 
 
 // =====================================
-// HELPER - CONVERT FORM VALUE TO BOOLEAN
+// BOOLEAN HELPER
 // =====================================
 
 function toBoolean(value) {
 
-    if (
+    return (
         value === true ||
         value === "true"
-    ) {
-        return true;
-    }
+    );
 
-    return false;
 }
 
 
 // =====================================
-// HELPER - DELETE OLD IMAGE
+// DELETE ONE IMAGE FROM DISK
 // =====================================
 
-function deleteNoteImage(
-    imageUrl
-) {
+function deleteNoteImage(imageUrl) {
 
     try {
 
@@ -40,10 +31,9 @@ function deleteNoteImage(
         }
 
 
-        const relativePath =
-            imageUrl.replace(
-                /^\/+/,
-                ""
+        const filename =
+            path.basename(
+                imageUrl
             );
 
 
@@ -51,7 +41,9 @@ function deleteNoteImage(
             path.join(
                 __dirname,
                 "..",
-                relativePath
+                "uploads",
+                "notes",
+                filename
             );
 
 
@@ -75,6 +67,60 @@ function deleteNoteImage(
         );
 
     }
+
+}
+
+
+// =====================================
+// DELETE MULTIPLE IMAGES
+// =====================================
+
+function deleteNoteImages(imageUrls = []) {
+
+    imageUrls.forEach(
+        imageUrl => {
+
+            deleteNoteImage(
+                imageUrl
+            );
+
+        }
+    );
+
+}
+
+
+// =====================================
+// GET UPLOADED IMAGE URLS
+// req.files comes from multer.array()
+// =====================================
+
+function getUploadedImageUrls(files = []) {
+
+    return files.map(
+        file =>
+            `/uploads/notes/${file.filename}`
+    );
+
+}
+
+
+// =====================================
+// CLEAN UP NEWLY UPLOADED FILES
+// Used when request fails
+// =====================================
+
+function cleanupUploadedFiles(files = []) {
+
+    const urls =
+        getUploadedImageUrls(
+            files
+        );
+
+
+    deleteNoteImages(
+        urls
+    );
 
 }
 
@@ -127,7 +173,8 @@ const getNotes =
 
 // =====================================
 // CREATE NOTE
-// TEXT + PHOTO / PHOTO ONLY
+// TEXT + MULTIPLE PHOTOS
+// Maximum 10 images
 // =====================================
 
 const createNote =
@@ -143,14 +190,23 @@ const createNote =
             } = req.body;
 
 
-            // -----------------------------
-            // Required title + subject
-            // -----------------------------
+            const uploadedFiles =
+                req.files || [];
+
+
+            // =================================
+            // TITLE + SUBJECT REQUIRED
+            // =================================
 
             if (
                 !title?.trim() ||
                 !subject?.trim()
             ) {
+
+                cleanupUploadedFiles(
+                    uploadedFiles
+                );
+
 
                 return res
                     .status(400)
@@ -163,9 +219,9 @@ const createNote =
             }
 
 
-            // -----------------------------
-            // Must contain text OR image
-            // -----------------------------
+            // =================================
+            // TEXT OR IMAGE REQUIRED
+            // =================================
 
             const hasContent =
                 Boolean(
@@ -173,15 +229,13 @@ const createNote =
                 );
 
 
-            const hasImage =
-                Boolean(
-                    req.file
-                );
+            const hasImages =
+                uploadedFiles.length > 0;
 
 
             if (
                 !hasContent &&
-                !hasImage
+                !hasImages
             ) {
 
                 return res
@@ -189,25 +243,25 @@ const createNote =
                     .json({
                         success: false,
                         message:
-                            "Please write a note or upload a photo"
+                            "Please write a note or upload at least one photo"
                     });
 
             }
 
 
-            // -----------------------------
-            // Image URL
-            // -----------------------------
+            // =================================
+            // IMAGE URLS
+            // =================================
 
-            const imageUrl =
-                req.file
-                    ? `/uploads/notes/${req.file.filename}`
-                    : null;
+            const imageUrls =
+                getUploadedImageUrls(
+                    uploadedFiles
+                );
 
 
-            // -----------------------------
-            // Create Note
-            // -----------------------------
+            // =================================
+            // CREATE NOTE
+            // =================================
 
             const note =
                 await Note.create({
@@ -226,7 +280,14 @@ const createNote =
                             ? content.trim()
                             : "",
 
-                    imageUrl,
+                    imageUrls:
+                        imageUrls,
+
+                    // Keep first image here too
+                    // for old frontend compatibility
+
+                    imageUrl:
+                        imageUrls[0] || null,
 
                     pinned:
                         toBoolean(
@@ -253,17 +314,9 @@ const createNote =
             );
 
 
-            // If DB save fails after
-            // multer uploaded the image,
-            // delete unused file.
-
-            if (req.file) {
-
-                deleteNoteImage(
-                    `/uploads/notes/${req.file.filename}`
-                );
-
-            }
+            cleanupUploadedFiles(
+                req.files || []
+            );
 
 
             res
@@ -281,11 +334,15 @@ const createNote =
 
 // =====================================
 // UPDATE NOTE
-// TEXT + NEW PHOTO
+// ADD / REMOVE MULTIPLE PHOTOS
 // =====================================
 
 const updateNote =
     async (req, res) => {
+
+        const uploadedFiles =
+            req.files || [];
+
 
         try {
 
@@ -301,16 +358,9 @@ const updateNote =
 
             if (!note) {
 
-                // Remove uploaded image
-                // if note does not exist.
-
-                if (req.file) {
-
-                    deleteNoteImage(
-                        `/uploads/notes/${req.file.filename}`
-                    );
-
-                }
+                cleanupUploadedFiles(
+                    uploadedFiles
+                );
 
 
                 return res
@@ -329,13 +379,42 @@ const updateNote =
                 subject,
                 content,
                 pinned,
-                removeImage
+                removeImage,
+                removeImages
             } = req.body;
 
 
-            // -----------------------------
-            // Update title
-            // -----------------------------
+            // =================================
+            // GET CURRENT IMAGES
+            // =================================
+
+            let currentImages =
+                Array.isArray(
+                    note.imageUrls
+                )
+                    ? [...note.imageUrls]
+                    : [];
+
+
+            // Old single image support
+
+            if (
+                note.imageUrl &&
+                !currentImages.includes(
+                    note.imageUrl
+                )
+            ) {
+
+                currentImages.unshift(
+                    note.imageUrl
+                );
+
+            }
+
+
+            // =================================
+            // UPDATE TITLE
+            // =================================
 
             if (
                 title !== undefined
@@ -344,6 +423,11 @@ const updateNote =
                 if (
                     !title.trim()
                 ) {
+
+                    cleanupUploadedFiles(
+                        uploadedFiles
+                    );
+
 
                     return res
                         .status(400)
@@ -362,9 +446,9 @@ const updateNote =
             }
 
 
-            // -----------------------------
-            // Update subject
-            // -----------------------------
+            // =================================
+            // UPDATE SUBJECT
+            // =================================
 
             if (
                 subject !== undefined
@@ -373,6 +457,11 @@ const updateNote =
                 if (
                     !subject.trim()
                 ) {
+
+                    cleanupUploadedFiles(
+                        uploadedFiles
+                    );
+
 
                     return res
                         .status(400)
@@ -391,9 +480,9 @@ const updateNote =
             }
 
 
-            // -----------------------------
-            // Update content
-            // -----------------------------
+            // =================================
+            // UPDATE CONTENT
+            // =================================
 
             if (
                 content !== undefined
@@ -405,9 +494,9 @@ const updateNote =
             }
 
 
-            // -----------------------------
-            // Update pin
-            // -----------------------------
+            // =================================
+            // UPDATE PIN
+            // =================================
 
             if (
                 pinned !== undefined
@@ -421,62 +510,152 @@ const updateNote =
             }
 
 
-            // -----------------------------
-            // Remove current image
-            // -----------------------------
+            // =================================
+            // REMOVE ALL OLD IMAGES
+            // Used by old frontend:
+            // removeImage = true
+            // =================================
 
             if (
                 removeImage === "true" ||
                 removeImage === true
             ) {
 
-                if (
-                    note.imageUrl
-                ) {
-
-                    deleteNoteImage(
-                        note.imageUrl
-                    );
-
-                }
+                deleteNoteImages(
+                    currentImages
+                );
 
 
-                note.imageUrl =
-                    null;
+                currentImages =
+                    [];
 
             }
 
 
-            // -----------------------------
-            // Replace with new image
-            // -----------------------------
+            // =================================
+            // REMOVE SELECTED IMAGES
+            //
+            // Frontend can send:
+            // removeImages = JSON.stringify([...])
+            // =================================
 
             if (
-                req.file
+                removeImages
             ) {
 
-                // Delete old photo
+                let imagesToRemove =
+                    [];
 
-                if (
-                    note.imageUrl
-                ) {
 
-                    deleteNoteImage(
-                        note.imageUrl
+                try {
+
+                    if (
+                        Array.isArray(
+                            removeImages
+                        )
+                    ) {
+
+                        imagesToRemove =
+                            removeImages;
+
+                    } else {
+
+                        imagesToRemove =
+                            JSON.parse(
+                                removeImages
+                            );
+
+                    }
+
+                } catch (error) {
+
+                    console.warn(
+                        "Invalid removeImages value"
                     );
 
                 }
 
 
-                note.imageUrl =
-                    `/uploads/notes/${req.file.filename}`;
+                if (
+                    Array.isArray(
+                        imagesToRemove
+                    )
+                ) {
+
+                    imagesToRemove
+                        .forEach(
+                            imageUrl => {
+
+                                if (
+                                    currentImages.includes(
+                                        imageUrl
+                                    )
+                                ) {
+
+                                    deleteNoteImage(
+                                        imageUrl
+                                    );
+
+
+                                    currentImages =
+                                        currentImages.filter(
+                                            url =>
+                                                url !== imageUrl
+                                        );
+
+                                }
+
+                            }
+                        );
+
+                }
 
             }
 
 
-            // -----------------------------
-            // Must still have text OR image
-            // -----------------------------
+            // =================================
+            // NEW UPLOADED IMAGES
+            // =================================
+
+            const newImageUrls =
+                getUploadedImageUrls(
+                    uploadedFiles
+                );
+
+
+            // Maximum total 10 images
+
+            if (
+                currentImages.length +
+                newImageUrls.length >
+                10
+            ) {
+
+                cleanupUploadedFiles(
+                    uploadedFiles
+                );
+
+
+                return res
+                    .status(400)
+                    .json({
+                        success: false,
+                        message:
+                            "A note can contain maximum 10 photos"
+                    });
+
+            }
+
+
+            currentImages.push(
+                ...newImageUrls
+            );
+
+
+            // =================================
+            // VALIDATION
+            // Must have text OR photo
+            // =================================
 
             const hasContent =
                 Boolean(
@@ -484,26 +663,44 @@ const updateNote =
                 );
 
 
-            const hasImage =
-                Boolean(
-                    note.imageUrl
-                );
+            const hasImages =
+                currentImages.length > 0;
 
 
             if (
                 !hasContent &&
-                !hasImage
+                !hasImages
             ) {
+
+                cleanupUploadedFiles(
+                    uploadedFiles
+                );
+
 
                 return res
                     .status(400)
                     .json({
                         success: false,
                         message:
-                            "A note must contain text or a photo"
+                            "A note must contain text or at least one photo"
                     });
 
             }
+
+
+            // =================================
+            // SAVE IMAGE ARRAY
+            // =================================
+
+            note.imageUrls =
+                currentImages;
+
+
+            // First image retained for
+            // existing frontend compatibility
+
+            note.imageUrl =
+                currentImages[0] || null;
 
 
             await note.save();
@@ -521,6 +718,11 @@ const updateNote =
             console.error(
                 "Update Note Error:",
                 error
+            );
+
+
+            cleanupUploadedFiles(
+                uploadedFiles
             );
 
 
@@ -578,10 +780,12 @@ const togglePin =
 
             res.json({
                 success: true,
+
                 message:
                     note.pinned
                         ? "Note pinned"
                         : "Note unpinned",
+
                 note
             });
 
@@ -608,7 +812,7 @@ const togglePin =
 
 // =====================================
 // DELETE NOTE
-// ALSO DELETE PHOTO
+// DELETE ALL PHOTOS TOO
 // =====================================
 
 const deleteNote =
@@ -639,18 +843,46 @@ const deleteNote =
             }
 
 
-            // Delete associated image
+            // =================================
+            // COLLECT ALL IMAGES
+            // =================================
+
+            const imagesToDelete =
+                Array.isArray(
+                    note.imageUrls
+                )
+                    ? [...note.imageUrls]
+                    : [];
+
+
+            // Old imageUrl support
 
             if (
-                note.imageUrl
+                note.imageUrl &&
+                !imagesToDelete.includes(
+                    note.imageUrl
+                )
             ) {
 
-                deleteNoteImage(
+                imagesToDelete.push(
                     note.imageUrl
                 );
 
             }
 
+
+            // =================================
+            // DELETE FILES
+            // =================================
+
+            deleteNoteImages(
+                imagesToDelete
+            );
+
+
+            // =================================
+            // DELETE DB NOTE
+            // =================================
 
             await note.deleteOne();
 

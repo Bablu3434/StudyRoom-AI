@@ -1051,8 +1051,6 @@ body.has-app-sidebar .navbar {
 
     box-shadow: none;
 }
-
-
 /* =========================================
    LIVE CAMERA
 ========================================= */
@@ -1383,7 +1381,6 @@ body.has-app-sidebar .navbar {
     gap: 10px;
 }
 
-
 .modal-actions button {
     min-height: 42px;
 
@@ -1652,9 +1649,7 @@ body.photo-viewer-open {
         padding:
             30px 16px 50px;
     }
-
-
-    .page-header {
+  .page-header {
         flex-direction: column;
 
         align-items:
@@ -1781,6 +1776,515 @@ body.photo-viewer-open {
             calc(
                 100vh - 120px
             );
+    }
+
+}
+
+/* =========================================
+   MULTIPLE IMAGE PREVIEW
+========================================= */
+
+.multi-preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 12px;
+
+    margin-bottom: 12px;
+}
+
+
+.multi-preview-header > div {
+    display: flex;
+    flex-direction: column;
+
+    gap: 3px;
+}
+
+
+.multi-preview-header strong {
+    color: var(--dark);
+
+    font-size: 13px;
+
+    font-weight: 800;
+}
+
+
+.multi-preview-header small {
+    color: var(--muted);
+
+    font-size: 11px;
+}
+
+
+/* =========================================
+   MULTIPLE PREVIEW GRID
+========================================= */
+
+.multi-preview-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            3,
+            minmax(0, 1fr)
+        );
+
+    gap: 10px;
+}
+
+
+/* =========================================
+   INDIVIDUAL PREVIEW IMAGE
+========================================= */
+
+.preview-image-card {
+    position: relative;
+
+    width: 100%;
+
+    aspect-ratio: 1 / 1;
+
+    overflow: hidden;
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius: 12px;
+
+    background:
+        #f7f8fc;
+
+    box-shadow:
+        0 4px 14px
+        rgba(
+            15,
+            23,
+            42,
+            0.07
+        );
+}
+
+
+.note-image-preview
+.preview-image-card img {
+    width: 100%;
+
+    height: 100%;
+
+    max-height: none;
+
+    display: block;
+
+    object-fit: cover;
+
+    border-radius: 0;
+
+    background:
+        #f7f8fc;
+
+    transition:
+        transform 0.25s ease;
+}
+
+
+.preview-image-card:hover img {
+    transform:
+        scale(1.04);
+}
+
+
+/* =========================================
+   SAVED / NEW BADGES
+========================================= */
+
+.image-status-badge {
+    position: absolute;
+
+    left: 7px;
+
+    bottom: 7px;
+
+    padding:
+        4px 8px;
+
+    border-radius:
+        999px;
+
+    background:
+        rgba(
+            22,
+            163,
+            74,
+            0.92
+        );
+
+    color:
+        #ffffff;
+
+    font-size: 9px;
+
+    font-weight: 800;
+
+    pointer-events: none;
+
+    backdrop-filter:
+        blur(5px);
+}
+
+
+.image-status-badge.new {
+    background:
+        rgba(
+            98,
+            91,
+            246,
+            0.93
+        );
+}
+
+
+/* =========================================
+   REMOVE INDIVIDUAL PREVIEW IMAGE
+========================================= */
+
+.note-image-preview
+.remove-preview-image {
+    position: absolute;
+
+    top: 7px;
+
+    right: 7px;
+
+    width: 28px;
+
+    height: 28px;
+
+    min-height: 0;
+
+    margin: 0;
+
+    padding: 0;
+
+    display: grid;
+
+    place-items: center;
+
+    border:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            0.7
+        );
+
+    border-radius:
+        50%;
+
+    background:
+        rgba(
+            220,
+            38,
+            38,
+            0.92
+        );
+
+    color:
+        white;
+
+    font-size: 12px;
+
+    font-weight: 800;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 4px 12px
+        rgba(
+            0,
+            0,
+            0,
+            0.18
+        );
+
+    transition:
+        transform 0.2s ease,
+        background 0.2s ease;
+
+    z-index: 5;
+}
+
+
+.note-image-preview
+.remove-preview-image:hover {
+    transform:
+        scale(1.08);
+
+    background:
+        #dc2626;
+}
+
+
+/* =========================================
+   NOTE CARD MULTIPLE IMAGE GALLERY
+========================================= */
+
+.note-card-gallery {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(0, 1fr)
+        );
+
+    gap: 8px;
+
+    width: 100%;
+
+    margin:
+        5px 0 18px;
+}
+
+
+/* Remove old spacing inside gallery */
+
+.note-card-gallery
+.note-photo-wrapper {
+    width: 100%;
+
+    margin: 0;
+
+    border-radius: 11px;
+}
+
+
+/* Gallery image size */
+
+.note-card-gallery
+.note-card-image {
+    width: 100%;
+
+    height: 125px;
+
+    object-fit: cover;
+}
+
+
+/* If there is only one photo */
+
+.note-card-gallery
+.note-photo-wrapper:only-child {
+    grid-column:
+        1 / -1;
+}
+
+
+.note-card-gallery
+.note-photo-wrapper:only-child
+.note-card-image {
+    height: 220px;
+}
+
+
+/* =========================================
+   GALLERY PHOTO OVERLAY
+========================================= */
+
+.note-card-gallery
+.note-photo-overlay span {
+    padding:
+        7px 10px;
+
+    font-size: 10px;
+}
+
+
+/* =========================================
+   BETTER CAMERA CAPTURE FEEDBACK
+========================================= */
+
+.camera-box::before {
+    content: "Multiple photos can be captured";
+
+    display: block;
+
+    margin-bottom: 8px;
+
+    color:
+        #8f9bad;
+
+    font-size: 10px;
+
+    text-align: right;
+}
+
+
+/* =========================================
+   IMAGE PREVIEW SCROLL
+   Useful when 7-10 photos are selected
+========================================= */
+
+.multi-preview-grid {
+    max-height: 430px;
+
+    overflow-y: auto;
+
+    padding-right: 3px;
+}
+
+
+.multi-preview-grid::-webkit-scrollbar {
+    width: 5px;
+}
+
+
+.multi-preview-grid::-webkit-scrollbar-track {
+    background:
+        #f0f1f5;
+
+    border-radius:
+        20px;
+}
+
+
+.multi-preview-grid::-webkit-scrollbar-thumb {
+    background:
+        #c5c4ec;
+
+    border-radius:
+        20px;
+}
+
+
+/* =========================================
+   IMAGE NUMBER EFFECT
+========================================= */
+
+.preview-image-card {
+    counter-increment:
+        previewImage;
+}
+
+
+.multi-preview-grid {
+    counter-reset:
+        previewImage;
+}
+
+
+.preview-image-card::after {
+    content:
+        counter(previewImage);
+
+    position: absolute;
+
+    top: 7px;
+
+    left: 7px;
+
+    min-width: 24px;
+
+    height: 24px;
+
+    padding:
+        0 6px;
+
+    display: grid;
+
+    place-items: center;
+
+    border-radius:
+        999px;
+
+    background:
+        rgba(
+            15,
+            23,
+            42,
+            0.72
+        );
+
+    color:
+        white;
+
+    font-size: 9px;
+
+    font-weight: 800;
+
+    pointer-events: none;
+}
+
+
+/* =========================================
+   RESPONSIVE MULTIPLE IMAGES
+========================================= */
+
+@media (
+    max-width: 650px
+) {
+
+    .multi-preview-grid {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+
+        max-height: 380px;
+    }
+
+
+    .note-card-gallery {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+    }
+
+
+    .note-card-gallery
+    .note-card-image {
+        height: 130px;
+    }
+
+
+    .note-card-gallery
+    .note-photo-wrapper:only-child
+    .note-card-image {
+        height: 240px;
+    }
+
+}
+
+
+@media (
+    max-width: 420px
+) {
+
+    .multi-preview-grid {
+        gap: 7px;
+    }
+
+
+    .preview-image-card {
+        border-radius: 10px;
+    }
+
+
+    .note-card-gallery {
+        gap: 6px;
+    }
+
+
+    .note-card-gallery
+    .note-card-image {
+        height: 115px;
     }
 
 }

@@ -1,6 +1,6 @@
 // =====================================
 // StudyRoom AI - Notes System
-// Text + Live Camera + Image Upload
+// Multiple Images + Live Camera
 // =====================================
 
 const API_URL =
@@ -9,12 +9,18 @@ const API_URL =
 const BACKEND_URL =
     "http://localhost:5000";
 
+const MAX_IMAGES = 10;
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+
+
+// =====================================
+// AUTH
+// =====================================
 
 const token =
     localStorage.getItem(
         "studyRoomToken"
     );
-
 
 if (!token) {
 
@@ -95,7 +101,7 @@ const pinNote =
 
 
 // =====================================
-// PHOTO ELEMENTS
+// IMAGE ELEMENTS
 // =====================================
 
 const takePhotoBtn =
@@ -118,19 +124,18 @@ const noteImagePreviewBox =
         "noteImagePreviewBox"
     );
 
-const noteImagePreview =
-    document.getElementById(
-        "noteImagePreview"
-    );
 
-const removeNoteImage =
-    document.getElementById(
-        "removeNoteImage"
-    );
+// Allow multiple file selection
+if (noteImageInput) {
+
+    noteImageInput.multiple =
+        true;
+
+}
 
 
 // =====================================
-// LIVE CAMERA ELEMENTS
+// CAMERA ELEMENTS
 // =====================================
 
 const cameraBox =
@@ -165,14 +170,32 @@ const closeCameraBtn =
 
 let notes = [];
 
-let selectedNoteImage =
-    null;
 
-let existingImageUrl =
-    null;
+// New photos:
+// [
+//   {
+//      file: File,
+//      previewUrl: "blob:..."
+//   }
+// ]
 
-let removeExistingImage =
-    false;
+let selectedNoteImages =
+    [];
+
+
+// Existing database photos
+
+let existingImageUrls =
+    [];
+
+
+// Existing photos user removed while editing
+
+let removedExistingImages =
+    [];
+
+
+// Camera stream
 
 let cameraStream =
     null;
@@ -180,7 +203,6 @@ let cameraStream =
 
 // =====================================
 // API HELPER
-// JSON + FormData Support
 // =====================================
 
 async function apiFetch(
@@ -198,8 +220,8 @@ async function apiFetch(
     };
 
 
-    // FormData ke saath
-    // Content-Type manually nahi dena.
+    // FormData ke case me browser
+    // khud multipart Content-Type set karega.
 
     if (
         !(options.body instanceof FormData)
@@ -248,14 +270,13 @@ async function apiFetch(
     const contentType =
         response.headers.get(
             "content-type"
-        );
+        ) || "";
 
 
-    let data = {};
+    let data;
 
 
     if (
-        contentType &&
         contentType.includes(
             "application/json"
         )
@@ -270,13 +291,10 @@ async function apiFetch(
             await response.text();
 
 
-        if (text) {
-
-            throw new Error(
-                text
-            );
-
-        }
+        throw new Error(
+            text ||
+            "Server request failed"
+        );
 
     }
 
@@ -336,7 +354,101 @@ async function loadNotes() {
 
 
 // =====================================
-// STOP LIVE CAMERA
+// GET NOTE IMAGES
+// Supports new + old notes
+// =====================================
+
+function getNoteImages(
+    note
+) {
+
+    const images = [];
+
+
+    if (
+        Array.isArray(
+            note.imageUrls
+        )
+    ) {
+
+        note.imageUrls
+            .forEach(
+                imageUrl => {
+
+                    if (
+                        imageUrl &&
+                        !images.includes(
+                            imageUrl
+                        )
+                    ) {
+
+                        images.push(
+                            imageUrl
+                        );
+
+                    }
+
+                }
+            );
+
+    }
+
+
+    // Old single image support
+
+    if (
+        note.imageUrl &&
+        !images.includes(
+            note.imageUrl
+        )
+    ) {
+
+        images.push(
+            note.imageUrl
+        );
+
+    }
+
+
+    return images;
+
+}
+
+
+// =====================================
+// ACTIVE EXISTING IMAGES
+// =====================================
+
+function getActiveExistingImages() {
+
+    return existingImageUrls
+        .filter(
+            imageUrl =>
+                !removedExistingImages
+                    .includes(
+                        imageUrl
+                    )
+        );
+
+}
+
+
+// =====================================
+// TOTAL CURRENT IMAGE COUNT
+// =====================================
+
+function getCurrentImageCount() {
+
+    return (
+        getActiveExistingImages().length +
+        selectedNoteImages.length
+    );
+
+}
+
+
+// =====================================
+// STOP CAMERA
 // =====================================
 
 function stopCamera() {
@@ -385,7 +497,7 @@ function stopCamera() {
 
 
 // =====================================
-// OPEN LIVE CAMERA
+// OPEN CAMERA
 // =====================================
 
 async function openCamera() {
@@ -393,12 +505,12 @@ async function openCamera() {
     try {
 
         if (
-            !navigator.mediaDevices ||
-            !navigator.mediaDevices.getUserMedia
+            getCurrentImageCount() >=
+            MAX_IMAGES
         ) {
 
             alert(
-                "Your browser does not support live camera access."
+                `Maximum ${MAX_IMAGES} photos are allowed in one note.`
             );
 
             return;
@@ -406,14 +518,24 @@ async function openCamera() {
         }
 
 
-        // Stop old stream first
+        if (
+            !navigator.mediaDevices ||
+            !navigator.mediaDevices.getUserMedia
+        ) {
+
+            alert(
+                "Camera is not supported in this browser."
+            );
+
+            return;
+
+        }
+
 
         stopCamera();
 
 
         try {
-
-            // Mobile par back camera prefer karega
 
             cameraStream =
                 await navigator.mediaDevices
@@ -443,15 +565,12 @@ async function openCamera() {
 
                     });
 
-        } catch (firstError) {
+        } catch (error) {
 
             console.warn(
-                "Preferred camera failed. Trying default camera.",
-                firstError
+                "Back camera unavailable, trying default camera."
             );
 
-
-            // Laptop/Desktop fallback
 
             cameraStream =
                 await navigator.mediaDevices
@@ -479,21 +598,8 @@ async function openCamera() {
             );
 
 
-        try {
+        await cameraVideo.play();
 
-            await cameraVideo.play();
-
-        } catch (playError) {
-
-            console.warn(
-                "Camera autoplay warning:",
-                playError
-            );
-
-        }
-
-
-        // Camera section visible karne ke liye
 
         cameraBox.scrollIntoView({
             behavior:
@@ -517,7 +623,7 @@ async function openCamera() {
         ) {
 
             alert(
-                "Camera permission denied. Please allow camera permission from your browser."
+                "Camera permission denied. Please allow camera permission."
             );
 
         } else if (
@@ -526,7 +632,7 @@ async function openCamera() {
         ) {
 
             alert(
-                "No camera was found on this device."
+                "No camera found on this device."
             );
 
         } else if (
@@ -535,7 +641,7 @@ async function openCamera() {
         ) {
 
             alert(
-                "Camera is already being used by another application."
+                "Camera is being used by another application."
             );
 
         } else if (
@@ -543,13 +649,13 @@ async function openCamera() {
         ) {
 
             alert(
-                "Camera requires localhost or HTTPS. Open this website through localhost or a secure HTTPS connection."
+                "Camera requires localhost or HTTPS."
             );
 
         } else {
 
             alert(
-                "Could not open the camera. Please check browser camera permission."
+                "Could not open camera."
             );
 
         }
@@ -560,14 +666,21 @@ async function openCamera() {
 
 
 // =====================================
-// CAPTURE PHOTO FROM CAMERA
+// ADD NEW IMAGE FILES
 // =====================================
 
-function captureCameraPhoto() {
+function addSelectedImages(
+    files
+) {
+
+    const incomingFiles =
+        Array.from(
+            files || []
+        );
+
 
     if (
-        !cameraVideo ||
-        !cameraCanvas
+        incomingFiles.length === 0
     ) {
 
         return;
@@ -575,13 +688,138 @@ function captureCameraPhoto() {
     }
 
 
+    let availableSlots =
+        MAX_IMAGES -
+        getCurrentImageCount();
+
+
     if (
+        availableSlots <= 0
+    ) {
+
+        alert(
+            `Maximum ${MAX_IMAGES} photos are allowed.`
+        );
+
+        return;
+
+    }
+
+
+    let addedCount =
+        0;
+
+
+    for (
+        const file of incomingFiles
+    ) {
+
+        if (
+            availableSlots <= 0
+        ) {
+
+            break;
+
+        }
+
+
+        if (
+            !file.type.startsWith(
+                "image/"
+            )
+        ) {
+
+            continue;
+
+        }
+
+
+        if (
+            file.size >
+            MAX_IMAGE_SIZE
+        ) {
+
+            alert(
+                `${file.name} is larger than 5 MB and was skipped.`
+            );
+
+            continue;
+
+        }
+
+
+        const previewUrl =
+            URL.createObjectURL(
+                file
+            );
+
+
+        selectedNoteImages.push({
+
+            file,
+            previewUrl
+
+        });
+
+
+        availableSlots--;
+
+        addedCount++;
+
+    }
+
+
+    if (
+        incomingFiles.length >
+        addedCount &&
+        getCurrentImageCount() >=
+        MAX_IMAGES
+    ) {
+
+        alert(
+            `Only ${MAX_IMAGES} photos can be added to one note.`
+        );
+
+    }
+
+
+    renderImagePreviews();
+
+}
+
+
+// =====================================
+// CAPTURE CAMERA PHOTO
+// =====================================
+
+function captureCameraPhoto() {
+
+    if (
+        getCurrentImageCount() >=
+        MAX_IMAGES
+    ) {
+
+        alert(
+            `Maximum ${MAX_IMAGES} photos are allowed.`
+        );
+
+
+        stopCamera();
+
+        return;
+
+    }
+
+
+    if (
+        !cameraVideo ||
+        !cameraCanvas ||
         !cameraVideo.videoWidth ||
         !cameraVideo.videoHeight
     ) {
 
         alert(
-            "Camera is still loading. Please wait a moment and try again."
+            "Camera is still loading. Please try again."
         );
 
         return;
@@ -601,17 +839,6 @@ function captureCameraPhoto() {
         cameraCanvas.getContext(
             "2d"
         );
-
-
-    if (!context) {
-
-        alert(
-            "Could not capture photo."
-        );
-
-        return;
-
-    }
 
 
     context.drawImage(
@@ -653,15 +880,22 @@ function captureCameraPhoto() {
                 );
 
 
-            // Same preview function
-            // upload aur camera dono ke liye
-
-            previewNoteImage(
-                file
+            addSelectedImages(
+                [file]
             );
 
 
-            stopCamera();
+            // Camera intentionally open rahega
+            // so user can capture another page.
+
+            if (
+                getCurrentImageCount() >=
+                MAX_IMAGES
+            ) {
+
+                stopCamera();
+
+            }
 
         },
 
@@ -675,7 +909,312 @@ function captureCameraPhoto() {
 
 
 // =====================================
-// RESET PHOTO STATE
+// REMOVE NEW SELECTED PHOTO
+// =====================================
+
+function removeSelectedImage(
+    index
+) {
+
+    const item =
+        selectedNoteImages[
+            index
+        ];
+
+
+    if (!item) {
+
+        return;
+
+    }
+
+
+    if (
+        item.previewUrl
+    ) {
+
+        URL.revokeObjectURL(
+            item.previewUrl
+        );
+
+    }
+
+
+    selectedNoteImages.splice(
+        index,
+        1
+    );
+
+
+    renderImagePreviews();
+
+}
+
+
+// =====================================
+// REMOVE EXISTING DB PHOTO
+// =====================================
+
+function removeExistingImage(
+    imageUrl
+) {
+
+    if (
+        !imageUrl
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        !removedExistingImages
+            .includes(
+                imageUrl
+            )
+    ) {
+
+        removedExistingImages.push(
+            imageUrl
+        );
+
+    }
+
+
+    renderImagePreviews();
+
+}
+
+
+// =====================================
+// RENDER MULTIPLE PREVIEWS
+// =====================================
+
+function renderImagePreviews() {
+
+    if (
+        !noteImagePreviewBox
+    ) {
+
+        return;
+
+    }
+
+
+    const activeExisting =
+        getActiveExistingImages();
+
+
+    const total =
+        activeExisting.length +
+        selectedNoteImages.length;
+
+
+    if (
+        total === 0
+    ) {
+
+        noteImagePreviewBox
+            .classList
+            .add(
+                "hidden"
+            );
+
+
+        noteImagePreviewBox.innerHTML =
+            "";
+
+        return;
+
+    }
+
+
+    noteImagePreviewBox
+        .classList
+        .remove(
+            "hidden"
+        );
+
+
+    let previewHTML = `
+
+        <div class="multi-preview-header">
+
+            <div>
+
+                <strong>
+                    Photo Preview
+                </strong>
+
+                <small>
+                    ${total} / ${MAX_IMAGES} photos
+                </small>
+
+            </div>
+
+        </div>
+
+
+        <div class="multi-preview-grid">
+
+    `;
+
+
+    // Existing DB images
+
+    activeExisting.forEach(
+        (imageUrl) => {
+
+            previewHTML += `
+
+                <div
+                    class="preview-image-card"
+                    data-existing-image="${escapeAttribute(
+                        imageUrl
+                    )}"
+                >
+
+                    <img
+                        src="${escapeAttribute(
+                            getImageURL(
+                                imageUrl
+                            )
+                        )}"
+                        alt="Saved note image"
+                    >
+
+                    <span class="image-status-badge">
+                        Saved
+                    </span>
+
+                    <button
+                        type="button"
+                        class="remove-preview-image existing-image-remove"
+                        data-image-url="${escapeAttribute(
+                            imageUrl
+                        )}"
+                        title="Remove photo"
+                    >
+                        ✕
+                    </button>
+
+                </div>
+
+            `;
+
+        }
+    );
+
+
+    // Newly selected/captured images
+
+    selectedNoteImages.forEach(
+        (item, index) => {
+
+            previewHTML += `
+
+                <div
+                    class="preview-image-card"
+                >
+
+                    <img
+                        src="${escapeAttribute(
+                            item.previewUrl
+                        )}"
+                        alt="New note image"
+                    >
+
+                    <span class="image-status-badge new">
+                        New
+                    </span>
+
+                    <button
+                        type="button"
+                        class="remove-preview-image new-image-remove"
+                        data-index="${index}"
+                        title="Remove photo"
+                    >
+                        ✕
+                    </button>
+
+                </div>
+
+            `;
+
+        }
+    );
+
+
+    previewHTML += `
+
+        </div>
+
+    `;
+
+
+    noteImagePreviewBox.innerHTML =
+        previewHTML;
+
+
+    // Existing image remove events
+
+    noteImagePreviewBox
+        .querySelectorAll(
+            ".existing-image-remove"
+        )
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    function () {
+
+                        removeExistingImage(
+                            this.dataset.imageUrl
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+
+    // New image remove events
+
+    noteImagePreviewBox
+        .querySelectorAll(
+            ".new-image-remove"
+        )
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    function () {
+
+                        const index =
+                            Number(
+                                this.dataset.index
+                            );
+
+
+                        removeSelectedImage(
+                            index
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+}
+
+
+// =====================================
+// RESET IMAGE STATE
 // =====================================
 
 function resetPhotoState() {
@@ -683,16 +1222,34 @@ function resetPhotoState() {
     stopCamera();
 
 
-    selectedNoteImage =
-        null;
+    selectedNoteImages
+        .forEach(
+            item => {
+
+                if (
+                    item.previewUrl
+                ) {
+
+                    URL.revokeObjectURL(
+                        item.previewUrl
+                    );
+
+                }
+
+            }
+        );
 
 
-    existingImageUrl =
-        null;
+    selectedNoteImages =
+        [];
 
 
-    removeExistingImage =
-        false;
+    existingImageUrls =
+        [];
+
+
+    removedExistingImages =
+        [];
 
 
     if (
@@ -706,18 +1263,12 @@ function resetPhotoState() {
 
 
     if (
-        noteImagePreview
-    ) {
-
-        noteImagePreview.src =
-            "";
-
-    }
-
-
-    if (
         noteImagePreviewBox
     ) {
+
+        noteImagePreviewBox.innerHTML =
+            "";
+
 
         noteImagePreviewBox
             .classList
@@ -731,113 +1282,7 @@ function resetPhotoState() {
 
 
 // =====================================
-// SHOW IMAGE PREVIEW
-// =====================================
-
-function showImagePreview(
-    src
-) {
-
-    if (
-        !noteImagePreview ||
-        !noteImagePreviewBox
-    ) {
-
-        return;
-
-    }
-
-
-    noteImagePreview.src =
-        src;
-
-
-    noteImagePreviewBox
-        .classList
-        .remove(
-            "hidden"
-        );
-
-}
-
-
-// =====================================
-// PREVIEW SELECTED PHOTO
-// =====================================
-
-function previewNoteImage(
-    file
-) {
-
-    if (!file) {
-
-        return;
-
-    }
-
-
-    if (
-        !file.type.startsWith(
-            "image/"
-        )
-    ) {
-
-        alert(
-            "Please select an image file."
-        );
-
-        return;
-
-    }
-
-
-    // Max 5 MB
-
-    if (
-        file.size >
-        5 * 1024 * 1024
-    ) {
-
-        alert(
-            "Image size must be less than 5 MB."
-        );
-
-        return;
-
-    }
-
-
-    selectedNoteImage =
-        file;
-
-
-    removeExistingImage =
-        false;
-
-
-    const reader =
-        new FileReader();
-
-
-    reader.onload =
-        function (event) {
-
-            showImagePreview(
-                event.target.result
-            );
-
-        };
-
-
-    reader.readAsDataURL(
-        file
-    );
-
-}
-
-
-// =====================================
-// TAKE PHOTO BUTTON
+// CAMERA BUTTON
 // =====================================
 
 if (
@@ -853,7 +1298,7 @@ if (
 
 
 // =====================================
-// CAPTURE PHOTO BUTTON
+// CAPTURE BUTTON
 // =====================================
 
 if (
@@ -869,7 +1314,7 @@ if (
 
 
 // =====================================
-// CLOSE CAMERA BUTTON
+// CLOSE CAMERA
 // =====================================
 
 if (
@@ -909,7 +1354,7 @@ if (
 
 
 // =====================================
-// GALLERY / PC IMAGE SELECTED
+// MULTIPLE FILE SELECT
 // =====================================
 
 if (
@@ -920,19 +1365,16 @@ if (
         "change",
         function () {
 
-            const file =
-                this.files?.[0];
+            addSelectedImages(
+                this.files
+            );
 
 
-            if (
-                file
-            ) {
+            // Same image dubara select
+            // karne ke liye reset
 
-                previewNoteImage(
-                    file
-                );
-
-            }
+            this.value =
+                "";
 
         }
     );
@@ -941,77 +1383,7 @@ if (
 
 
 // =====================================
-// REMOVE PHOTO
-// =====================================
-
-if (
-    removeNoteImage
-) {
-
-    removeNoteImage.addEventListener(
-        "click",
-        function () {
-
-            stopCamera();
-
-
-            // Existing DB photo remove
-
-            if (
-                existingImageUrl &&
-                !selectedNoteImage
-            ) {
-
-                removeExistingImage =
-                    true;
-
-            }
-
-
-            selectedNoteImage =
-                null;
-
-
-            if (
-                noteImageInput
-            ) {
-
-                noteImageInput.value =
-                    "";
-
-            }
-
-
-            if (
-                noteImagePreview
-            ) {
-
-                noteImagePreview.src =
-                    "";
-
-            }
-
-
-            if (
-                noteImagePreviewBox
-            ) {
-
-                noteImagePreviewBox
-                    .classList
-                    .add(
-                        "hidden"
-                    );
-
-            }
-
-        }
-    );
-
-}
-
-
-// =====================================
-// OPEN ADD NOTE MODAL
+// OPEN ADD NOTE
 // =====================================
 
 function openNoteModal() {
@@ -1032,15 +1404,17 @@ function openNoteModal() {
         "Add Note";
 
 
-    noteModal.classList.add(
-        "show"
-    );
+    noteModal
+        .classList
+        .add(
+            "show"
+        );
 
 }
 
 
 // =====================================
-// CLOSE NOTE MODAL
+// CLOSE MODAL
 // =====================================
 
 function closeNoteBox() {
@@ -1048,9 +1422,11 @@ function closeNoteBox() {
     stopCamera();
 
 
-    noteModal.classList.remove(
-        "show"
-    );
+    noteModal
+        .classList
+        .remove(
+            "show"
+        );
 
 
     resetPhotoState();
@@ -1098,7 +1474,7 @@ noteModal.addEventListener(
 
 
 // =====================================
-// ADD / UPDATE NOTE
+// SAVE / UPDATE NOTE
 // =====================================
 
 noteForm.addEventListener(
@@ -1129,10 +1505,6 @@ noteForm.addEventListener(
                 .trim();
 
 
-        // =================================
-        // VALIDATION
-        // =================================
-
         if (
             !title ||
             !subject
@@ -1147,31 +1519,24 @@ noteForm.addEventListener(
         }
 
 
-        const hasExistingImage =
-            Boolean(
-                existingImageUrl &&
-                !removeExistingImage
-            );
+        const activeExisting =
+            getActiveExistingImages();
 
 
         if (
             !content &&
-            !selectedNoteImage &&
-            !hasExistingImage
+            activeExisting.length === 0 &&
+            selectedNoteImages.length === 0
         ) {
 
             alert(
-                "Please write a note or add a photo."
+                "Please write a note or add at least one photo."
             );
 
             return;
 
         }
 
-
-        // =================================
-        // FORMDATA
-        // =================================
 
         const formData =
             new FormData();
@@ -1203,29 +1568,37 @@ noteForm.addEventListener(
         );
 
 
-        // Camera / Gallery photo
+        // =================================
+        // NEW MULTIPLE IMAGES
+        // IMPORTANT FIELD NAME:
+        // noteImages
+        // =================================
 
-        if (
-            selectedNoteImage
-        ) {
+        selectedNoteImages
+            .forEach(
+                item => {
 
-            formData.append(
-                "noteImage",
-                selectedNoteImage
+                    formData.append(
+                        "noteImages",
+                        item.file
+                    );
+
+                }
             );
 
-        }
 
-
-        // Remove previous DB image
+        // Existing images removed during edit
 
         if (
-            removeExistingImage
+            removedExistingImages.length >
+            0
         ) {
 
             formData.append(
-                "removeImage",
-                "true"
+                "removeImages",
+                JSON.stringify(
+                    removedExistingImages
+                )
             );
 
         }
@@ -1237,11 +1610,7 @@ noteForm.addEventListener(
                 editingNoteId.value;
 
 
-            if (
-                id
-            ) {
-
-                // UPDATE NOTE
+            if (id) {
 
                 await apiFetch(
                     `${API_URL}/${id}`,
@@ -1255,8 +1624,6 @@ noteForm.addEventListener(
                 );
 
             } else {
-
-                // CREATE NOTE
 
                 await apiFetch(
                     API_URL,
@@ -1317,25 +1684,7 @@ function editNote(
     }
 
 
-    stopCamera();
-
-
-    selectedNoteImage =
-        null;
-
-
-    removeExistingImage =
-        false;
-
-
-    if (
-        noteImageInput
-    ) {
-
-        noteImageInput.value =
-            "";
-
-    }
+    resetPhotoState();
 
 
     editingNoteId.value =
@@ -1360,49 +1709,23 @@ function editNote(
         );
 
 
-    // =================================
-    // EXISTING PHOTO
-    // =================================
+    // Load existing images
 
-    existingImageUrl =
-        note.imageUrl || null;
-
-
-    if (
-        existingImageUrl
-    ) {
-
-        showImagePreview(
-            getImageURL(
-                existingImageUrl
-            )
+    existingImageUrls =
+        getNoteImages(
+            note
         );
 
-    } else {
 
-        if (
-            noteImagePreview
-        ) {
-
-            noteImagePreview.src =
-                "";
-
-        }
+    removedExistingImages =
+        [];
 
 
-        if (
-            noteImagePreviewBox
-        ) {
+    selectedNoteImages =
+        [];
 
-            noteImagePreviewBox
-                .classList
-                .add(
-                    "hidden"
-                );
 
-        }
-
-    }
+    renderImagePreviews();
 
 
     document.getElementById(
@@ -1411,9 +1734,11 @@ function editNote(
         "Edit Note";
 
 
-    noteModal.classList.add(
-        "show"
-    );
+    noteModal
+        .classList
+        .add(
+            "show"
+        );
 
 }
 
@@ -1580,16 +1905,14 @@ function updateSubjectFilter() {
 
 
 // =====================================
-// IMAGE URL HELPER
+// IMAGE URL
 // =====================================
 
 function getImageURL(
     imageUrl
 ) {
 
-    if (
-        !imageUrl
-    ) {
+    if (!imageUrl) {
 
         return "";
 
@@ -1702,10 +2025,6 @@ function renderNotes() {
         "";
 
 
-    // =================================
-    // EMPTY STATE
-    // =================================
-
     if (
         filtered.length === 0
     ) {
@@ -1719,8 +2038,8 @@ function renderNotes() {
                 </h3>
 
                 <p>
-                    Add a text note or capture
-                    a photo of your study notes.
+                    Add text notes or multiple
+                    photos of your study material.
                 </p>
 
             </div>
@@ -1734,10 +2053,6 @@ function renderNotes() {
 
     }
 
-
-    // =================================
-    // NOTE CARDS
-    // =================================
 
     filtered.forEach(
         note => {
@@ -1757,39 +2072,74 @@ function renderNotes() {
                 );
 
 
-            const imageHTML =
-                note.imageUrl
+            const noteImages =
+                getNoteImages(
+                    note
+                );
 
-                    ? `
 
-                        <div class="note-photo-wrapper">
+            let imageHTML =
+                "";
 
-                            <img
-                                src="${escapeAttribute(
-                                    getImageURL(
-                                        note.imageUrl
-                                    )
-                                )}"
-                                alt="${escapeAttribute(
-                                    note.title
-                                )}"
-                                class="note-card-image"
-                                loading="lazy"
+
+            if (
+                noteImages.length >
+                0
+            ) {
+
+                imageHTML += `
+
+                    <div class="note-card-gallery">
+
+                `;
+
+
+                noteImages.forEach(
+                    (imageUrl, index) => {
+
+                        imageHTML += `
+
+                            <div
+                                class="note-photo-wrapper"
+                                data-image-index="${index}"
                             >
 
-                            <div class="note-photo-overlay">
+                                <img
+                                    src="${escapeAttribute(
+                                        getImageURL(
+                                            imageUrl
+                                        )
+                                    )}"
+                                    alt="${escapeAttribute(
+                                        note.title
+                                    )}"
+                                    class="note-card-image"
+                                    loading="lazy"
+                                >
 
-                                <span>
-                                    🔍 View Photo
-                                </span>
+                                <div class="note-photo-overlay">
+
+                                    <span>
+                                        🔍 View
+                                    </span>
+
+                                </div>
 
                             </div>
 
-                        </div>
+                        `;
 
-                    `
+                    }
+                );
 
-                    : "";
+
+                imageHTML += `
+
+                    </div>
+
+                `;
+
+            }
 
 
             const contentHTML =
@@ -1865,6 +2215,7 @@ function renderNotes() {
 
                     <div class="note-actions">
 
+
                         <button
                             type="button"
                             class="pin-btn"
@@ -1894,6 +2245,7 @@ function renderNotes() {
                             Delete
                         </button>
 
+
                     </div>
 
                 </div>
@@ -1902,33 +2254,38 @@ function renderNotes() {
 
 
             // =================================
-            // OPEN PHOTO LARGE
+            // IMAGE CLICK EVENTS
             // =================================
 
-            const photoWrapper =
-                card.querySelector(
+            card
+                .querySelectorAll(
                     ".note-photo-wrapper"
+                )
+                .forEach(
+                    wrapper => {
+
+                        wrapper.addEventListener(
+                            "click",
+                            function () {
+
+                                const index =
+                                    Number(
+                                        this.dataset.imageIndex
+                                    );
+
+
+                                openNotePhoto(
+                                    note,
+                                    noteImages[
+                                        index
+                                    ]
+                                );
+
+                            }
+                        );
+
+                    }
                 );
-
-
-            if (
-                photoWrapper &&
-                note.imageUrl
-            ) {
-
-                photoWrapper
-                    .addEventListener(
-                        "click",
-                        function () {
-
-                            openNotePhoto(
-                                note
-                            );
-
-                        }
-                    );
-
-            }
 
 
             // =================================
@@ -1993,11 +2350,12 @@ function renderNotes() {
 // =====================================
 
 function openNotePhoto(
-    note
+    note,
+    imageUrl
 ) {
 
     if (
-        !note.imageUrl
+        !imageUrl
     ) {
 
         return;
@@ -2060,7 +2418,6 @@ function openNotePhoto(
                 <button
                     type="button"
                     class="close-photo-viewer"
-                    aria-label="Close photo"
                 >
                     ✕
                 </button>
@@ -2073,7 +2430,7 @@ function openNotePhoto(
                 <img
                     src="${escapeAttribute(
                         getImageURL(
-                            note.imageUrl
+                            imageUrl
                         )
                     )}"
                     alt="${escapeAttribute(
@@ -2101,19 +2458,18 @@ function openNotePhoto(
         );
 
 
-    const closeViewer =
-        function () {
+    function closeViewer() {
 
-            viewer.remove();
+        viewer.remove();
 
 
-            document.body
-                .classList
-                .remove(
-                    "photo-viewer-open"
-                );
+        document.body
+            .classList
+            .remove(
+                "photo-viewer-open"
+            );
 
-        };
+    }
 
 
     viewer
@@ -2222,9 +2578,7 @@ function formatDate(
     date
 ) {
 
-    if (
-        !date
-    ) {
+    if (!date) {
 
         return "";
 
@@ -2237,6 +2591,7 @@ function formatDate(
         .toLocaleDateString(
             "en-IN",
             {
+
                 day:
                     "numeric",
 
@@ -2245,6 +2600,7 @@ function formatDate(
 
                 year:
                     "numeric"
+
             }
         );
 
@@ -2316,7 +2672,7 @@ subjectFilter.addEventListener(
 
 
 // =====================================
-// STOP CAMERA IF PAGE CLOSES
+// PAGE CLOSE
 // =====================================
 
 window.addEventListener(
