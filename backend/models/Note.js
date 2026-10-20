@@ -107,6 +107,14 @@ const noteSchema =
             },
 
 
+            imagePublicIds: {
+    type: [
+        String
+    ],
+    default: []
+},
+
+
             // =====================================
             // OLD SINGLE IMAGE
             // Existing notes ke liye temporarily

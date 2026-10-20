@@ -1,77 +1,63 @@
 const multer =
     require("multer");
 
-const path =
-    require("path");
+const {
+    CloudinaryStorage
+} = require(
+    "multer-storage-cloudinary"
+);
 
-const fs =
-    require("fs");
-
-
-const uploadDir =
-    path.join(
-        __dirname,
-        "../uploads/notes"
+const cloudinary =
+    require(
+        "../config/cloudinary"
     );
 
 
-if (!fs.existsSync(uploadDir)) {
-
-    fs.mkdirSync(
-        uploadDir,
-        {
-            recursive: true
-        }
-    );
-
-}
-
+// =====================================
+// CLOUDINARY STORAGE
+// =====================================
 
 const storage =
-    multer.diskStorage({
+    new CloudinaryStorage({
 
-        destination:
-            function (
-                req,
-                file,
-                cb
-            ) {
+        cloudinary,
 
-                cb(
-                    null,
-                    uploadDir
-                );
+        params: async (
+            req,
+            file
+        ) => {
 
-            },
+            return {
 
-        filename:
-            function (
-                req,
-                file,
-                cb
-            ) {
+                folder:
+                    "studyroom-ai/notes",
 
-                const uniqueName =
-                    Date.now() +
-                    "-" +
-                    Math.round(
+                resource_type:
+                    "image",
+
+                allowed_formats: [
+                    "jpg",
+                    "jpeg",
+                    "png",
+                    "webp"
+                ],
+
+                public_id:
+                    `note-${Date.now()}-${Math.round(
                         Math.random() *
                         1e9
-                    ) +
-                    path.extname(
-                        file.originalname
-                    );
+                    )}`
 
+            };
 
-                cb(
-                    null,
-                    uniqueName
-                );
-
-            }
+        }
 
     });
 
+
+// =====================================
+// IMAGE FILTER
+// =====================================
 
 const fileFilter =
     (
@@ -80,9 +66,19 @@ const fileFilter =
         cb
     ) => {
 
+        const allowedTypes = [
+
+            "image/jpeg",
+            "image/jpg",
+            "image/png",
+            "image/webp"
+
+        ];
+
+
         if (
-            file.mimetype.startsWith(
-                "image/"
+            allowedTypes.includes(
+                file.mimetype
             )
         ) {
 
@@ -95,7 +91,7 @@ const fileFilter =
 
             cb(
                 new Error(
-                    "Only image files are allowed."
+                    "Only JPG, PNG and WEBP images are allowed."
                 ),
                 false
             );
@@ -105,6 +101,10 @@ const fileFilter =
     };
 
 
+// =====================================
+// MULTER UPLOAD
+// =====================================
+
 const noteUpload =
     multer({
 
@@ -113,12 +113,20 @@ const noteUpload =
         fileFilter,
 
         limits: {
+
             fileSize:
-                5 * 1024 * 1024
+                5 *
+                1024 *
+                1024
+
         }
 
     });
 
+
+// =====================================
+// EXPORT
+// =====================================
 
 module.exports =
     noteUpload;

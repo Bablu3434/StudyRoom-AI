@@ -1,7 +1,14 @@
-const Note = require("../models/Note");
+const Note =
+    require("../models/Note");
 
-const fs = require("fs");
-const path = require("path");
+const cloudinary =
+    require("../config/cloudinary");
+
+const fs =
+    require("fs");
+
+const path =
+    require("path");
 
 
 // =====================================
@@ -19,15 +26,130 @@ function toBoolean(value) {
 
 
 // =====================================
-// DELETE ONE IMAGE FROM DISK
+// GET CLOUDINARY PUBLIC ID FROM URL
+// Fallback for older Cloudinary records
 // =====================================
 
-function deleteNoteImage(imageUrl) {
+function getPublicIdFromCloudinaryUrl(
+    imageUrl
+) {
 
     try {
 
-        if (!imageUrl) {
+        if (
+            !imageUrl ||
+            !imageUrl.includes(
+                "res.cloudinary.com"
+            )
+        ) {
+
+            return null;
+
+        }
+
+
+        const url =
+            new URL(
+                imageUrl
+            );
+
+
+        const uploadPart =
+            "/upload/";
+
+
+        const uploadIndex =
+            url.pathname.indexOf(
+                uploadPart
+            );
+
+
+        if (
+            uploadIndex === -1
+        ) {
+
+            return null;
+
+        }
+
+
+        let publicPath =
+            url.pathname.substring(
+                uploadIndex +
+                uploadPart.length
+            );
+
+
+        const parts =
+            publicPath.split(
+                "/"
+            );
+
+
+        // Remove Cloudinary version:
+        // v123456789
+
+        if (
+            parts[0] &&
+            /^v\d+$/.test(
+                parts[0]
+            )
+        ) {
+
+            parts.shift();
+
+        }
+
+
+        publicPath =
+            parts.join(
+                "/"
+            );
+
+
+        // Remove extension
+
+        publicPath =
+            publicPath.replace(
+                /\.[^/.]+$/,
+                ""
+            );
+
+
+        return (
+            publicPath ||
+            null
+        );
+
+    } catch (error) {
+
+        return null;
+
+    }
+
+}
+
+
+// =====================================
+// DELETE OLD LOCAL IMAGE
+// Compatibility with old notes
+// =====================================
+
+function deleteLocalImage(
+    imageUrl
+) {
+
+    try {
+
+        if (
+            !imageUrl ||
+            !imageUrl.startsWith(
+                "/uploads/notes/"
+            )
+        ) {
+
             return;
+
         }
 
 
@@ -62,7 +184,7 @@ function deleteNoteImage(imageUrl) {
     } catch (error) {
 
         console.error(
-            "Delete Note Image Error:",
+            "Delete Local Image Error:",
             error
         );
 
@@ -72,55 +194,246 @@ function deleteNoteImage(imageUrl) {
 
 
 // =====================================
-// DELETE MULTIPLE IMAGES
+// DELETE ONE STORED IMAGE
+// Cloudinary + old local support
 // =====================================
 
-function deleteNoteImages(imageUrls = []) {
+async function deleteStoredImage(
+    imageUrl,
+    publicId
+) {
 
-    imageUrls.forEach(
-        imageUrl => {
+    try {
 
-            deleteNoteImage(
+        // =================================
+        // CLOUDINARY IMAGE
+        // =================================
+
+        const cloudinaryPublicId =
+            publicId ||
+            getPublicIdFromCloudinaryUrl(
                 imageUrl
             );
 
+
+        if (
+            cloudinaryPublicId
+        ) {
+
+            await cloudinary.uploader.destroy(
+                cloudinaryPublicId,
+                {
+                    resource_type:
+                        "image"
+                }
+            );
+
+
+            return;
+
         }
+
+
+        // =================================
+        // OLD LOCAL IMAGE
+        // =================================
+
+        deleteLocalImage(
+            imageUrl
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Delete Stored Image Error:",
+            error
+        );
+
+    }
+
+}
+
+
+// =====================================
+// DELETE MULTIPLE STORED IMAGES
+// =====================================
+
+async function deleteStoredImages(
+    imageEntries = []
+) {
+
+    await Promise.allSettled(
+
+        imageEntries.map(
+            entry =>
+                deleteStoredImage(
+                    entry.url,
+                    entry.publicId
+                )
+        )
+
     );
 
 }
 
 
 // =====================================
-// GET UPLOADED IMAGE URLS
-// req.files comes from multer.array()
+// GET UPLOADED FILE ENTRIES
+//
+// Cloudinary storage gives:
+//
+// file.path     -> secure image URL
+// file.filename -> Cloudinary public ID
 // =====================================
 
-function getUploadedImageUrls(files = []) {
+function getUploadedImageEntries(
+    files = []
+) {
 
-    return files.map(
-        file =>
-            `/uploads/notes/${file.filename}`
-    );
+    return files
+        .filter(
+            file =>
+                file &&
+                file.path
+        )
+        .map(
+            file => ({
+
+                url:
+                    file.path,
+
+                publicId:
+                    file.filename || ""
+
+            })
+        );
 
 }
 
 
 // =====================================
-// CLEAN UP NEWLY UPLOADED FILES
-// Used when request fails
+// CLEANUP NEW CLOUDINARY UPLOADS
+// Used when DB validation/save fails
 // =====================================
 
-function cleanupUploadedFiles(files = []) {
+async function cleanupUploadedFiles(
+    files = []
+) {
 
-    const urls =
-        getUploadedImageUrls(
+    const entries =
+        getUploadedImageEntries(
             files
         );
 
 
-    deleteNoteImages(
-        urls
+    await deleteStoredImages(
+        entries
     );
+
+}
+
+
+// =====================================
+// NORMALIZE STORED IMAGES
+// Supports:
+//
+// imageUrls[]
+// imagePublicIds[]
+// legacy imageUrl
+// =====================================
+
+function getStoredImageEntries(
+    note
+) {
+
+    const entries = [];
+
+
+    const imageUrls =
+        Array.isArray(
+            note.imageUrls
+        )
+            ? note.imageUrls
+            : [];
+
+
+    const publicIds =
+        Array.isArray(
+            note.imagePublicIds
+        )
+            ? note.imagePublicIds
+            : [];
+
+
+    imageUrls.forEach(
+        (url, index) => {
+
+            if (!url) {
+
+                return;
+
+            }
+
+
+            if (
+                entries.some(
+                    item =>
+                        item.url === url
+                )
+            ) {
+
+                return;
+
+            }
+
+
+            entries.push({
+
+                url,
+
+                publicId:
+                    publicIds[index] ||
+                    getPublicIdFromCloudinaryUrl(
+                        url
+                    ) ||
+                    ""
+
+            });
+
+        }
+    );
+
+
+    // =================================
+    // OLD SINGLE IMAGE SUPPORT
+    // =================================
+
+    if (
+        note.imageUrl &&
+        !entries.some(
+            item =>
+                item.url ===
+                note.imageUrl
+        )
+    ) {
+
+        entries.unshift({
+
+            url:
+                note.imageUrl,
+
+            publicId:
+                getPublicIdFromCloudinaryUrl(
+                    note.imageUrl
+                ) ||
+                ""
+
+        });
+
+    }
+
+
+    return entries;
 
 }
 
@@ -130,7 +443,10 @@ function cleanupUploadedFiles(files = []) {
 // =====================================
 
 const getNotes =
-    async (req, res) => {
+    async (
+        req,
+        res
+    ) => {
 
         try {
 
@@ -140,13 +456,18 @@ const getNotes =
                         req.user._id
                 })
                     .sort({
-                        pinned: -1,
-                        updatedAt: -1
+                        pinned:
+                            -1,
+
+                        updatedAt:
+                            -1
                     });
 
 
             res.json({
-                success: true,
+                success:
+                    true,
+
                 notes
             });
 
@@ -161,7 +482,9 @@ const getNotes =
             res
                 .status(500)
                 .json({
-                    success: false,
+                    success:
+                        false,
+
                     message:
                         "Failed to load notes"
                 });
@@ -173,12 +496,18 @@ const getNotes =
 
 // =====================================
 // CREATE NOTE
-// TEXT + MULTIPLE PHOTOS
-// Maximum 10 images
+// MULTIPLE CLOUDINARY IMAGES
 // =====================================
 
 const createNote =
-    async (req, res) => {
+    async (
+        req,
+        res
+    ) => {
+
+        const uploadedFiles =
+            req.files || [];
+
 
         try {
 
@@ -190,10 +519,6 @@ const createNote =
             } = req.body;
 
 
-            const uploadedFiles =
-                req.files || [];
-
-
             // =================================
             // TITLE + SUBJECT REQUIRED
             // =================================
@@ -203,7 +528,7 @@ const createNote =
                 !subject?.trim()
             ) {
 
-                cleanupUploadedFiles(
+                await cleanupUploadedFiles(
                     uploadedFiles
                 );
 
@@ -211,7 +536,9 @@ const createNote =
                 return res
                     .status(400)
                     .json({
-                        success: false,
+                        success:
+                            false,
+
                         message:
                             "Title and subject are required"
                     });
@@ -220,7 +547,7 @@ const createNote =
 
 
             // =================================
-            // TEXT OR IMAGE REQUIRED
+            // TEXT OR PHOTO REQUIRED
             // =================================
 
             const hasContent =
@@ -241,7 +568,9 @@ const createNote =
                 return res
                     .status(400)
                     .json({
-                        success: false,
+                        success:
+                            false,
+
                         message:
                             "Please write a note or upload at least one photo"
                     });
@@ -250,12 +579,53 @@ const createNote =
 
 
             // =================================
-            // IMAGE URLS
+            // MAXIMUM 10 PHOTOS
             // =================================
 
-            const imageUrls =
-                getUploadedImageUrls(
+            if (
+                uploadedFiles.length >
+                10
+            ) {
+
+                await cleanupUploadedFiles(
                     uploadedFiles
+                );
+
+
+                return res
+                    .status(400)
+                    .json({
+                        success:
+                            false,
+
+                        message:
+                            "A note can contain maximum 10 photos"
+                    });
+
+            }
+
+
+            // =================================
+            // CLOUDINARY DATA
+            // =================================
+
+            const uploadedImages =
+                getUploadedImageEntries(
+                    uploadedFiles
+                );
+
+
+            const imageUrls =
+                uploadedImages.map(
+                    image =>
+                        image.url
+                );
+
+
+            const imagePublicIds =
+                uploadedImages.map(
+                    image =>
+                        image.publicId
                 );
 
 
@@ -280,14 +650,15 @@ const createNote =
                             ? content.trim()
                             : "",
 
-                    imageUrls:
-                        imageUrls,
+                    imageUrls,
 
-                    // Keep first image here too
-                    // for old frontend compatibility
+                    imagePublicIds,
+
+                    // Legacy frontend compatibility
 
                     imageUrl:
-                        imageUrls[0] || null,
+                        imageUrls[0] ||
+                        null,
 
                     pinned:
                         toBoolean(
@@ -300,9 +671,12 @@ const createNote =
             res
                 .status(201)
                 .json({
-                    success: true,
+                    success:
+                        true,
+
                     message:
                         "Note created successfully",
+
                     note
                 });
 
@@ -314,15 +688,20 @@ const createNote =
             );
 
 
-            cleanupUploadedFiles(
-                req.files || []
+            // Uploaded to Cloudinary but
+            // DB operation failed
+
+            await cleanupUploadedFiles(
+                uploadedFiles
             );
 
 
             res
                 .status(500)
                 .json({
-                    success: false,
+                    success:
+                        false,
+
                     message:
                         "Failed to create note"
                 });
@@ -334,11 +713,14 @@ const createNote =
 
 // =====================================
 // UPDATE NOTE
-// ADD / REMOVE MULTIPLE PHOTOS
+// ADD / REMOVE CLOUDINARY PHOTOS
 // =====================================
 
 const updateNote =
-    async (req, res) => {
+    async (
+        req,
+        res
+    ) => {
 
         const uploadedFiles =
             req.files || [];
@@ -348,17 +730,19 @@ const updateNote =
 
             const note =
                 await Note.findOne({
+
                     _id:
                         req.params.id,
 
                     user:
                         req.user._id
+
                 });
 
 
             if (!note) {
 
-                cleanupUploadedFiles(
+                await cleanupUploadedFiles(
                     uploadedFiles
                 );
 
@@ -366,7 +750,9 @@ const updateNote =
                 return res
                     .status(404)
                     .json({
-                        success: false,
+                        success:
+                            false,
+
                         message:
                             "Note not found"
                     });
@@ -385,35 +771,24 @@ const updateNote =
 
 
             // =================================
-            // GET CURRENT IMAGES
+            // CURRENT SAVED IMAGES
             // =================================
 
             let currentImages =
-                Array.isArray(
-                    note.imageUrls
-                )
-                    ? [...note.imageUrls]
-                    : [];
-
-
-            // Old single image support
-
-            if (
-                note.imageUrl &&
-                !currentImages.includes(
-                    note.imageUrl
-                )
-            ) {
-
-                currentImages.unshift(
-                    note.imageUrl
+                getStoredImageEntries(
+                    note
                 );
 
-            }
+
+            // Images to remove from Cloudinary
+            // AFTER successful DB save
+
+            const imagesToDelete =
+                [];
 
 
             // =================================
-            // UPDATE TITLE
+            // TITLE
             // =================================
 
             if (
@@ -424,7 +799,7 @@ const updateNote =
                     !title.trim()
                 ) {
 
-                    cleanupUploadedFiles(
+                    await cleanupUploadedFiles(
                         uploadedFiles
                     );
 
@@ -432,7 +807,9 @@ const updateNote =
                     return res
                         .status(400)
                         .json({
-                            success: false,
+                            success:
+                                false,
+
                             message:
                                 "Title cannot be empty"
                         });
@@ -447,7 +824,7 @@ const updateNote =
 
 
             // =================================
-            // UPDATE SUBJECT
+            // SUBJECT
             // =================================
 
             if (
@@ -458,7 +835,7 @@ const updateNote =
                     !subject.trim()
                 ) {
 
-                    cleanupUploadedFiles(
+                    await cleanupUploadedFiles(
                         uploadedFiles
                     );
 
@@ -466,7 +843,9 @@ const updateNote =
                     return res
                         .status(400)
                         .json({
-                            success: false,
+                            success:
+                                false,
+
                             message:
                                 "Subject cannot be empty"
                         });
@@ -481,7 +860,7 @@ const updateNote =
 
 
             // =================================
-            // UPDATE CONTENT
+            // CONTENT
             // =================================
 
             if (
@@ -495,7 +874,7 @@ const updateNote =
 
 
             // =================================
-            // UPDATE PIN
+            // PIN
             // =================================
 
             if (
@@ -511,18 +890,19 @@ const updateNote =
 
 
             // =================================
-            // REMOVE ALL OLD IMAGES
-            // Used by old frontend:
-            // removeImage = true
+            // OLD FRONTEND:
+            // REMOVE ALL IMAGES
             // =================================
 
             if (
-                removeImage === "true" ||
-                removeImage === true
+                removeImage ===
+                    "true" ||
+                removeImage ===
+                    true
             ) {
 
-                deleteNoteImages(
-                    currentImages
+                imagesToDelete.push(
+                    ...currentImages
                 );
 
 
@@ -535,15 +915,15 @@ const updateNote =
             // =================================
             // REMOVE SELECTED IMAGES
             //
-            // Frontend can send:
-            // removeImages = JSON.stringify([...])
+            // removeImages =
+            // JSON.stringify([...URLs])
             // =================================
 
             if (
                 removeImages
             ) {
 
-                let imagesToRemove =
+                let urlsToRemove =
                     [];
 
 
@@ -555,12 +935,12 @@ const updateNote =
                         )
                     ) {
 
-                        imagesToRemove =
+                        urlsToRemove =
                             removeImages;
 
                     } else {
 
-                        imagesToRemove =
+                        urlsToRemove =
                             JSON.parse(
                                 removeImages
                             );
@@ -570,7 +950,8 @@ const updateNote =
                 } catch (error) {
 
                     console.warn(
-                        "Invalid removeImages value"
+                        "Invalid removeImages value:",
+                        error
                     );
 
                 }
@@ -578,32 +959,31 @@ const updateNote =
 
                 if (
                     Array.isArray(
-                        imagesToRemove
+                        urlsToRemove
                     )
                 ) {
 
-                    imagesToRemove
-                        .forEach(
-                            imageUrl => {
+                    currentImages =
+                        currentImages.filter(
+                            image => {
 
                                 if (
-                                    currentImages.includes(
-                                        imageUrl
+                                    urlsToRemove.includes(
+                                        image.url
                                     )
                                 ) {
 
-                                    deleteNoteImage(
-                                        imageUrl
+                                    imagesToDelete.push(
+                                        image
                                     );
 
 
-                                    currentImages =
-                                        currentImages.filter(
-                                            url =>
-                                                url !== imageUrl
-                                        );
+                                    return false;
 
                                 }
+
+
+                                return true;
 
                             }
                         );
@@ -614,24 +994,26 @@ const updateNote =
 
 
             // =================================
-            // NEW UPLOADED IMAGES
+            // NEW CLOUDINARY IMAGES
             // =================================
 
-            const newImageUrls =
-                getUploadedImageUrls(
+            const newImages =
+                getUploadedImageEntries(
                     uploadedFiles
                 );
 
 
-            // Maximum total 10 images
+            // =================================
+            // MAXIMUM 10 IMAGES TOTAL
+            // =================================
 
             if (
                 currentImages.length +
-                newImageUrls.length >
+                newImages.length >
                 10
             ) {
 
-                cleanupUploadedFiles(
+                await cleanupUploadedFiles(
                     uploadedFiles
                 );
 
@@ -639,7 +1021,9 @@ const updateNote =
                 return res
                     .status(400)
                     .json({
-                        success: false,
+                        success:
+                            false,
+
                         message:
                             "A note can contain maximum 10 photos"
                     });
@@ -647,14 +1031,14 @@ const updateNote =
             }
 
 
-            currentImages.push(
-                ...newImageUrls
-            );
+            const finalImages = [
+                ...currentImages,
+                ...newImages
+            ];
 
 
             // =================================
-            // VALIDATION
-            // Must have text OR photo
+            // MUST HAVE TEXT OR PHOTO
             // =================================
 
             const hasContent =
@@ -664,7 +1048,7 @@ const updateNote =
 
 
             const hasImages =
-                currentImages.length > 0;
+                finalImages.length > 0;
 
 
             if (
@@ -672,7 +1056,7 @@ const updateNote =
                 !hasImages
             ) {
 
-                cleanupUploadedFiles(
+                await cleanupUploadedFiles(
                     uploadedFiles
                 );
 
@@ -680,7 +1064,9 @@ const updateNote =
                 return res
                     .status(400)
                     .json({
-                        success: false,
+                        success:
+                            false,
+
                         message:
                             "A note must contain text or at least one photo"
                     });
@@ -689,27 +1075,61 @@ const updateNote =
 
 
             // =================================
-            // SAVE IMAGE ARRAY
+            // SAVE NEW IMAGE DATA
             // =================================
 
             note.imageUrls =
-                currentImages;
+                finalImages.map(
+                    image =>
+                        image.url
+                );
 
 
-            // First image retained for
-            // existing frontend compatibility
+            // Keep array indexes aligned.
+            // Old local images can have "".
+
+            note.imagePublicIds =
+                finalImages.map(
+                    image =>
+                        image.publicId ||
+                        ""
+                );
+
+
+            // Legacy compatibility
 
             note.imageUrl =
-                currentImages[0] || null;
+                note.imageUrls[0] ||
+                null;
 
+
+            // =================================
+            // SAVE DATABASE FIRST
+            // =================================
 
             await note.save();
 
 
+            // =================================
+            // NOW DELETE REMOVED CLOUDINARY
+            // IMAGES
+            //
+            // DB save already succeeded,
+            // so note won't point to deleted images.
+            // =================================
+
+            await deleteStoredImages(
+                imagesToDelete
+            );
+
+
             res.json({
-                success: true,
+                success:
+                    true,
+
                 message:
                     "Note updated successfully",
+
                 note
             });
 
@@ -721,7 +1141,10 @@ const updateNote =
             );
 
 
-            cleanupUploadedFiles(
+            // Only delete newly uploaded
+            // Cloudinary files on failure.
+
+            await cleanupUploadedFiles(
                 uploadedFiles
             );
 
@@ -729,7 +1152,9 @@ const updateNote =
             res
                 .status(500)
                 .json({
-                    success: false,
+                    success:
+                        false,
+
                     message:
                         "Failed to update note"
                 });
@@ -744,17 +1169,22 @@ const updateNote =
 // =====================================
 
 const togglePin =
-    async (req, res) => {
+    async (
+        req,
+        res
+    ) => {
 
         try {
 
             const note =
                 await Note.findOne({
+
                     _id:
                         req.params.id,
 
                     user:
                         req.user._id
+
                 });
 
 
@@ -763,7 +1193,9 @@ const togglePin =
                 return res
                     .status(404)
                     .json({
-                        success: false,
+                        success:
+                            false,
+
                         message:
                             "Note not found"
                     });
@@ -779,7 +1211,8 @@ const togglePin =
 
 
             res.json({
-                success: true,
+                success:
+                    true,
 
                 message:
                     note.pinned
@@ -800,7 +1233,9 @@ const togglePin =
             res
                 .status(500)
                 .json({
-                    success: false,
+                    success:
+                        false,
+
                     message:
                         "Failed to update pin"
                 });
@@ -812,21 +1247,26 @@ const togglePin =
 
 // =====================================
 // DELETE NOTE
-// DELETE ALL PHOTOS TOO
+// DELETE CLOUDINARY IMAGES TOO
 // =====================================
 
 const deleteNote =
-    async (req, res) => {
+    async (
+        req,
+        res
+    ) => {
 
         try {
 
             const note =
                 await Note.findOne({
+
                     _id:
                         req.params.id,
 
                     user:
                         req.user._id
+
                 });
 
 
@@ -835,7 +1275,9 @@ const deleteNote =
                 return res
                     .status(404)
                     .json({
-                        success: false,
+                        success:
+                            false,
+
                         message:
                             "Note not found"
                     });
@@ -844,51 +1286,36 @@ const deleteNote =
 
 
             // =================================
-            // COLLECT ALL IMAGES
+            // COLLECT ALL STORED IMAGES
             // =================================
 
-            const imagesToDelete =
-                Array.isArray(
-                    note.imageUrls
-                )
-                    ? [...note.imageUrls]
-                    : [];
-
-
-            // Old imageUrl support
-
-            if (
-                note.imageUrl &&
-                !imagesToDelete.includes(
-                    note.imageUrl
-                )
-            ) {
-
-                imagesToDelete.push(
-                    note.imageUrl
+            const storedImages =
+                getStoredImageEntries(
+                    note
                 );
 
-            }
-
 
             // =================================
-            // DELETE FILES
-            // =================================
-
-            deleteNoteImages(
-                imagesToDelete
-            );
-
-
-            // =================================
-            // DELETE DB NOTE
+            // DELETE NOTE FROM DATABASE
             // =================================
 
             await note.deleteOne();
 
 
+            // =================================
+            // DELETE IMAGES FROM CLOUDINARY
+            // / LOCAL LEGACY STORAGE
+            // =================================
+
+            await deleteStoredImages(
+                storedImages
+            );
+
+
             res.json({
-                success: true,
+                success:
+                    true,
+
                 message:
                     "Note deleted successfully"
             });
@@ -904,7 +1331,9 @@ const deleteNote =
             res
                 .status(500)
                 .json({
-                    success: false,
+                    success:
+                        false,
+
                     message:
                         "Failed to delete note"
                 });
