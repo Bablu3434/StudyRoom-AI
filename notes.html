@@ -1,34 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Smart Notes | StudyRoom AI</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <link rel="stylesheet" href="css/notes.css">
-    <link rel="stylesheet" href="css/sidebar.css">
+    <title>
+        Smart Notes | StudyRoom AI
+    </title>
+
+
+    <!-- Notes CSS -->
+    <link
+        rel="stylesheet"
+        href="css/notes.css"
+    >
+
+
+    <!-- Common Sidebar -->
+    <link
+        rel="stylesheet"
+        href="css/sidebar.css"
+    >
+
 </head>
+
 
 <body>
 
+
+<!-- =====================================
+     OLD NAVBAR
+     Sidebar active hone par hide hoga
+===================================== -->
+
 <header class="navbar">
 
-    <a href="dashboard.html" class="logo">
-        <span>AI</span>
+    <a
+        href="dashboard.html"
+        class="logo"
+    >
+
+        <span>
+            AI
+        </span>
+
         StudyRoom
+
     </a>
 
-    <a href="dashboard.html" class="back-btn">
+
+    <a
+        href="dashboard.html"
+        class="back-btn"
+    >
         ← Dashboard
     </a>
 
 </header>
 
 
+
+<!-- =====================================
+     MAIN CONTENT
+===================================== -->
+
 <main class="container">
 
-    <!-- Header -->
+
+    <!-- =====================================
+         PAGE HEADER
+    ====================================== -->
 
     <section class="page-header">
 
@@ -43,26 +90,36 @@
             </h1>
 
             <p>
-                Create, organize and manage your
-                study notes in one place.
+                Create, organize, capture and manage
+                your study notes in one place.
             </p>
 
         </div>
 
-        <button id="addNoteBtn">
+
+        <button
+            type="button"
+            id="addNoteBtn"
+        >
             + Add Note
         </button>
 
     </section>
 
 
-    <!-- Stats -->
+
+    <!-- =====================================
+         STATS
+    ====================================== -->
 
     <section class="stats-grid">
 
+
         <div class="stat-card">
 
-            <p>Total Notes</p>
+            <p>
+                Total Notes
+            </p>
 
             <h2 id="totalNotes">
                 0
@@ -73,7 +130,9 @@
 
         <div class="stat-card">
 
-            <p>Pinned Notes</p>
+            <p>
+                Pinned Notes
+            </p>
 
             <h2 id="pinnedNotes">
                 0
@@ -84,7 +143,9 @@
 
         <div class="stat-card">
 
-            <p>Subjects</p>
+            <p>
+                Subjects
+            </p>
 
             <h2 id="subjectCount">
                 0
@@ -92,10 +153,14 @@
 
         </div>
 
+
     </section>
 
 
-    <!-- Search -->
+
+    <!-- =====================================
+         SEARCH / FILTER
+    ====================================== -->
 
     <section class="filter-section">
 
@@ -104,6 +169,7 @@
             id="searchNotes"
             placeholder="Search notes..."
         >
+
 
         <select id="subjectFilter">
 
@@ -116,7 +182,10 @@
     </section>
 
 
-    <!-- Notes -->
+
+    <!-- =====================================
+         NOTES
+    ====================================== -->
 
     <section
         class="notes-grid"
@@ -124,10 +193,14 @@
     >
     </section>
 
+
 </main>
 
 
-<!-- Add / Edit Note Modal -->
+
+<!-- =====================================
+     ADD / EDIT NOTE MODAL
+===================================== -->
 
 <div
     class="modal"
@@ -135,6 +208,11 @@
 >
 
     <div class="modal-box">
+
+
+        <!-- =================================
+             MODAL HEADER
+        ================================== -->
 
         <div class="modal-header">
 
@@ -145,19 +223,33 @@
                 </h2>
 
                 <p>
-                    Save your important study notes.
+                    Write a note, capture a photo,
+                    or upload your handwritten notes.
                 </p>
 
             </div>
 
-            <button id="closeNoteModal">
+
+            <button
+                type="button"
+                id="closeNoteModal"
+                aria-label="Close"
+            >
                 ×
             </button>
 
         </div>
 
 
+
+        <!-- =================================
+             NOTE FORM
+        ================================== -->
+
         <form id="noteForm">
+
+
+            <!-- Editing Note ID -->
 
             <input
                 type="hidden"
@@ -165,9 +257,14 @@
             >
 
 
+
+            <!-- =================================
+                 TITLE
+            ================================== -->
+
             <div class="input-group">
 
-                <label>
+                <label for="noteTitle">
                     Note Title
                 </label>
 
@@ -182,9 +279,14 @@
             </div>
 
 
+
+            <!-- =================================
+                 SUBJECT
+            ================================== -->
+
             <div class="input-group">
 
-                <label>
+                <label for="noteSubject">
                     Subject
                 </label>
 
@@ -199,21 +301,197 @@
             </div>
 
 
+
+            <!-- =================================
+                 NOTE CONTENT
+            ================================== -->
+
             <div class="input-group">
 
-                <label>
+                <label for="noteContent">
                     Note Content
                 </label>
 
                 <textarea
                     id="noteContent"
-                    placeholder="Write your notes here..."
-                    rows="8"
-                    required
+                    placeholder="Write your notes here, or capture/upload a photo below..."
+                    rows="7"
                 ></textarea>
 
             </div>
 
+
+
+            <!-- =================================
+                 CAMERA / PHOTO AREA
+            ================================== -->
+
+            <div class="note-photo-section">
+
+
+                <!-- =================================
+                     PHOTO BUTTONS
+                ================================== -->
+
+                <div class="photo-buttons">
+
+
+                    <button
+                        type="button"
+                        id="takePhotoBtn"
+                        class="photo-btn"
+                    >
+                        📷 Take Photo
+                    </button>
+
+
+                    <button
+                        type="button"
+                        id="uploadPhotoBtn"
+                        class="photo-btn secondary"
+                    >
+                        🖼 Upload Photo
+                    </button>
+
+
+                </div>
+
+
+
+                <!-- =================================
+                     UPLOAD PHOTO INPUT
+                ================================== -->
+
+                <input
+                    type="file"
+                    id="noteImageInput"
+                    accept="image/*"
+                    hidden
+                >
+
+
+
+                <!-- =================================
+                     LIVE CAMERA
+                ================================== -->
+
+                <div
+                    id="cameraBox"
+                    class="camera-box hidden"
+                >
+
+
+                    <div class="camera-title">
+
+                        <span>
+                            📷 Live Camera
+                        </span>
+
+                        <small>
+                            Position your notes clearly
+                            inside the camera.
+                        </small>
+
+                    </div>
+
+
+                    <div class="camera-video-wrapper">
+
+                        <video
+                            id="cameraVideo"
+                            autoplay
+                            muted
+                            playsinline
+                        ></video>
+
+                    </div>
+
+
+                    <div class="camera-actions">
+
+
+                        <button
+                            type="button"
+                            id="capturePhotoBtn"
+                            class="capture-photo-btn"
+                        >
+                            📸 Capture Photo
+                        </button>
+
+
+                        <button
+                            type="button"
+                            id="closeCameraBtn"
+                            class="close-camera-btn"
+                        >
+                            ✕ Close Camera
+                        </button>
+
+
+                    </div>
+
+
+                    <!-- Hidden canvas used for capture -->
+
+                    <canvas
+                        id="cameraCanvas"
+                        hidden
+                    ></canvas>
+
+
+                </div>
+
+
+
+                <!-- =================================
+                     PHOTO PREVIEW
+                ================================== -->
+
+                <div
+                    id="noteImagePreviewBox"
+                    class="note-image-preview hidden"
+                >
+
+
+                    <div class="preview-label">
+
+                        <span>
+                            Photo Preview
+                        </span>
+
+                        <small>
+                            This photo will be saved
+                            with your note.
+                        </small>
+
+                    </div>
+
+
+                    <img
+                        id="noteImagePreview"
+                        src=""
+                        alt="Selected note preview"
+                    >
+
+
+                    <button
+                        type="button"
+                        id="removeNoteImage"
+                    >
+                        ✕ Remove Photo
+                    </button>
+
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- =================================
+                 PIN NOTE
+            ================================== -->
 
             <label class="pin-option">
 
@@ -227,7 +505,13 @@
             </label>
 
 
+
+            <!-- =================================
+                 ACTION BUTTONS
+            ================================== -->
+
             <div class="modal-actions">
+
 
                 <button
                     type="button"
@@ -237,6 +521,7 @@
                     Cancel
                 </button>
 
+
                 <button
                     type="submit"
                     class="save-btn"
@@ -244,17 +529,32 @@
                     Save Note
                 </button>
 
+
             </div>
 
+
         </form>
+
 
     </div>
 
 </div>
-<script src="js/sidebar.js"></script>
+
+
+
+<!-- =====================================
+     SCRIPTS
+===================================== -->
+
 <script src="js/notifications.js"></script>
+
 <script src="js/reminders.js"></script>
+
+<script src="js/sidebar.js"></script>
+
 <script src="js/notes.js"></script>
 
+
 </body>
+
 </html>

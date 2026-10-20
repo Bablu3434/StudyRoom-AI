@@ -1,5 +1,13 @@
+// =====================================
+// StudyRoom AI - Notes System
+// Text + Live Camera + Image Upload
+// =====================================
+
 const API_URL =
     "http://localhost:5000/api/notes";
+
+const BACKEND_URL =
+    "http://localhost:5000";
 
 
 const token =
@@ -16,7 +24,9 @@ if (!token) {
 }
 
 
-// Elements
+// =====================================
+// ELEMENTS
+// =====================================
 
 const noteModal =
     document.getElementById(
@@ -58,7 +68,6 @@ const subjectFilter =
         "subjectFilter"
     );
 
-
 const editingNoteId =
     document.getElementById(
         "editingNoteId"
@@ -85,38 +94,136 @@ const pinNote =
     );
 
 
+// =====================================
+// PHOTO ELEMENTS
+// =====================================
+
+const takePhotoBtn =
+    document.getElementById(
+        "takePhotoBtn"
+    );
+
+const uploadPhotoBtn =
+    document.getElementById(
+        "uploadPhotoBtn"
+    );
+
+const noteImageInput =
+    document.getElementById(
+        "noteImageInput"
+    );
+
+const noteImagePreviewBox =
+    document.getElementById(
+        "noteImagePreviewBox"
+    );
+
+const noteImagePreview =
+    document.getElementById(
+        "noteImagePreview"
+    );
+
+const removeNoteImage =
+    document.getElementById(
+        "removeNoteImage"
+    );
+
+
+// =====================================
+// LIVE CAMERA ELEMENTS
+// =====================================
+
+const cameraBox =
+    document.getElementById(
+        "cameraBox"
+    );
+
+const cameraVideo =
+    document.getElementById(
+        "cameraVideo"
+    );
+
+const cameraCanvas =
+    document.getElementById(
+        "cameraCanvas"
+    );
+
+const capturePhotoBtn =
+    document.getElementById(
+        "capturePhotoBtn"
+    );
+
+const closeCameraBtn =
+    document.getElementById(
+        "closeCameraBtn"
+    );
+
+
+// =====================================
+// STATE
+// =====================================
+
 let notes = [];
 
+let selectedNoteImage =
+    null;
 
-// ===================================
-// API Helper
-// ===================================
+let existingImageUrl =
+    null;
+
+let removeExistingImage =
+    false;
+
+let cameraStream =
+    null;
+
+
+// =====================================
+// API HELPER
+// JSON + FormData Support
+// =====================================
 
 async function apiFetch(
     url,
     options = {}
 ) {
 
+    const headers = {
+
+        Authorization:
+            `Bearer ${token}`,
+
+        ...options.headers
+
+    };
+
+
+    // FormData ke saath
+    // Content-Type manually nahi dena.
+
+    if (
+        !(options.body instanceof FormData)
+    ) {
+
+        headers["Content-Type"] =
+            "application/json";
+
+    }
+
+
     const response =
         await fetch(
             url,
             {
                 ...options,
-
-                headers: {
-                    "Content-Type":
-                        "application/json",
-
-                    Authorization:
-                        `Bearer ${token}`,
-
-                    ...options.headers
-                }
+                headers
             }
         );
 
 
-    if (response.status === 401) {
+    if (
+        response.status === 401
+    ) {
 
         localStorage.removeItem(
             "studyRoomToken"
@@ -126,15 +233,52 @@ async function apiFetch(
             "studyRoomUser"
         );
 
+
         window.location.href =
             "login.html";
 
-        return;
+
+        throw new Error(
+            "Login session expired."
+        );
+
     }
 
 
-    const data =
-        await response.json();
+    const contentType =
+        response.headers.get(
+            "content-type"
+        );
+
+
+    let data = {};
+
+
+    if (
+        contentType &&
+        contentType.includes(
+            "application/json"
+        )
+    ) {
+
+        data =
+            await response.json();
+
+    } else {
+
+        const text =
+            await response.text();
+
+
+        if (text) {
+
+            throw new Error(
+                text
+            );
+
+        }
+
+    }
 
 
     if (!response.ok) {
@@ -148,12 +292,13 @@ async function apiFetch(
 
 
     return data;
+
 }
 
 
-// ===================================
-// Load Notes
-// ===================================
+// =====================================
+// LOAD NOTES
+// =====================================
 
 async function loadNotes() {
 
@@ -166,7 +311,7 @@ async function loadNotes() {
 
 
         notes =
-            data.notes;
+            data.notes || [];
 
 
         updateSubjectFilter();
@@ -174,6 +319,12 @@ async function loadNotes() {
         renderNotes();
 
     } catch (error) {
+
+        console.error(
+            "Load Notes Error:",
+            error
+        );
+
 
         alert(
             error.message
@@ -184,16 +335,695 @@ async function loadNotes() {
 }
 
 
-// ===================================
-// Modal
-// ===================================
+// =====================================
+// STOP LIVE CAMERA
+// =====================================
+
+function stopCamera() {
+
+    if (
+        cameraStream
+    ) {
+
+        cameraStream
+            .getTracks()
+            .forEach(
+                track =>
+                    track.stop()
+            );
+
+
+        cameraStream =
+            null;
+
+    }
+
+
+    if (
+        cameraVideo
+    ) {
+
+        cameraVideo.srcObject =
+            null;
+
+    }
+
+
+    if (
+        cameraBox
+    ) {
+
+        cameraBox
+            .classList
+            .add(
+                "hidden"
+            );
+
+    }
+
+}
+
+
+// =====================================
+// OPEN LIVE CAMERA
+// =====================================
+
+async function openCamera() {
+
+    try {
+
+        if (
+            !navigator.mediaDevices ||
+            !navigator.mediaDevices.getUserMedia
+        ) {
+
+            alert(
+                "Your browser does not support live camera access."
+            );
+
+            return;
+
+        }
+
+
+        // Stop old stream first
+
+        stopCamera();
+
+
+        try {
+
+            // Mobile par back camera prefer karega
+
+            cameraStream =
+                await navigator.mediaDevices
+                    .getUserMedia({
+
+                        video: {
+
+                            facingMode: {
+                                ideal:
+                                    "environment"
+                            },
+
+                            width: {
+                                ideal:
+                                    1280
+                            },
+
+                            height: {
+                                ideal:
+                                    720
+                            }
+
+                        },
+
+                        audio:
+                            false
+
+                    });
+
+        } catch (firstError) {
+
+            console.warn(
+                "Preferred camera failed. Trying default camera.",
+                firstError
+            );
+
+
+            // Laptop/Desktop fallback
+
+            cameraStream =
+                await navigator.mediaDevices
+                    .getUserMedia({
+
+                        video:
+                            true,
+
+                        audio:
+                            false
+
+                    });
+
+        }
+
+
+        cameraVideo.srcObject =
+            cameraStream;
+
+
+        cameraBox
+            .classList
+            .remove(
+                "hidden"
+            );
+
+
+        try {
+
+            await cameraVideo.play();
+
+        } catch (playError) {
+
+            console.warn(
+                "Camera autoplay warning:",
+                playError
+            );
+
+        }
+
+
+        // Camera section visible karne ke liye
+
+        cameraBox.scrollIntoView({
+            behavior:
+                "smooth",
+
+            block:
+                "nearest"
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Camera Error:",
+            error
+        );
+
+
+        if (
+            error.name ===
+            "NotAllowedError"
+        ) {
+
+            alert(
+                "Camera permission denied. Please allow camera permission from your browser."
+            );
+
+        } else if (
+            error.name ===
+            "NotFoundError"
+        ) {
+
+            alert(
+                "No camera was found on this device."
+            );
+
+        } else if (
+            error.name ===
+            "NotReadableError"
+        ) {
+
+            alert(
+                "Camera is already being used by another application."
+            );
+
+        } else if (
+            !window.isSecureContext
+        ) {
+
+            alert(
+                "Camera requires localhost or HTTPS. Open this website through localhost or a secure HTTPS connection."
+            );
+
+        } else {
+
+            alert(
+                "Could not open the camera. Please check browser camera permission."
+            );
+
+        }
+
+    }
+
+}
+
+
+// =====================================
+// CAPTURE PHOTO FROM CAMERA
+// =====================================
+
+function captureCameraPhoto() {
+
+    if (
+        !cameraVideo ||
+        !cameraCanvas
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        !cameraVideo.videoWidth ||
+        !cameraVideo.videoHeight
+    ) {
+
+        alert(
+            "Camera is still loading. Please wait a moment and try again."
+        );
+
+        return;
+
+    }
+
+
+    cameraCanvas.width =
+        cameraVideo.videoWidth;
+
+
+    cameraCanvas.height =
+        cameraVideo.videoHeight;
+
+
+    const context =
+        cameraCanvas.getContext(
+            "2d"
+        );
+
+
+    if (!context) {
+
+        alert(
+            "Could not capture photo."
+        );
+
+        return;
+
+    }
+
+
+    context.drawImage(
+        cameraVideo,
+        0,
+        0,
+        cameraCanvas.width,
+        cameraCanvas.height
+    );
+
+
+    cameraCanvas.toBlob(
+
+        function (blob) {
+
+            if (!blob) {
+
+                alert(
+                    "Could not capture photo."
+                );
+
+                return;
+
+            }
+
+
+            const file =
+                new File(
+
+                    [blob],
+
+                    `study-note-${Date.now()}.jpg`,
+
+                    {
+                        type:
+                            "image/jpeg"
+                    }
+
+                );
+
+
+            // Same preview function
+            // upload aur camera dono ke liye
+
+            previewNoteImage(
+                file
+            );
+
+
+            stopCamera();
+
+        },
+
+        "image/jpeg",
+
+        0.9
+
+    );
+
+}
+
+
+// =====================================
+// RESET PHOTO STATE
+// =====================================
+
+function resetPhotoState() {
+
+    stopCamera();
+
+
+    selectedNoteImage =
+        null;
+
+
+    existingImageUrl =
+        null;
+
+
+    removeExistingImage =
+        false;
+
+
+    if (
+        noteImageInput
+    ) {
+
+        noteImageInput.value =
+            "";
+
+    }
+
+
+    if (
+        noteImagePreview
+    ) {
+
+        noteImagePreview.src =
+            "";
+
+    }
+
+
+    if (
+        noteImagePreviewBox
+    ) {
+
+        noteImagePreviewBox
+            .classList
+            .add(
+                "hidden"
+            );
+
+    }
+
+}
+
+
+// =====================================
+// SHOW IMAGE PREVIEW
+// =====================================
+
+function showImagePreview(
+    src
+) {
+
+    if (
+        !noteImagePreview ||
+        !noteImagePreviewBox
+    ) {
+
+        return;
+
+    }
+
+
+    noteImagePreview.src =
+        src;
+
+
+    noteImagePreviewBox
+        .classList
+        .remove(
+            "hidden"
+        );
+
+}
+
+
+// =====================================
+// PREVIEW SELECTED PHOTO
+// =====================================
+
+function previewNoteImage(
+    file
+) {
+
+    if (!file) {
+
+        return;
+
+    }
+
+
+    if (
+        !file.type.startsWith(
+            "image/"
+        )
+    ) {
+
+        alert(
+            "Please select an image file."
+        );
+
+        return;
+
+    }
+
+
+    // Max 5 MB
+
+    if (
+        file.size >
+        5 * 1024 * 1024
+    ) {
+
+        alert(
+            "Image size must be less than 5 MB."
+        );
+
+        return;
+
+    }
+
+
+    selectedNoteImage =
+        file;
+
+
+    removeExistingImage =
+        false;
+
+
+    const reader =
+        new FileReader();
+
+
+    reader.onload =
+        function (event) {
+
+            showImagePreview(
+                event.target.result
+            );
+
+        };
+
+
+    reader.readAsDataURL(
+        file
+    );
+
+}
+
+
+// =====================================
+// TAKE PHOTO BUTTON
+// =====================================
+
+if (
+    takePhotoBtn
+) {
+
+    takePhotoBtn.addEventListener(
+        "click",
+        openCamera
+    );
+
+}
+
+
+// =====================================
+// CAPTURE PHOTO BUTTON
+// =====================================
+
+if (
+    capturePhotoBtn
+) {
+
+    capturePhotoBtn.addEventListener(
+        "click",
+        captureCameraPhoto
+    );
+
+}
+
+
+// =====================================
+// CLOSE CAMERA BUTTON
+// =====================================
+
+if (
+    closeCameraBtn
+) {
+
+    closeCameraBtn.addEventListener(
+        "click",
+        stopCamera
+    );
+
+}
+
+
+// =====================================
+// UPLOAD PHOTO BUTTON
+// =====================================
+
+if (
+    uploadPhotoBtn &&
+    noteImageInput
+) {
+
+    uploadPhotoBtn.addEventListener(
+        "click",
+        function () {
+
+            stopCamera();
+
+
+            noteImageInput.click();
+
+        }
+    );
+
+}
+
+
+// =====================================
+// GALLERY / PC IMAGE SELECTED
+// =====================================
+
+if (
+    noteImageInput
+) {
+
+    noteImageInput.addEventListener(
+        "change",
+        function () {
+
+            const file =
+                this.files?.[0];
+
+
+            if (
+                file
+            ) {
+
+                previewNoteImage(
+                    file
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+// =====================================
+// REMOVE PHOTO
+// =====================================
+
+if (
+    removeNoteImage
+) {
+
+    removeNoteImage.addEventListener(
+        "click",
+        function () {
+
+            stopCamera();
+
+
+            // Existing DB photo remove
+
+            if (
+                existingImageUrl &&
+                !selectedNoteImage
+            ) {
+
+                removeExistingImage =
+                    true;
+
+            }
+
+
+            selectedNoteImage =
+                null;
+
+
+            if (
+                noteImageInput
+            ) {
+
+                noteImageInput.value =
+                    "";
+
+            }
+
+
+            if (
+                noteImagePreview
+            ) {
+
+                noteImagePreview.src =
+                    "";
+
+            }
+
+
+            if (
+                noteImagePreviewBox
+            ) {
+
+                noteImagePreviewBox
+                    .classList
+                    .add(
+                        "hidden"
+                    );
+
+            }
+
+        }
+    );
+
+}
+
+
+// =====================================
+// OPEN ADD NOTE MODAL
+// =====================================
 
 function openNoteModal() {
 
     noteForm.reset();
 
+
     editingNoteId.value =
         "";
+
+
+    resetPhotoState();
 
 
     document.getElementById(
@@ -209,14 +1039,28 @@ function openNoteModal() {
 }
 
 
+// =====================================
+// CLOSE NOTE MODAL
+// =====================================
+
 function closeNoteBox() {
+
+    stopCamera();
+
 
     noteModal.classList.remove(
         "show"
     );
 
+
+    resetPhotoState();
+
 }
 
+
+// =====================================
+// MODAL EVENTS
+// =====================================
 
 addNoteBtn.addEventListener(
     "click",
@@ -241,7 +1085,8 @@ noteModal.addEventListener(
     function (event) {
 
         if (
-            event.target === noteModal
+            event.target ===
+            noteModal
         ) {
 
             closeNoteBox();
@@ -252,9 +1097,9 @@ noteModal.addEventListener(
 );
 
 
-// ===================================
-// Add / Update Note
-// ===================================
+// =====================================
+// ADD / UPDATE NOTE
+// =====================================
 
 noteForm.addEventListener(
     "submit",
@@ -263,27 +1108,127 @@ noteForm.addEventListener(
         event.preventDefault();
 
 
-        const body = {
+        stopCamera();
 
-            title:
-                noteTitle
-                    .value
-                    .trim(),
 
-            subject:
-                noteSubject
-                    .value
-                    .trim(),
+        const title =
+            noteTitle
+                .value
+                .trim();
 
-            content:
-                noteContent
-                    .value
-                    .trim(),
 
-            pinned:
+        const subject =
+            noteSubject
+                .value
+                .trim();
+
+
+        const content =
+            noteContent
+                .value
+                .trim();
+
+
+        // =================================
+        // VALIDATION
+        // =================================
+
+        if (
+            !title ||
+            !subject
+        ) {
+
+            alert(
+                "Please enter title and subject."
+            );
+
+            return;
+
+        }
+
+
+        const hasExistingImage =
+            Boolean(
+                existingImageUrl &&
+                !removeExistingImage
+            );
+
+
+        if (
+            !content &&
+            !selectedNoteImage &&
+            !hasExistingImage
+        ) {
+
+            alert(
+                "Please write a note or add a photo."
+            );
+
+            return;
+
+        }
+
+
+        // =================================
+        // FORMDATA
+        // =================================
+
+        const formData =
+            new FormData();
+
+
+        formData.append(
+            "title",
+            title
+        );
+
+
+        formData.append(
+            "subject",
+            subject
+        );
+
+
+        formData.append(
+            "content",
+            content
+        );
+
+
+        formData.append(
+            "pinned",
+            String(
                 pinNote.checked
+            )
+        );
 
-        };
+
+        // Camera / Gallery photo
+
+        if (
+            selectedNoteImage
+        ) {
+
+            formData.append(
+                "noteImage",
+                selectedNoteImage
+            );
+
+        }
+
+
+        // Remove previous DB image
+
+        if (
+            removeExistingImage
+        ) {
+
+            formData.append(
+                "removeImage",
+                "true"
+            );
+
+        }
 
 
         try {
@@ -292,7 +1237,11 @@ noteForm.addEventListener(
                 editingNoteId.value;
 
 
-            if (id) {
+            if (
+                id
+            ) {
+
+                // UPDATE NOTE
 
                 await apiFetch(
                     `${API_URL}/${id}`,
@@ -301,13 +1250,13 @@ noteForm.addEventListener(
                             "PUT",
 
                         body:
-                            JSON.stringify(
-                                body
-                            )
+                            formData
                     }
                 );
 
             } else {
+
+                // CREATE NOTE
 
                 await apiFetch(
                     API_URL,
@@ -316,9 +1265,7 @@ noteForm.addEventListener(
                             "POST",
 
                         body:
-                            JSON.stringify(
-                                body
-                            )
+                            formData
                     }
                 );
 
@@ -327,9 +1274,16 @@ noteForm.addEventListener(
 
             closeNoteBox();
 
+
             await loadNotes();
 
         } catch (error) {
+
+            console.error(
+                "Save Note Error:",
+                error
+            );
+
 
             alert(
                 error.message
@@ -341,11 +1295,13 @@ noteForm.addEventListener(
 );
 
 
-// ===================================
-// Edit
-// ===================================
+// =====================================
+// EDIT NOTE
+// =====================================
 
-function editNote(id) {
+function editNote(
+    id
+) {
 
     const note =
         notes.find(
@@ -354,8 +1310,32 @@ function editNote(id) {
         );
 
 
-    if (!note)
+    if (!note) {
+
         return;
+
+    }
+
+
+    stopCamera();
+
+
+    selectedNoteImage =
+        null;
+
+
+    removeExistingImage =
+        false;
+
+
+    if (
+        noteImageInput
+    ) {
+
+        noteImageInput.value =
+            "";
+
+    }
 
 
     editingNoteId.value =
@@ -363,19 +1343,66 @@ function editNote(id) {
 
 
     noteTitle.value =
-        note.title;
+        note.title || "";
 
 
     noteSubject.value =
-        note.subject;
+        note.subject || "";
 
 
     noteContent.value =
-        note.content;
+        note.content || "";
 
 
     pinNote.checked =
-        note.pinned;
+        Boolean(
+            note.pinned
+        );
+
+
+    // =================================
+    // EXISTING PHOTO
+    // =================================
+
+    existingImageUrl =
+        note.imageUrl || null;
+
+
+    if (
+        existingImageUrl
+    ) {
+
+        showImagePreview(
+            getImageURL(
+                existingImageUrl
+            )
+        );
+
+    } else {
+
+        if (
+            noteImagePreview
+        ) {
+
+            noteImagePreview.src =
+                "";
+
+        }
+
+
+        if (
+            noteImagePreviewBox
+        ) {
+
+            noteImagePreviewBox
+                .classList
+                .add(
+                    "hidden"
+                );
+
+        }
+
+    }
 
 
     document.getElementById(
@@ -391,11 +1418,13 @@ function editNote(id) {
 }
 
 
-// ===================================
-// Delete
-// ===================================
+// =====================================
+// DELETE NOTE
+// =====================================
 
-async function deleteNote(id) {
+async function deleteNote(
+    id
+) {
 
     if (
         !confirm(
@@ -423,6 +1452,12 @@ async function deleteNote(id) {
 
     } catch (error) {
 
+        console.error(
+            "Delete Note Error:",
+            error
+        );
+
+
         alert(
             error.message
         );
@@ -432,11 +1467,13 @@ async function deleteNote(id) {
 }
 
 
-// ===================================
-// Pin / Unpin
-// ===================================
+// =====================================
+// PIN / UNPIN
+// =====================================
 
-async function togglePin(id) {
+async function togglePin(
+    id
+) {
 
     try {
 
@@ -453,6 +1490,12 @@ async function togglePin(id) {
 
     } catch (error) {
 
+        console.error(
+            "Toggle Pin Error:",
+            error
+        );
+
+
         alert(
             error.message
         );
@@ -462,9 +1505,9 @@ async function togglePin(id) {
 }
 
 
-// ===================================
-// Subject Filter
-// ===================================
+// =====================================
+// SUBJECT FILTER
+// =====================================
 
 function updateSubjectFilter() {
 
@@ -475,10 +1518,14 @@ function updateSubjectFilter() {
     const subjects = [
 
         ...new Set(
-            notes.map(
-                note =>
-                    note.subject
-            )
+
+            notes
+                .map(
+                    note =>
+                        note.subject
+                )
+                .filter(Boolean)
+
         )
 
     ].sort();
@@ -532,9 +1579,48 @@ function updateSubjectFilter() {
 }
 
 
-// ===================================
-// Render Notes
-// ===================================
+// =====================================
+// IMAGE URL HELPER
+// =====================================
+
+function getImageURL(
+    imageUrl
+) {
+
+    if (
+        !imageUrl
+    ) {
+
+        return "";
+
+    }
+
+
+    if (
+        imageUrl.startsWith(
+            "http://"
+        ) ||
+        imageUrl.startsWith(
+            "https://"
+        )
+    ) {
+
+        return imageUrl;
+
+    }
+
+
+    return (
+        BACKEND_URL +
+        imageUrl
+    );
+
+}
+
+
+// =====================================
+// RENDER NOTES
+// =====================================
 
 function renderNotes() {
 
@@ -552,23 +1638,44 @@ function renderNotes() {
         notes.filter(
             note => {
 
+                const title =
+                    String(
+                        note.title || ""
+                    )
+                        .toLowerCase();
+
+
+                const subject =
+                    String(
+                        note.subject || ""
+                    )
+                        .toLowerCase();
+
+
+                const content =
+                    String(
+                        note.content || ""
+                    )
+                        .toLowerCase();
+
+
                 const searchMatch =
 
-                    note.title
-                        .toLowerCase()
-                        .includes(query)
+                    title.includes(
+                        query
+                    )
 
                     ||
 
-                    note.subject
-                        .toLowerCase()
-                        .includes(query)
+                    subject.includes(
+                        query
+                    )
 
                     ||
 
-                    note.content
-                        .toLowerCase()
-                        .includes(query);
+                    content.includes(
+                        query
+                    );
 
 
                 const subjectMatch =
@@ -595,6 +1702,10 @@ function renderNotes() {
         "";
 
 
+    // =================================
+    // EMPTY STATE
+    // =================================
+
     if (
         filtered.length === 0
     ) {
@@ -608,15 +1719,25 @@ function renderNotes() {
                 </h3>
 
                 <p>
-                    Add your first study note.
+                    Add a text note or capture
+                    a photo of your study notes.
                 </p>
 
             </div>
 
         `;
 
+
+        updateStats();
+
+        return;
+
     }
 
+
+    // =================================
+    // NOTE CARDS
+    // =================================
 
     filtered.forEach(
         note => {
@@ -636,15 +1757,70 @@ function renderNotes() {
                 );
 
 
+            const imageHTML =
+                note.imageUrl
+
+                    ? `
+
+                        <div class="note-photo-wrapper">
+
+                            <img
+                                src="${escapeAttribute(
+                                    getImageURL(
+                                        note.imageUrl
+                                    )
+                                )}"
+                                alt="${escapeAttribute(
+                                    note.title
+                                )}"
+                                class="note-card-image"
+                                loading="lazy"
+                            >
+
+                            <div class="note-photo-overlay">
+
+                                <span>
+                                    🔍 View Photo
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    `
+
+                    : "";
+
+
+            const contentHTML =
+                note.content
+
+                    ? `
+
+                        <div class="note-text">
+
+                            ${escapeHTML(
+                                note.content
+                            )}
+
+                        </div>
+
+                    `
+
+                    : "";
+
+
             card.innerHTML = `
 
                 ${
                     note.pinned
 
                         ? `
+
                             <span class="pin-badge">
                                 📌 Pinned
                             </span>
+
                         `
 
                         : ""
@@ -669,13 +1845,10 @@ function renderNotes() {
                 </h3>
 
 
-                <div class="note-text">
+                ${imageHTML}
 
-                    ${escapeHTML(
-                        note.content
-                    )}
 
-                </div>
+                ${contentHTML}
 
 
                 <div class="note-footer">
@@ -693,17 +1866,21 @@ function renderNotes() {
                     <div class="note-actions">
 
                         <button
+                            type="button"
                             class="pin-btn"
                         >
+
                             ${
                                 note.pinned
                                     ? "Unpin"
                                     : "Pin"
                             }
+
                         </button>
 
 
                         <button
+                            type="button"
                             class="edit-btn"
                         >
                             Edit
@@ -711,6 +1888,7 @@ function renderNotes() {
 
 
                         <button
+                            type="button"
                             class="delete-btn"
                         >
                             Delete
@@ -722,6 +1900,40 @@ function renderNotes() {
 
             `;
 
+
+            // =================================
+            // OPEN PHOTO LARGE
+            // =================================
+
+            const photoWrapper =
+                card.querySelector(
+                    ".note-photo-wrapper"
+                );
+
+
+            if (
+                photoWrapper &&
+                note.imageUrl
+            ) {
+
+                photoWrapper
+                    .addEventListener(
+                        "click",
+                        function () {
+
+                            openNotePhoto(
+                                note
+                            );
+
+                        }
+                    );
+
+            }
+
+
+            // =================================
+            // BUTTON EVENTS
+            // =================================
 
             card
                 .querySelector(
@@ -762,9 +1974,10 @@ function renderNotes() {
                 );
 
 
-            notesContainer.appendChild(
-                card
-            );
+            notesContainer
+                .appendChild(
+                    card
+                );
 
         }
     );
@@ -775,9 +1988,166 @@ function renderNotes() {
 }
 
 
-// ===================================
-// Stats
-// ===================================
+// =====================================
+// LARGE PHOTO VIEWER
+// =====================================
+
+function openNotePhoto(
+    note
+) {
+
+    if (
+        !note.imageUrl
+    ) {
+
+        return;
+
+    }
+
+
+    const oldViewer =
+        document.getElementById(
+            "notePhotoViewer"
+        );
+
+
+    if (
+        oldViewer
+    ) {
+
+        oldViewer.remove();
+
+    }
+
+
+    const viewer =
+        document.createElement(
+            "div"
+        );
+
+
+    viewer.id =
+        "notePhotoViewer";
+
+
+    viewer.className =
+        "note-photo-viewer";
+
+
+    viewer.innerHTML = `
+
+        <div class="note-photo-viewer-box">
+
+            <div class="photo-viewer-header">
+
+                <div>
+
+                    <span>
+                        ${escapeHTML(
+                            note.subject
+                        )}
+                    </span>
+
+                    <h3>
+                        ${escapeHTML(
+                            note.title
+                        )}
+                    </h3>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="close-photo-viewer"
+                    aria-label="Close photo"
+                >
+                    ✕
+                </button>
+
+            </div>
+
+
+            <div class="photo-viewer-image-area">
+
+                <img
+                    src="${escapeAttribute(
+                        getImageURL(
+                            note.imageUrl
+                        )
+                    )}"
+                    alt="${escapeAttribute(
+                        note.title
+                    )}"
+                >
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    document.body
+        .appendChild(
+            viewer
+        );
+
+
+    document.body
+        .classList
+        .add(
+            "photo-viewer-open"
+        );
+
+
+    const closeViewer =
+        function () {
+
+            viewer.remove();
+
+
+            document.body
+                .classList
+                .remove(
+                    "photo-viewer-open"
+                );
+
+        };
+
+
+    viewer
+        .querySelector(
+            ".close-photo-viewer"
+        )
+        .addEventListener(
+            "click",
+            closeViewer
+        );
+
+
+    viewer.addEventListener(
+        "click",
+        function (event) {
+
+            if (
+                event.target ===
+                viewer
+            ) {
+
+                closeViewer();
+
+            }
+
+        }
+    );
+
+}
+
+
+// =====================================
+// STATS
+// =====================================
 
 function updateStats() {
 
@@ -790,60 +2160,100 @@ function updateStats() {
 
     const subjects =
         new Set(
-            notes.map(
-                note =>
-                    note.subject
-            )
+
+            notes
+                .map(
+                    note =>
+                        note.subject
+                )
+                .filter(Boolean)
+
         );
 
 
-    document.getElementById(
-        "totalNotes"
-    ).textContent =
-        notes.length;
+    setText(
+        "totalNotes",
+        notes.length
+    );
 
 
-    document.getElementById(
-        "pinnedNotes"
-    ).textContent =
-        pinned;
+    setText(
+        "pinnedNotes",
+        pinned
+    );
 
 
-    document.getElementById(
-        "subjectCount"
-    ).textContent =
-        subjects.size;
-
-}
-
-
-// ===================================
-// Helpers
-// ===================================
-
-function formatDate(date) {
-
-    return new Date(
-        date
-    )
-    .toLocaleDateString(
-        "en-IN",
-        {
-            day:
-                "numeric",
-
-            month:
-                "short",
-
-            year:
-                "numeric"
-        }
+    setText(
+        "subjectCount",
+        subjects.size
     );
 
 }
 
 
-function escapeHTML(text) {
+// =====================================
+// HELPERS
+// =====================================
+
+function setText(
+    id,
+    value
+) {
+
+    const element =
+        document.getElementById(
+            id
+        );
+
+
+    if (
+        element
+    ) {
+
+        element.textContent =
+            value;
+
+    }
+
+}
+
+
+function formatDate(
+    date
+) {
+
+    if (
+        !date
+    ) {
+
+        return "";
+
+    }
+
+
+    return new Date(
+        date
+    )
+        .toLocaleDateString(
+            "en-IN",
+            {
+                day:
+                    "numeric",
+
+                month:
+                    "short",
+
+                year:
+                    "numeric"
+            }
+        );
+
+}
+
+
+function escapeHTML(
+    text
+) {
 
     const div =
         document.createElement(
@@ -852,7 +2262,9 @@ function escapeHTML(text) {
 
 
     div.textContent =
-        String(text);
+        String(
+            text ?? ""
+        );
 
 
     return div.innerHTML;
@@ -860,7 +2272,36 @@ function escapeHTML(text) {
 }
 
 
-// Search
+function escapeAttribute(
+    text
+) {
+
+    return String(
+        text ?? ""
+    )
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        );
+
+}
+
+
+// =====================================
+// SEARCH / FILTER
+// =====================================
 
 searchNotes.addEventListener(
     "input",
@@ -874,6 +2315,18 @@ subjectFilter.addEventListener(
 );
 
 
-// Start
+// =====================================
+// STOP CAMERA IF PAGE CLOSES
+// =====================================
+
+window.addEventListener(
+    "beforeunload",
+    stopCamera
+);
+
+
+// =====================================
+// START
+// =====================================
 
 loadNotes();

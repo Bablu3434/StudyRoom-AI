@@ -1,8 +1,87 @@
 const Note =
     require("../models/Note");
 
+const fs =
+    require("fs");
 
+const path =
+    require("path");
+
+
+// =====================================
+// HELPER - CONVERT FORM VALUE TO BOOLEAN
+// =====================================
+
+function toBoolean(value) {
+
+    if (
+        value === true ||
+        value === "true"
+    ) {
+        return true;
+    }
+
+    return false;
+}
+
+
+// =====================================
+// HELPER - DELETE OLD IMAGE
+// =====================================
+
+function deleteNoteImage(
+    imageUrl
+) {
+
+    try {
+
+        if (!imageUrl) {
+            return;
+        }
+
+
+        const relativePath =
+            imageUrl.replace(
+                /^\/+/,
+                ""
+            );
+
+
+        const fullPath =
+            path.join(
+                __dirname,
+                "..",
+                relativePath
+            );
+
+
+        if (
+            fs.existsSync(
+                fullPath
+            )
+        ) {
+
+            fs.unlinkSync(
+                fullPath
+            );
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Delete Note Image Error:",
+            error
+        );
+
+    }
+
+}
+
+
+// =====================================
 // GET ALL NOTES
+// =====================================
 
 const getNotes =
     async (req, res) => {
@@ -11,12 +90,13 @@ const getNotes =
 
             const notes =
                 await Note.find({
-                    user: req.user._id
+                    user:
+                        req.user._id
                 })
-                .sort({
-                    pinned: -1,
-                    updatedAt: -1
-                });
+                    .sort({
+                        pinned: -1,
+                        updatedAt: -1
+                    });
 
 
             res.json({
@@ -31,18 +111,24 @@ const getNotes =
                 error
             );
 
-            res.status(500).json({
-                success: false,
-                message:
-                    "Failed to load notes"
-            });
+
+            res
+                .status(500)
+                .json({
+                    success: false,
+                    message:
+                        "Failed to load notes"
+                });
 
         }
 
     };
 
 
+// =====================================
 // CREATE NOTE
+// TEXT + PHOTO / PHOTO ONLY
+// =====================================
 
 const createNote =
     async (req, res) => {
@@ -57,10 +143,13 @@ const createNote =
             } = req.body;
 
 
+            // -----------------------------
+            // Required title + subject
+            // -----------------------------
+
             if (
-                !title ||
-                !subject ||
-                !content
+                !title?.trim() ||
+                !subject?.trim()
             ) {
 
                 return res
@@ -68,11 +157,57 @@ const createNote =
                     .json({
                         success: false,
                         message:
-                            "Please fill all required fields"
+                            "Title and subject are required"
                     });
 
             }
 
+
+            // -----------------------------
+            // Must contain text OR image
+            // -----------------------------
+
+            const hasContent =
+                Boolean(
+                    content?.trim()
+                );
+
+
+            const hasImage =
+                Boolean(
+                    req.file
+                );
+
+
+            if (
+                !hasContent &&
+                !hasImage
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+                        success: false,
+                        message:
+                            "Please write a note or upload a photo"
+                    });
+
+            }
+
+
+            // -----------------------------
+            // Image URL
+            // -----------------------------
+
+            const imageUrl =
+                req.file
+                    ? `/uploads/notes/${req.file.filename}`
+                    : null;
+
+
+            // -----------------------------
+            // Create Note
+            // -----------------------------
 
             const note =
                 await Note.create({
@@ -87,20 +222,28 @@ const createNote =
                         subject.trim(),
 
                     content:
-                        content.trim(),
+                        content
+                            ? content.trim()
+                            : "",
+
+                    imageUrl,
 
                     pinned:
-                        Boolean(pinned)
+                        toBoolean(
+                            pinned
+                        )
 
                 });
 
 
-            res.status(201).json({
-                success: true,
-                message:
-                    "Note created successfully",
-                note
-            });
+            res
+                .status(201)
+                .json({
+                    success: true,
+                    message:
+                        "Note created successfully",
+                    note
+                });
 
         } catch (error) {
 
@@ -109,18 +252,37 @@ const createNote =
                 error
             );
 
-            res.status(500).json({
-                success: false,
-                message:
-                    "Failed to create note"
-            });
+
+            // If DB save fails after
+            // multer uploaded the image,
+            // delete unused file.
+
+            if (req.file) {
+
+                deleteNoteImage(
+                    `/uploads/notes/${req.file.filename}`
+                );
+
+            }
+
+
+            res
+                .status(500)
+                .json({
+                    success: false,
+                    message:
+                        "Failed to create note"
+                });
 
         }
 
     };
 
 
+// =====================================
 // UPDATE NOTE
+// TEXT + NEW PHOTO
+// =====================================
 
 const updateNote =
     async (req, res) => {
@@ -129,12 +291,27 @@ const updateNote =
 
             const note =
                 await Note.findOne({
-                    _id: req.params.id,
-                    user: req.user._id
+                    _id:
+                        req.params.id,
+
+                    user:
+                        req.user._id
                 });
 
 
             if (!note) {
+
+                // Remove uploaded image
+                // if note does not exist.
+
+                if (req.file) {
+
+                    deleteNoteImage(
+                        `/uploads/notes/${req.file.filename}`
+                    );
+
+                }
+
 
                 return res
                     .status(404)
@@ -151,31 +328,181 @@ const updateNote =
                 title,
                 subject,
                 content,
-                pinned
+                pinned,
+                removeImage
             } = req.body;
 
 
-            if (title !== undefined) {
+            // -----------------------------
+            // Update title
+            // -----------------------------
+
+            if (
+                title !== undefined
+            ) {
+
+                if (
+                    !title.trim()
+                ) {
+
+                    return res
+                        .status(400)
+                        .json({
+                            success: false,
+                            message:
+                                "Title cannot be empty"
+                        });
+
+                }
+
+
                 note.title =
                     title.trim();
+
             }
 
 
-            if (subject !== undefined) {
+            // -----------------------------
+            // Update subject
+            // -----------------------------
+
+            if (
+                subject !== undefined
+            ) {
+
+                if (
+                    !subject.trim()
+                ) {
+
+                    return res
+                        .status(400)
+                        .json({
+                            success: false,
+                            message:
+                                "Subject cannot be empty"
+                        });
+
+                }
+
+
                 note.subject =
                     subject.trim();
+
             }
 
 
-            if (content !== undefined) {
+            // -----------------------------
+            // Update content
+            // -----------------------------
+
+            if (
+                content !== undefined
+            ) {
+
                 note.content =
                     content.trim();
+
             }
 
 
-            if (pinned !== undefined) {
+            // -----------------------------
+            // Update pin
+            // -----------------------------
+
+            if (
+                pinned !== undefined
+            ) {
+
                 note.pinned =
-                    Boolean(pinned);
+                    toBoolean(
+                        pinned
+                    );
+
+            }
+
+
+            // -----------------------------
+            // Remove current image
+            // -----------------------------
+
+            if (
+                removeImage === "true" ||
+                removeImage === true
+            ) {
+
+                if (
+                    note.imageUrl
+                ) {
+
+                    deleteNoteImage(
+                        note.imageUrl
+                    );
+
+                }
+
+
+                note.imageUrl =
+                    null;
+
+            }
+
+
+            // -----------------------------
+            // Replace with new image
+            // -----------------------------
+
+            if (
+                req.file
+            ) {
+
+                // Delete old photo
+
+                if (
+                    note.imageUrl
+                ) {
+
+                    deleteNoteImage(
+                        note.imageUrl
+                    );
+
+                }
+
+
+                note.imageUrl =
+                    `/uploads/notes/${req.file.filename}`;
+
+            }
+
+
+            // -----------------------------
+            // Must still have text OR image
+            // -----------------------------
+
+            const hasContent =
+                Boolean(
+                    note.content?.trim()
+                );
+
+
+            const hasImage =
+                Boolean(
+                    note.imageUrl
+                );
+
+
+            if (
+                !hasContent &&
+                !hasImage
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+                        success: false,
+                        message:
+                            "A note must contain text or a photo"
+                    });
+
             }
 
 
@@ -185,7 +512,7 @@ const updateNote =
             res.json({
                 success: true,
                 message:
-                    "Note updated",
+                    "Note updated successfully",
                 note
             });
 
@@ -196,18 +523,23 @@ const updateNote =
                 error
             );
 
-            res.status(500).json({
-                success: false,
-                message:
-                    "Failed to update note"
-            });
+
+            res
+                .status(500)
+                .json({
+                    success: false,
+                    message:
+                        "Failed to update note"
+                });
 
         }
 
     };
 
 
+// =====================================
 // TOGGLE PIN
+// =====================================
 
 const togglePin =
     async (req, res) => {
@@ -216,8 +548,11 @@ const togglePin =
 
             const note =
                 await Note.findOne({
-                    _id: req.params.id,
-                    user: req.user._id
+                    _id:
+                        req.params.id,
+
+                    user:
+                        req.user._id
                 });
 
 
@@ -243,6 +578,10 @@ const togglePin =
 
             res.json({
                 success: true,
+                message:
+                    note.pinned
+                        ? "Note pinned"
+                        : "Note unpinned",
                 note
             });
 
@@ -253,18 +592,24 @@ const togglePin =
                 error
             );
 
-            res.status(500).json({
-                success: false,
-                message:
-                    "Failed to update pin"
-            });
+
+            res
+                .status(500)
+                .json({
+                    success: false,
+                    message:
+                        "Failed to update pin"
+                });
 
         }
 
     };
 
 
+// =====================================
 // DELETE NOTE
+// ALSO DELETE PHOTO
+// =====================================
 
 const deleteNote =
     async (req, res) => {
@@ -272,9 +617,12 @@ const deleteNote =
         try {
 
             const note =
-                await Note.findOneAndDelete({
-                    _id: req.params.id,
-                    user: req.user._id
+                await Note.findOne({
+                    _id:
+                        req.params.id,
+
+                    user:
+                        req.user._id
                 });
 
 
@@ -291,10 +639,26 @@ const deleteNote =
             }
 
 
+            // Delete associated image
+
+            if (
+                note.imageUrl
+            ) {
+
+                deleteNoteImage(
+                    note.imageUrl
+                );
+
+            }
+
+
+            await note.deleteOne();
+
+
             res.json({
                 success: true,
                 message:
-                    "Note deleted"
+                    "Note deleted successfully"
             });
 
         } catch (error) {
@@ -304,16 +668,23 @@ const deleteNote =
                 error
             );
 
-            res.status(500).json({
-                success: false,
-                message:
-                    "Failed to delete note"
-            });
+
+            res
+                .status(500)
+                .json({
+                    success: false,
+                    message:
+                        "Failed to delete note"
+                });
 
         }
 
     };
 
+
+// =====================================
+// EXPORTS
+// =====================================
 
 module.exports = {
     getNotes,
